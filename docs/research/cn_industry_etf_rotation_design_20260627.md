@@ -209,4 +209,166 @@ python scripts/smoke_cn_industry_etf_rotation_dry_run.py --json
 
 # 红利 quality（防守轨，需 snapshot fixture）
 cd ../QmtPlatform && python3 scripts/smoke_cn_dividend_quality_dry_run_e2e.py
+
+# 行业轮动 Qmt e2e（conservative v1，需 market_history fixture）
+cd ../QmtPlatform && python3 scripts/smoke_cn_industry_etf_rotation_dry_run_e2e.py
 ```
+
+---
+
+## 10. Conservative v1（生产默认，已冻结）
+
+**Profile：** `cn_industry_etf_rotation`  
+**Preset 快照：** `src/cn_equity_strategies/strategies/industry_etf_rotation_presets.py` → `CONSERVATIVE_V1_PRESET`
+
+| 项 | 值 |
+|---|---|
+| 模式 | 纯动量 + 200 日趋势 |
+| 池子 | 14 只 A 股行业/风格 ETF |
+| 持仓 | top5，逆波加权 |
+| Vol target | 20% |
+| 调仓 | 月频 |
+| 情绪/拥挤 | **off** |
+| Benchmark risk-off | **off** |
+| 相关性过滤 | ≤ 0.85 |
+
+**证据摘要**
+
+| 区间 | 年化 | MDD | 总收益 |
+|---|---:|---:|---:|
+| 2021–2026 | 13.79% | -15.4% | +80% |
+| 2017–2026 拼接 | 12.40% | -17.0% | +138% |
+
+**上线检查清单**
+
+- [x] catalog `runtime_enabled`
+- [x] QmtPlatform 默认 `STRATEGY_PROFILE=cn_industry_etf_rotation`
+- [x] manifest / default_config 含 `max_pair_correlation`
+- [x] CnEquity smoke：`scripts/smoke_cn_industry_etf_rotation_dry_run.py --json`
+- [x] Qmt e2e smoke：`QmtPlatform/scripts/smoke_cn_industry_etf_rotation_dry_run_e2e.py`
+- [ ] Qmt pin 合入 main（`chore/sync-cn-equity-strategies-pin`）
+- [ ] 红利轨 expanded universe PR 合入（双轨研究用）
+
+---
+
+## 11. Aggressive research track（研究轨，不进 runtime）
+
+**原则：** 保守版先上线；强收益版必须在 proxy 中 **beat conservative v1 OOS** 且 **MDD 不劣化 >5pp** 才可讨论 promotion。
+
+**Preset 库：** `industry_etf_rotation_presets.py` → `AGGRESSIVE_RESEARCH_PRESETS`
+
+| Key | 思路 |
+|---|---|
+| `tech_sleeve_momentum_monthly` | 通信/半导体/AI/科创50 子池，top3，vol25% |
+| `full_pool_sentiment_monthly` | 全池 + 成交额情绪 |
+| `full_pool_crowding_monthly` | 全池 + 情绪 + 拥挤惩罚 |
+| `full_pool_momentum_biweekly` | 全池纯动量双周频 |
+| `full_pool_vol25_monthly` | 全池 vol25% |
+| `full_pool_riskoff_monthly` | MA200 防御切换 |
+
+**运行矩阵回测**
+
+```bash
+cd CnEquityStrategies
+PYTHONPATH=src:scripts python3 scripts/research_cn_industry_etf_rotation_aggressive_matrix.py \
+  --start 2021-01-01 --end 2026-06-27 \
+  --json-output /tmp/cn_industry_aggressive_matrix.json
+```
+
+**Promotion gate（代码内 `PROMOTION_GATE`）**
+
+- 训练：2021–2023；样本外：2024–2026
+- OOS total return 需比 conservative v1 高 ≥5pp
+- 全样本 MDD 不得比 conservative v1 差 >5pp
+
+**下一步研究**
+
+1. 跑 aggressive matrix，记录哪些 variant 过 gate — **见 §12 初跑结果**
+2. Phase 2 因子（北向/涨停广度/融资余额）仅进 research preset
+3. 过 gate 后另开 `cn_industry_etf_rotation_aggressive` profile（**不替换** conservative v1 默认）— **已完成**（`research_backtest_only`）
+4. 双轨：industry aggressive + expanded dividend — **见 §13**
+
+---
+
+## 12. Aggressive 初跑结果（2021–2026，2026-06-27）
+
+```bash
+# ETF 主题池 / sentiment / 双周频
+PYTHONPATH=src:scripts python3 scripts/research_cn_industry_etf_rotation_aggressive_matrix.py --suite etf
+
+# 光模块/算力个股
+PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy.py
+```
+
+### ETF aggressive（vs conservative v1 年化 13.79% / MDD -15.42%）
+
+| Variant | 年化 | MDD | 总收益 | OOS gate |
+|---|---:|---:|---:|:---:|
+| **full_pool vol25% monthly** | **14.83%** | **-15.42%** | +87.7% | **PASS** |
+| conservative v1 * | 13.79% | -15.42% | +80.1% | baseline |
+| tech sleeve top2 biweekly vol25% | 12.96% | -31.09% | +93.0% | fail（OOS 高但 MDD 劣化 15pp） |
+| full pool sentiment weight=0.08 | 12.64% | -17.04% | +71.9% | fail |
+| full pool sentiment default | 10.90% | -17.04% | +60.2% | fail |
+| tech sleeve top3 monthly | 9.03% | -29.50% | +59.5% | fail |
+| full pool biweekly | 8.96% | -19.81% | +47.8% | fail |
+
+**解读**：缩小到通信/半导体/AI/科创子池 + 双周频，总收益虽高（+93%），但 **MDD 接近 -31%**，过不了 promotion gate。Sentiment 即使用轻权重 0.08，全池仍跑不赢 conservative。**唯一过 gate 的是全池 vol25%**（OOS 多 +5.4pp，MDD 不变）。
+
+### 个股光模块/算力（8 只，2021 起有历史）
+
+| Variant | 年化 | MDD | 总收益 | OOS 2024–26 |
+|---|---:|---:|---:|---:|
+| top3 momentum monthly | **28.19%** | -39.52% | **+380%** | +277% vs ETF +89% |
+| top2 momentum monthly | 27.12% | -35.99% | +356% | +131% lift |
+| top2 biweekly | 16.30% | -39.61% | +160% | +102% lift |
+
+**解读**：个股主题轮动能接近你看到的 CPO/科创板叙事收益，但 **2021–2022 熊市 -38%**（ETF 仅 -3.5%），MDD -36%~-40%，不适合作为 conservative 替代；可作独立「高风险 research track」继续调 vol/止损/池子 PIT。
+
+**结论（当前证据）**
+
+| 路线 | 能否量化上线 | 说明 |
+|---|---|---|
+| conservative v1 | ✅ 默认生产 | 证据最稳 |
+| full_pool vol25% | 🟡 aggressive profile 已注册 | 唯一过 ETF promotion gate；catalog status=`research_backtest_only` |
+| tech sleeve 双周 top2 | ❌ 研究继续 | 收益高、回撤过大 |
+| sentiment/flow 默认参数 | ❌ | 轻调 weight 仍不过 gate |
+| 个股光模块/算力 | ❌ 独立高风险轨 | 收益极高、MDD 不可接受 |
+
+---
+
+## 13. Aggressive profile 注册与双轨回测（2017–2026）
+
+**Profile：** `cn_industry_etf_rotation_aggressive` — full 14-ETF 池、vol target **25%**、纯动量；`catalog.status = research_backtest_only`（不进 Qmt 默认）。
+
+**运行命令**
+
+```bash
+cd CnEquityStrategies
+PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
+  python3 scripts/research_cn_dual_track_combo_proxy_backtest.py \
+  --industry-profile aggressive \
+  --dividend-universe-mode expanded \
+  --start 2017-01-01 --end 2026-06-27 \
+  --json-output docs/research/cn_dual_track_aggressive_expanded_2017_2026.json
+```
+
+### 70/30 双轨对比（expanded 红利腿相同）
+
+| 组合 | 行业 profile | 年化 | MDD | 总收益 |
+|---|---|---:|---:|---:|
+| conservative + expanded | vol 20% | 16.22% | -15.37% | +69.7% |
+| **aggressive + expanded** | **vol 25%** | **12.95%** | **-15.37%** | **+74.1%** |
+
+单腿（同区间）：
+
+| 腿 | 年化 | MDD | 总收益 |
+|---|---:|---:|---:|
+| aggressive industry | 14.83% | -15.42% | +87.7% |
+| conservative industry | 13.79% | -15.42% | +80.1% |
+| expanded dividend | 7.54% | -33.63% | +94.1% |
+
+**解读**
+
+- Aggressive 行业腿在 2021–2026 样本内优于 conservative（+7.6pp 总收益），但 2017–2020 行业 ETF 池尚未完整可用，组合全样本年化被红利腿早期表现拉低，与 conservative 双轨的 16.22% 不完全可比。
+- 组合 MDD 仍由行业腿 vol targeting 锚定在 ~-15%，与 conservative 双轨一致；红利腿 MDD -34% 未传导至组合层（return-level blend）。
+- **生产默认不变**：Qmt 仍用 `cn_industry_etf_rotation`；aggressive 仅作 research / 组合研究输入。
