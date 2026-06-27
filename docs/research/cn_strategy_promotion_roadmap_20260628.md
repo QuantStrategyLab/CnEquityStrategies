@@ -4,6 +4,44 @@
 
 ---
 
+## 0. 策略架构：A 股 vs 美股 vs Snapshot（你问的分层）
+
+**不是「ETF 轮动 vs Snapshot」拿来和美股对比**——美股是 **另一个 domain + 另一套 Platform**，和 A 股 QMT 并列，不在同一策略池里。
+
+```
+QuantRuntimeSettings（切换控制台）
+├── us_equity domain → IBKR / Schwab / LongBridge / Firstrade
+│   └── UsEquityStrategies：tqqq_growth_income、soxl…（美股 live）
+│
+└── cn_equity domain → QMT（当前仅 dry-run）
+    └── CnEquityStrategies
+        ├── market_history 直驱（「普通 A 股」runtime）
+        │   └── cn_industry_etf_rotation ← 生产默认，14 行业 ETF 动量
+        ├── feature_snapshot 快照（「A 股 Snapshot」runtime）
+        │   └── cn_dividend_quality_snapshot ← Pipeline 因子 CSV + manifest
+        └── research_backtest_only（回测/研究，不进切换页默认）
+            ├── cn_industry_etf_rotation_aggressive（ETF vol25%）
+            ├── cn_index_etf_tactical_rotation（legacy）
+            ├── cross-section 个股动量 proxy（CSI500 宽池）
+            └── 固定 8 股主题 sleeve proxy
+```
+
+| 类型 | Profile 示例 | 输入 | 是否需要 Pipeline | 与美股关系 |
+|---|---|---|---|---|
+| **A 股直驱（普通）** | `cn_industry_etf_rotation` | `market_history`（日 K CSV） | 否 | 无；美股另有一套 |
+| **A 股 Snapshot** | `cn_dividend_quality_snapshot` | `feature_snapshot` | **是**（CnEquitySnapshotPipelines） | 无 |
+| **美股** | `tqqq_growth_income` 等 | 各 Platform 自有 | 否（UsEquity 域） | **独立 domain** |
+| **研究 proxy** | CSI500 个股动量、双轨 70/30 | 脚本 + AkShare | 红利腿用 Pipeline；ETF/动量腿不用 | 无 |
+
+**对照关系（正确理解）：**
+
+- **行业 ETF 轮动** = A 股 **market_history 直驱** 的生产主轨（类似「只喂行情就能跑」的普通策略）。
+- **红利 quality** = A 股 **snapshot 轨**，必须先跑 Pipeline 产出因子快照，再喂给策略。
+- **CSI500 个股动量** = 研究中的 **第三条线**，输入方式仍像 ETF（行情驱动），但 **尚未注册 runtime profile**；和 Snapshot 无关，也和美股无关。
+- **双轨 70/30** = research 里把 **直驱 ETF 腿 + snapshot 红利腿** 收益加权；不是单一 profile。
+
+---
+
 ## 1. Aggressive vol25% → Live 候选评审
 
 **目标 profile：** `cn_industry_etf_rotation_aggressive`  
@@ -141,38 +179,46 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy
 # 三种 universe 全跑 + 与固定主题 8 股对照
 PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy.py \
   --universe-mode all --track both \
-  --json-output docs/research/cn_momentum_stock_matrix_20260628.json
+  --json-output docs/research/cn_momentum_stock_csi500_full_20260628.json
 ```
+
+### 3.7 全量 CSI500 回测（2021–2026，2026-06-28）
+
+**设置：** 500 成分候选，**398** 只在 `2021-01-01` 有足够历史；csindex 成分为最新表（非 PIT）。
+
+| Variant | 年化 | MDD | 总收益 | OOS 2024–26 |
+|---|---:|---:|---:|---:|
+| **CSI500 top5 + CSI300 risk-off** | **14.39%** | **-25.66%** | **+99.1%** | +89.2%（≈ ETF +89.1%） |
+| CSI500 top5 vol20% | 3.92% | -36.10% | +21.8% | fail |
+| CSI500 top5 vol18% low gross | 3.87% | -31.77% | +21.5% | fail |
+| ETF conservative v1（对照） | 13.79% | -15.42% | +80.0% | +89.1% |
+| 固定 8 股 top3 thematic（旧） | ~28% | ~-40% | +380% | — |
+
+**解读**
+
+- **Risk-off 版** 在全量 CSI500 下 OOS 与 ETF conservative **几乎打平**（+89% vs +89%），全样本总收益更高（+99% vs +80%），但 MDD 仍 **-26%**（gate 要求 ≥-25%），熊市 2021–22 仍 **-17% vs ETF -3.5%**。
+- 纯 vol20% 无 risk-off 在全池上 **远差于 ETF**（MDD -36%）——个股宽池必须带 benchmark 防御。
+- 相对固定 8 股主题：cross-section + risk-off **显著降低回撤**，OOS 收益不再依赖叙事集中。
+- 仍 **不过** `STOCK_MOMENTUM_PROMOTION_GATE`（MDD / 熊市约束）；暂不上 live。
+
+JSON：`docs/research/cn_momentum_stock_csi500_full_20260628.json`
 
 ### 3.5 更严格 promotion gate（个股）
 
 - **Cross-section 动量：** `STOCK_MOMENTUM_PROMOTION_GATE`（MDD ≥ -25%，熊市劣化 ≤10pp vs ETF）
-
 - **固定主题 sleeve：** `STOCK_THEMATIC_PROMOTION_GATE`（MDD ≥ -28%，熊市劣化 ≤15pp）
 
-| 约束 | 阈值 |
-|---|---|
-| `max_mdd_absolute` | MDD ≥ **-28%**（不得深于 -28%） |
-| `max_bear_total_return_regression` | 2021–2022 总收益不得比 ETF baseline 差 **>15pp** |
-
-**说明：** 即使 OOS 收益极高，MDD -40% 或熊市 -38% 仍会被 gate 拒绝。
+即使 OOS 收益极高，MDD -40% 或熊市 -38% 仍会被 gate 拒绝。
 
 ### 3.6 固定主题轨运行命令
 
 ```bash
 cd CnEquityStrategies
-
-# baseline 个股矩阵
 PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy.py --suite stock
-
-# 新增 risk-control 矩阵
 PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy.py --suite stock_risk
-
-# 或统一入口
-PYTHONPATH=src:scripts python3 scripts/research_cn_industry_etf_rotation_aggressive_matrix.py --suite stock_risk
 ```
 
-### 3.5 后续参数方向（待编码）
+### 3.7 后续参数方向（待编码）
 
 | 方向 | 参数 | 预期效果 |
 |---|---|---|
