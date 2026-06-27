@@ -75,9 +75,9 @@ QuantRuntimeSettings（切换控制台）
 ### 1.4 落地步骤（若选 optional_target）
 
 - [ ] `catalog.status` 改为 `runtime_enabled`（或保留 research 但 QMT allowlist 显式加入）
-- [ ] `runtime_adapters.py` 为 aggressive 注册 adapter（与 conservative 相同 `market_history`）
-- [ ] `QuantRuntimeSettings/examples/targets/qmt/industry_etf_aggressive_dry_run.example.json`
-- [ ] 控制台 strategy catalog 增加 aggressive 条目
+- [ ] `runtime_adapters.py` 为 aggressive 注册 adapter（与 conservative 相同 `market_history`） — **已完成**
+- [ ] `QuantRuntimeSettings/examples/targets/qmt/industry_etf_aggressive_dry_run.example.json` — **已完成**
+- [ ] 控制台 strategy catalog 增加 aggressive 条目 — **已完成**（strategy-profiles + account-options）
 - [ ] 跑 `smoke_cn_industry_etf_rotation_dry_run_e2e.py` 改 profile 验证
 
 ---
@@ -232,22 +232,47 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy
 - **仍无 variant 过完整** `STOCK_MOMENTUM_PROMOTION_GATE`（OOS lift + MDD 双重要求同时满足很难）。
 - **研究默认 risk-off 候选：** `CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY` → `momentum_csi500_top5_vol15_gross75_riskoff`。
 
-**下一步（若继续压 MDD 且抬 OOS）**
-
-- 70% ETF conservative + 30% vol15 risk-off 个股 sleeve（组合层，非单策略）
-- PIT 成分 + 动态 vol scaling
-- 单票 weight cap 8%（需 core 支持）
-
 JSON：`docs/research/cn_momentum_csi500_riskoff_tuning_20260628.json`
 
-### 3.5 更严格 promotion gate（个股）
+### 3.5 70/30 组合：ETF conservative + vol15 risk-off 个股
+
+**脚本：** `research_cn_etf_momentum_stock_combo_proxy_backtest.py`  
+**Preset：** `DUAL_TRACK_COMBO_PRESETS["etf_vol15_riskoff_stock_70_30"]`
+
+```bash
+cd CnEquityStrategies
+PYTHONPATH=src:scripts:../QuantPlatformKit/src \
+  python3 scripts/research_cn_etf_momentum_stock_combo_proxy_backtest.py \
+  --json-output docs/research/cn_etf_momentum_stock_combo_20260628.json
+```
+
+**2021-01-01 ~ 2026-06-27（return-level 70/30 blend）**
+
+| 腿 | 年化 | 总收益 | MDD | OOS 2024+ | 熊市 2021–22 |
+|---|---:|---:|---:|---:|---:|
+| **70/30 组合** | **14.87%** | **+87.9%** | **-13.88%** | +81.9% | **-3.21%** |
+| ETF conservative（70% 权重来源） | 13.79% | +80.0% | -15.42% | +89.1% | -3.46% |
+| vol15 risk-off 个股（30% 权重来源） | 15.19% | +100.5% | -16.47% | +62.5% | -2.99% |
+| 70/30 ETF + expanded 红利（对照） | 16.22% | — | -15.37% | — | — |
+
+**结论**
+
+- **MDD 优于两腿单独：** 组合 **-13.9%** 低于 ETF（-15.4%）与个股（-16.5%），说明低相关 sleeve 在 return blend 层有效分散。
+- **年化介于两腿之间：** 14.9% > 纯 ETF 13.8%，但低于纯个股 15.2% 与红利双轨 16.2%。
+- **OOS 仍偏 ETF 侧：** 2024+ 组合 +82% 介于 ETF +89% 与个股 +63% 之间——**未同时 beat 纯 ETF OOS**。
+- **熊市略优于纯 ETF：** -3.21% vs -3.46%（个股腿 -2.99% 拉低组合）。
+- **相对红利双轨：** 换 30% 个股 sleeve 后 MDD 略优（-13.9% vs -15.4%），年化略低（14.9% vs 16.2%）——**防御略强、收益略弱** 的 trade-off。
+
+JSON：`docs/research/cn_etf_momentum_stock_combo_20260628.json`
+
+### 3.6 更严格 promotion gate（个股）
 
 - **Cross-section 动量：** `STOCK_MOMENTUM_PROMOTION_GATE`（MDD ≥ -25%，熊市劣化 ≤10pp vs ETF）
 - **固定主题 sleeve：** `STOCK_THEMATIC_PROMOTION_GATE`（MDD ≥ -28%，熊市劣化 ≤15pp）
 
 即使 OOS 收益极高，MDD -40% 或熊市 -38% 仍会被 gate 拒绝。
 
-### 3.6 固定主题轨运行命令
+### 3.7 固定主题轨运行命令
 
 ```bash
 cd CnEquityStrategies
@@ -255,7 +280,7 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy.py --suite stock_risk
 ```
 
-### 3.7 后续参数方向（待编码）
+### 3.8 后续参数方向（待编码）
 
 | 方向 | 参数 | 预期效果 |
 |---|---|---|
@@ -274,6 +299,7 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 | P0 | Aggressive **optional QMT target** | +1pp 年化（ETF） | 低 |
 | P1 | 跑 **stock_risk** 矩阵，找 MDD/bear 改善最大的 preset | 可能保留 15–20% 年化同时 MDD → -28% | 中 |
 | P2 | 双轨 combo Phase 1→2（PIT + unified sim） | 组合年化 ~16% | 中 |
+| P2b | **70/30 ETF + vol15 stock** 已验证 proxy；可对比 50/50、40/60 权重扫描 | MDD ~-14% | 低 |
 | P3 | 个股 sleeve 仅在有 preset 过 stock gate 后讨论 profile | 高收益 | 高 |
 
 ---
@@ -285,5 +311,6 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 | `industry_etf_rotation_presets.py` | 全部 preset + checklist 常量 |
 | `backtest/promotion_gate.py` | 可配置 gate 评估 |
 | `research_cn_thematic_stock_rotation_proxy.py` | 个股矩阵 |
-| `research_cn_dual_track_combo_proxy_backtest.py` | 双轨 proxy |
+| `research_cn_dual_track_combo_proxy_backtest.py` | 双轨 proxy（ETF + 红利） |
+| `research_cn_etf_momentum_stock_combo_proxy_backtest.py` | ETF + CSI500 动量 risk-off 组合 proxy |
 | `docs/research/cn_industry_etf_rotation_design_20260627.md` | §12–§14 回测证据 |

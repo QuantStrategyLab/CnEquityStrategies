@@ -36,6 +36,9 @@ CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset(
     }
 )
 
+# Optional QMT rollout (second target); catalog status stays research_backtest_only.
+CN_QMT_OPTIONAL_RUNTIME_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE})
+
 STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"qmt"}),
@@ -217,8 +220,9 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         canonical_profile=CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
         display_name="CN Industry ETF Rotation Aggressive",
         description=(
-            "Research-only aggressive v1 preset: full 14-ETF pool with vol target 25% and pure momentum; "
-            "passed OOS promotion gate vs conservative v1 — not a runtime default."
+            "Aggressive v1 preset: full 14-ETF pool with vol target 25% and pure momentum; "
+            "passed OOS promotion gate vs conservative v1. Optional QMT target "
+            "(qmt/industry_etf_aggressive_dry_run); not the platform default profile."
         ),
         aliases=(),
         cadence="monthly review",
@@ -323,6 +327,14 @@ def get_runtime_enabled_profiles() -> frozenset[str]:
         for profile, metadata in STRATEGY_METADATA.items()
         if str(metadata.status or "").strip().lower() == "runtime_enabled"
     )
+
+
+def get_qmt_optional_runtime_profiles() -> frozenset[str]:
+    return frozenset(CN_QMT_OPTIONAL_RUNTIME_PROFILES)
+
+
+def get_qmt_rollout_allowlist() -> frozenset[str]:
+    return get_runtime_enabled_profiles() | get_qmt_optional_runtime_profiles()
 
 
 def get_direct_market_history_profiles() -> frozenset[str]:

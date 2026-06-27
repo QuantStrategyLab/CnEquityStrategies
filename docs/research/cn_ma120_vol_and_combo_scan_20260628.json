@@ -1,0 +1,831 @@
+{
+  "end": "2026-06-27",
+  "ma120_vol_matrix": {
+    "best_within_budget": "momentum_csi500_top5_vol25_ma120_riskoff",
+    "end": "2026-06-27",
+    "mdd_budget": -0.35,
+    "ranked_by_ann": [
+      "momentum_csi500_top5_vol25_ma120_riskoff",
+      "momentum_csi500_top5_vol22_ma120_riskoff",
+      "momentum_csi500_top5_vol20_ma120_riskoff",
+      "momentum_csi500_top5_vol18_ma120_riskoff"
+    ],
+    "start": "2021-01-01",
+    "track": "ma120_vol_tune",
+    "universe": {
+      "active_count": 432,
+      "candidate_count": 500
+    },
+    "variants": {
+      "momentum_csi500_top5_vol18_ma120_riskoff": {
+        "key": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA120",
+        "overall": {
+          "annual_return": 0.20340808541932676,
+          "annual_volatility": 0.1733948822564607,
+          "days": 1240,
+          "max_drawdown": -0.21597422295591817,
+          "sharpe_ratio": 1.17309163207294,
+          "total_return": 1.4870392957199954
+        },
+        "periods": {
+          "bear_2021_2022": {
+            "annual_return": -0.03293280858112191,
+            "annual_volatility": 0.1074674488714041,
+            "days": 399,
+            "max_drawdown": -0.21597422295591817,
+            "total_return": -0.0516404351000006
+          },
+          "full": {
+            "annual_return": 0.20340808541932676,
+            "annual_volatility": 0.1733948822564607,
+            "days": 1240,
+            "max_drawdown": -0.21597422295591817,
+            "total_return": 1.4870392957199954
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.33327966960847255,
+            "annual_volatility": 0.20335200924917016,
+            "days": 599,
+            "max_drawdown": -0.17315822812842285,
+            "total_return": 0.9812343301584119
+          }
+        },
+        "target_annual_volatility": 0.18,
+        "within_mdd_budget": true
+      },
+      "momentum_csi500_top5_vol20_ma120_riskoff": {
+        "key": "momentum_csi500_top5_vol20_ma120_riskoff",
+        "label": "CSI500 MA120 risk-off \u2014 top5 vol20%",
+        "overall": {
+          "annual_return": 0.22042129539325717,
+          "annual_volatility": 0.184959303595393,
+          "days": 1240,
+          "max_drawdown": -0.22166991500632438,
+          "sharpe_ratio": 1.191728618720575,
+          "total_return": 1.6649129688900013
+        },
+        "periods": {
+          "bear_2021_2022": {
+            "annual_return": -0.03218737860400156,
+            "annual_volatility": 0.11071326125142943,
+            "days": 399,
+            "max_drawdown": -0.22166991500632438,
+            "total_return": -0.050482742639999856
+          },
+          "full": {
+            "annual_return": 0.22042129539325717,
+            "annual_volatility": 0.184959303595393,
+            "days": 1240,
+            "max_drawdown": -0.22166991500632438,
+            "total_return": 1.6649129688900013
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.3543371542850744,
+            "annual_volatility": 0.21758239974701216,
+            "days": 599,
+            "max_drawdown": -0.18232719716801793,
+            "total_return": 1.0564232044464044
+          }
+        },
+        "target_annual_volatility": 0.2,
+        "within_mdd_budget": true
+      },
+      "momentum_csi500_top5_vol22_ma120_riskoff": {
+        "key": "momentum_csi500_top5_vol22_ma120_riskoff",
+        "label": "CSI500 MA120 risk-off \u2014 top5 vol22%",
+        "overall": {
+          "annual_return": 0.2350163622478716,
+          "annual_volatility": 0.19609528910371468,
+          "days": 1240,
+          "max_drawdown": -0.2267800760752433,
+          "sharpe_ratio": 1.1984804087953973,
+          "total_return": 1.825452074320003
+        },
+        "periods": {
+          "bear_2021_2022": {
+            "annual_return": -0.031068777342581955,
+            "annual_volatility": 0.11390904689824592,
+            "days": 399,
+            "max_drawdown": -0.2267800760752433,
+            "total_return": -0.048744519220000004
+          },
+          "full": {
+            "annual_return": 0.2350163622478716,
+            "annual_volatility": 0.19609528910371468,
+            "days": 1240,
+            "max_drawdown": -0.2267800760752433,
+            "total_return": 1.825452074320003
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.36874120882969685,
+            "annual_volatility": 0.23105565463702232,
+            "days": 599,
+            "max_drawdown": -0.1950540150147384,
+            "total_return": 1.1087916243950868
+          }
+        },
+        "target_annual_volatility": 0.22,
+        "within_mdd_budget": true
+      },
+      "momentum_csi500_top5_vol25_ma120_riskoff": {
+        "key": "momentum_csi500_top5_vol25_ma120_riskoff",
+        "label": "CSI500 MA120 risk-off \u2014 top5 vol25%",
+        "overall": {
+          "annual_return": 0.25149128437379353,
+          "annual_volatility": 0.21130065338475712,
+          "days": 1240,
+          "max_drawdown": -0.23540287385005754,
+          "sharpe_ratio": 1.1902059001959324,
+          "total_return": 2.0158294636399985
+        },
+        "periods": {
+          "bear_2021_2022": {
+            "annual_return": -0.02956527799108155,
+            "annual_volatility": 0.11814817643290922,
+            "days": 399,
+            "max_drawdown": -0.23540287385005754,
+            "total_return": -0.04640634812000011
+          },
+          "full": {
+            "annual_return": 0.25149128437379353,
+            "annual_volatility": 0.21130065338475712,
+            "days": 1240,
+            "max_drawdown": -0.23540287385005754,
+            "total_return": 2.0158294636399985
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.3887019680519568,
+            "annual_volatility": 0.25036219164126905,
+            "days": 599,
+            "max_drawdown": -0.2090613318568676,
+            "total_return": 1.182626634334039
+          }
+        },
+        "target_annual_volatility": 0.25,
+        "within_mdd_budget": true
+      }
+    }
+  },
+  "start": "2021-01-01",
+  "weight_grid": {
+    "best_within_budget_by_ann": {
+      "bear_2021_2022": {
+        "annual_return": -0.02956527799108155,
+        "annual_volatility": 0.11814817643290922,
+        "days": 399,
+        "max_drawdown": -0.23540287385005754,
+        "total_return": -0.04640634812000011
+      },
+      "etf_weight": 0.0,
+      "industry_profile": "conservative",
+      "oos_2024_2026": {
+        "annual_return": 0.3887019680519568,
+        "annual_volatility": 0.25036219164126905,
+        "days": 599,
+        "max_drawdown": -0.2090613318568676,
+        "total_return": 1.182626634334039
+      },
+      "overall": {
+        "annual_return": 0.25149128437379353,
+        "annual_volatility": 0.21130065338475712,
+        "days": 1240,
+        "max_drawdown": -0.23540287385005754,
+        "sharpe_ratio": 1.1902059001959324,
+        "total_return": 2.0158294636399985
+      },
+      "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+      "stock_weight": 1.0,
+      "within_mdd_budget": true
+    },
+    "best_within_budget_by_sharpe": {
+      "bear_2021_2022": {
+        "annual_return": -0.03514376021471488,
+        "annual_volatility": 0.0969559197402471,
+        "days": 306,
+        "max_drawdown": -0.16392935326758684,
+        "total_return": -0.04251237635854044
+      },
+      "etf_weight": 0.3,
+      "industry_profile": "conservative",
+      "oos_2024_2026": {
+        "annual_return": 0.3552297260051285,
+        "annual_volatility": 0.20038195299158879,
+        "days": 599,
+        "max_drawdown": -0.15505612416287162,
+        "total_return": 1.0596461438435139
+      },
+      "overall": {
+        "annual_return": 0.22371510201561606,
+        "annual_volatility": 0.1714180059516788,
+        "days": 1147,
+        "max_drawdown": -0.16392935326758684,
+        "sharpe_ratio": 1.3050851967014443,
+        "total_return": 1.5065976604113462
+      },
+      "stock_preset": "momentum_csi500_top5_vol22_ma120_riskoff",
+      "stock_weight": 0.7,
+      "within_mdd_budget": true
+    },
+    "end": "2026-06-27",
+    "etf_weights_scanned": [
+      0.0,
+      0.3,
+      0.5,
+      0.7,
+      1.0
+    ],
+    "grid": [
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03293280858112191,
+          "annual_volatility": 0.1074674488714041,
+          "days": 399,
+          "max_drawdown": -0.21597422295591817,
+          "total_return": -0.0516404351000006
+        },
+        "etf_weight": 0.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.33327966960847255,
+          "annual_volatility": 0.20335200924917016,
+          "days": 599,
+          "max_drawdown": -0.17315822812842285,
+          "total_return": 0.9812343301584119
+        },
+        "overall": {
+          "annual_return": 0.20340808541932676,
+          "annual_volatility": 0.1733948822564607,
+          "days": 1240,
+          "max_drawdown": -0.21597422295591817,
+          "sharpe_ratio": 1.17309163207294,
+          "total_return": 1.4870392957199954
+        },
+        "stock_preset": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "stock_weight": 1.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.037008710427855696,
+          "annual_volatility": 0.09193699030936849,
+          "days": 306,
+          "max_drawdown": -0.15582916826797744,
+          "total_return": -0.04475919848721188
+        },
+        "etf_weight": 0.3,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.32972938848372957,
+          "annual_volatility": 0.1816027937664493,
+          "days": 599,
+          "max_drawdown": -0.14481643086692741,
+          "total_return": 0.9687171372757488
+        },
+        "overall": {
+          "annual_return": 0.19927146795811246,
+          "annual_volatility": 0.15545081481211873,
+          "days": 1147,
+          "max_drawdown": -0.15582916826797744,
+          "sharpe_ratio": 1.281894007432231,
+          "total_return": 1.2866510628636947
+        },
+        "stock_preset": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "stock_weight": 0.7,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03389692566624947,
+          "annual_volatility": 0.07446558195910576,
+          "days": 306,
+          "max_drawdown": -0.11357943463491393,
+          "total_return": -0.04100971756078231
+        },
+        "etf_weight": 0.5,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.32531874022976015,
+          "annual_volatility": 0.17477014342936245,
+          "days": 599,
+          "max_drawdown": -0.1441859762092832,
+          "total_return": 0.9532305314411289
+        },
+        "overall": {
+          "annual_return": 0.18301113783793999,
+          "annual_volatility": 0.14611587304524393,
+          "days": 1147,
+          "max_drawdown": -0.14418597620928297,
+          "sharpe_ratio": 1.2525068907556105,
+          "total_return": 1.1488942683102366
+        },
+        "stock_preset": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "stock_weight": 0.5,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03135174080086067,
+          "annual_volatility": 0.06192774388194582,
+          "days": 306,
+          "max_drawdown": -0.08687600270698359,
+          "total_return": -0.03794102454378878
+        },
+        "etf_weight": 0.7,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.31928563244943065,
+          "annual_volatility": 0.17500562469714126,
+          "days": 599,
+          "max_drawdown": -0.1468848630194074,
+          "total_return": 0.9321618172759549
+        },
+        "overall": {
+          "annual_return": 0.16570956291191852,
+          "annual_volatility": 0.14395302902706605,
+          "days": 1147,
+          "max_drawdown": -0.14688486301940773,
+          "sharpe_ratio": 1.1511363396234044,
+          "total_return": 1.0095176889421844
+        },
+        "stock_preset": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "stock_weight": 0.30000000000000004,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.028607342130033464,
+          "annual_volatility": 0.05928488670669046,
+          "days": 306,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "etf_weight": 1.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.30723313290056975,
+          "annual_volatility": 0.1883362009686863,
+          "days": 599,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.8904680657783053
+        },
+        "overall": {
+          "annual_return": 0.13791091679142387,
+          "annual_volatility": 0.154542597791082,
+          "days": 1147,
+          "max_drawdown": -0.1542440726918759,
+          "sharpe_ratio": 0.8923812512706585,
+          "total_return": 0.8004524729299969
+        },
+        "stock_preset": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "stock_weight": 0.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03218737860400156,
+          "annual_volatility": 0.11071326125142943,
+          "days": 399,
+          "max_drawdown": -0.22166991500632438,
+          "total_return": -0.050482742639999856
+        },
+        "etf_weight": 0.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3543371542850744,
+          "annual_volatility": 0.21758239974701216,
+          "days": 599,
+          "max_drawdown": -0.18232719716801793,
+          "total_return": 1.0564232044464044
+        },
+        "overall": {
+          "annual_return": 0.22042129539325717,
+          "annual_volatility": 0.184959303595393,
+          "days": 1240,
+          "max_drawdown": -0.22166991500632438,
+          "sharpe_ratio": 1.191728618720575,
+          "total_return": 1.6649129688900013
+        },
+        "stock_preset": "momentum_csi500_top5_vol20_ma120_riskoff",
+        "stock_weight": 1.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.036246490352875194,
+          "annual_volatility": 0.09446280727749622,
+          "days": 306,
+          "max_drawdown": -0.16009333284784766,
+          "total_return": -0.04384101686669972
+        },
+        "etf_weight": 0.3,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3447891812666395,
+          "annual_volatility": 0.19126442887975884,
+          "days": 599,
+          "max_drawdown": -0.14873382697168447,
+          "total_return": 1.0221296952428927
+        },
+        "overall": {
+          "annual_return": 0.21240070220025387,
+          "annual_volatility": 0.16360036855430313,
+          "days": 1147,
+          "max_drawdown": -0.16009333284784766,
+          "sharpe_ratio": 1.2982898759775878,
+          "total_return": 1.402829123716625
+        },
+        "stock_preset": "momentum_csi500_top5_vol20_ma120_riskoff",
+        "stock_weight": 0.7,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03331035789087411,
+          "annual_volatility": 0.07614315519260424,
+          "days": 306,
+          "max_drawdown": -0.11676337990644081,
+          "total_return": -0.04030265462138716
+        },
+        "etf_weight": 0.5,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3362095294356837,
+          "annual_volatility": 0.18120876054926,
+          "days": 599,
+          "max_drawdown": -0.14697756514921678,
+          "total_return": 0.9915987372479347
+        },
+        "overall": {
+          "annual_return": 0.19239844758070968,
+          "annual_volatility": 0.15150122887708797,
+          "days": 1147,
+          "max_drawdown": -0.14697756514921734,
+          "sharpe_ratio": 1.2699464486641316,
+          "total_return": 1.2276075575440646
+        },
+        "stock_preset": "momentum_csi500_top5_vol20_ma120_riskoff",
+        "stock_weight": 0.5,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.030974619009963567,
+          "annual_volatility": 0.06274119549527948,
+          "days": 306,
+          "max_drawdown": -0.08922386538759841,
+          "total_return": -0.037486187089173284
+        },
+        "etf_weight": 0.7,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3258911863091589,
+          "annual_volatility": 0.1784193131949561,
+          "days": 599,
+          "max_drawdown": -0.14854946816459258,
+          "total_return": 0.9552364956081316
+        },
+        "overall": {
+          "annual_return": 0.17134005154516863,
+          "annual_volatility": 0.14673603570871444,
+          "days": 1147,
+          "max_drawdown": -0.14854946816459258,
+          "sharpe_ratio": 1.1676753478967878,
+          "total_return": 1.0540766244886552
+        },
+        "stock_preset": "momentum_csi500_top5_vol20_ma120_riskoff",
+        "stock_weight": 0.30000000000000004,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.028607342130033464,
+          "annual_volatility": 0.05928488670669046,
+          "days": 306,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "etf_weight": 1.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.30723313290056975,
+          "annual_volatility": 0.1883362009686863,
+          "days": 599,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.8904680657783053
+        },
+        "overall": {
+          "annual_return": 0.13791091679142387,
+          "annual_volatility": 0.154542597791082,
+          "days": 1147,
+          "max_drawdown": -0.1542440726918759,
+          "sharpe_ratio": 0.8923812512706585,
+          "total_return": 0.8004524729299969
+        },
+        "stock_preset": "momentum_csi500_top5_vol20_ma120_riskoff",
+        "stock_weight": 0.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.031068777342581955,
+          "annual_volatility": 0.11390904689824592,
+          "days": 399,
+          "max_drawdown": -0.2267800760752433,
+          "total_return": -0.048744519220000004
+        },
+        "etf_weight": 0.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.36874120882969685,
+          "annual_volatility": 0.23105565463702232,
+          "days": 599,
+          "max_drawdown": -0.1950540150147384,
+          "total_return": 1.1087916243950868
+        },
+        "overall": {
+          "annual_return": 0.2350163622478716,
+          "annual_volatility": 0.19609528910371468,
+          "days": 1240,
+          "max_drawdown": -0.2267800760752433,
+          "sharpe_ratio": 1.1984804087953973,
+          "total_return": 1.825452074320003
+        },
+        "stock_preset": "momentum_csi500_top5_vol22_ma120_riskoff",
+        "stock_weight": 1.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03514376021471488,
+          "annual_volatility": 0.0969559197402471,
+          "days": 306,
+          "max_drawdown": -0.16392935326758684,
+          "total_return": -0.04251237635854044
+        },
+        "etf_weight": 0.3,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3552297260051285,
+          "annual_volatility": 0.20038195299158879,
+          "days": 599,
+          "max_drawdown": -0.15505612416287162,
+          "total_return": 1.0596461438435139
+        },
+        "overall": {
+          "annual_return": 0.22371510201561606,
+          "annual_volatility": 0.1714180059516788,
+          "days": 1147,
+          "max_drawdown": -0.16392935326758684,
+          "sharpe_ratio": 1.3050851967014443,
+          "total_return": 1.5065976604113462
+        },
+        "stock_preset": "momentum_csi500_top5_vol22_ma120_riskoff",
+        "stock_weight": 0.7,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03247937475862561,
+          "annual_volatility": 0.07780657859931388,
+          "days": 306,
+          "max_drawdown": -0.11963272766284949,
+          "total_return": -0.03930081013875886
+        },
+        "etf_weight": 0.5,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.34382181699915404,
+          "annual_volatility": 0.18727719996048564,
+          "days": 599,
+          "max_drawdown": -0.15149268641327995,
+          "total_return": 1.0186738363605814
+        },
+        "overall": {
+          "annual_return": 0.20050424726756488,
+          "annual_volatility": 0.1566592073438567,
+          "days": 1147,
+          "max_drawdown": -0.1514926864132803,
+          "sharpe_ratio": 1.279875282577367,
+          "total_return": 1.2973692995854895
+        },
+        "stock_preset": "momentum_csi500_top5_vol22_ma120_riskoff",
+        "stock_weight": 0.5,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.03045025209309571,
+          "annual_volatility": 0.0635549483347966,
+          "days": 306,
+          "max_drawdown": -0.09138579521355883,
+          "total_return": -0.036853697818252096
+        },
+        "etf_weight": 0.7,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3305434836621113,
+          "annual_volatility": 0.18162172421534017,
+          "days": 599,
+          "max_drawdown": -0.1512475409355647,
+          "total_return": 0.9715833244937842
+        },
+        "overall": {
+          "annual_return": 0.17621028047196674,
+          "annual_volatility": 0.1493867300575267,
+          "days": 1147,
+          "max_drawdown": -0.15124754093556503,
+          "sharpe_ratio": 1.1795577853810086,
+          "total_return": 1.0932374630439607
+        },
+        "stock_preset": "momentum_csi500_top5_vol22_ma120_riskoff",
+        "stock_weight": 0.30000000000000004,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.028607342130033464,
+          "annual_volatility": 0.05928488670669046,
+          "days": 306,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "etf_weight": 1.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.30723313290056975,
+          "annual_volatility": 0.1883362009686863,
+          "days": 599,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.8904680657783053
+        },
+        "overall": {
+          "annual_return": 0.13791091679142387,
+          "annual_volatility": 0.154542597791082,
+          "days": 1147,
+          "max_drawdown": -0.1542440726918759,
+          "sharpe_ratio": 0.8923812512706585,
+          "total_return": 0.8004524729299969
+        },
+        "stock_preset": "momentum_csi500_top5_vol22_ma120_riskoff",
+        "stock_weight": 0.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.02956527799108155,
+          "annual_volatility": 0.11814817643290922,
+          "days": 399,
+          "max_drawdown": -0.23540287385005754,
+          "total_return": -0.04640634812000011
+        },
+        "etf_weight": 0.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3887019680519568,
+          "annual_volatility": 0.25036219164126905,
+          "days": 599,
+          "max_drawdown": -0.2090613318568676,
+          "total_return": 1.182626634334039
+        },
+        "overall": {
+          "annual_return": 0.25149128437379353,
+          "annual_volatility": 0.21130065338475712,
+          "days": 1240,
+          "max_drawdown": -0.23540287385005754,
+          "sharpe_ratio": 1.1902059001959324,
+          "total_return": 2.0158294636399985
+        },
+        "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+        "stock_weight": 1.0,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.0336471402776074,
+          "annual_volatility": 0.10015232978044349,
+          "days": 306,
+          "max_drawdown": -0.17041646169866187,
+          "total_return": -0.04070863147330994
+        },
+        "etf_weight": 0.3,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.36973060391337587,
+          "annual_volatility": 0.2136162985794196,
+          "days": 599,
+          "max_drawdown": -0.16262585563310006,
+          "total_return": 1.112416761687355
+        },
+        "overall": {
+          "annual_return": 0.23658703863820008,
+          "annual_volatility": 0.18217560526959253,
+          "days": 1147,
+          "max_drawdown": -0.17041646169866187,
+          "sharpe_ratio": 1.2986757381049279,
+          "total_return": 1.628867687574779
+        },
+        "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+        "stock_weight": 0.7,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.031345618722362745,
+          "annual_volatility": 0.07985169637163053,
+          "days": 306,
+          "max_drawdown": -0.1244921258935976,
+          "total_return": -0.03793364115620301
+        },
+        "etf_weight": 0.5,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3544057566219827,
+          "annual_volatility": 0.1962070165522835,
+          "days": 599,
+          "max_drawdown": -0.15689908937490138,
+          "total_return": 1.0566708132263476
+        },
+        "overall": {
+          "annual_return": 0.209762694391183,
+          "annual_volatility": 0.16382636102755302,
+          "days": 1147,
+          "max_drawdown": -0.1568990893749015,
+          "sharpe_ratio": 1.2803964702353623,
+          "total_return": 1.3791242596349482
+        },
+        "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+        "stock_weight": 0.5,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.029731502743851723,
+          "annual_volatility": 0.06446805815768154,
+          "days": 306,
+          "max_drawdown": -0.0944155772541041,
+          "total_return": -0.03598662613993664
+        },
+        "etf_weight": 0.7,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.3370166343120944,
+          "annual_volatility": 0.18640719421613236,
+          "days": 599,
+          "max_drawdown": -0.15447847767221679,
+          "total_return": 0.9944593832304391
+        },
+        "overall": {
+          "annual_return": 0.18179294399675872,
+          "annual_volatility": 0.1531096026439192,
+          "days": 1147,
+          "max_drawdown": -0.154478477672217,
+          "sharpe_ratio": 1.187338617941209,
+          "total_return": 1.1388409066338752
+        },
+        "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+        "stock_weight": 0.30000000000000004,
+        "within_mdd_budget": true
+      },
+      {
+        "bear_2021_2022": {
+          "annual_return": -0.028607342130033464,
+          "annual_volatility": 0.05928488670669046,
+          "days": 306,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "etf_weight": 1.0,
+        "industry_profile": "conservative",
+        "oos_2024_2026": {
+          "annual_return": 0.30723313290056975,
+          "annual_volatility": 0.1883362009686863,
+          "days": 599,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.8904680657783053
+        },
+        "overall": {
+          "annual_return": 0.13791091679142387,
+          "annual_volatility": 0.154542597791082,
+          "days": 1147,
+          "max_drawdown": -0.1542440726918759,
+          "sharpe_ratio": 0.8923812512706585,
+          "total_return": 0.8004524729299969
+        },
+        "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+        "stock_weight": 0.0,
+        "within_mdd_budget": true
+      }
+    ],
+    "industry_profile": "conservative",
+    "mdd_budget": -0.35,
+    "start": "2021-01-01",
+    "stock_preset_keys": [
+      "momentum_csi500_top5_vol18_ma120_riskoff",
+      "momentum_csi500_top5_vol20_ma120_riskoff",
+      "momentum_csi500_top5_vol22_ma120_riskoff",
+      "momentum_csi500_top5_vol25_ma120_riskoff"
+    ],
+    "track": "etf_stock_weight_grid"
+  }
+}

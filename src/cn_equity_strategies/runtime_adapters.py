@@ -10,8 +10,9 @@ from quant_platform_kit.strategy_contracts import (
 from cn_equity_strategies.catalog import (
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
-    get_research_backtest_only_profiles,
+    get_qmt_rollout_allowlist,
     get_strategy_definition,
     get_strategy_definitions,
     resolve_canonical_profile,
@@ -19,6 +20,7 @@ from cn_equity_strategies.catalog import (
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
+from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
 
 QMT_PLATFORM = "qmt"
 SUPPORTED_RUNTIME_PLATFORMS = frozenset({QMT_PLATFORM})
@@ -31,6 +33,10 @@ BASE_RUNTIME_ADAPTERS: dict[str, StrategyRuntimeAdapter] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: StrategyRuntimeAdapter(
         status_icon=industry_etf_strategy.STATUS_ICON,
         managed_symbols_extractor=industry_etf_strategy.extract_managed_symbols,
+    ),
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: StrategyRuntimeAdapter(
+        status_icon=industry_etf_aggressive_strategy.STATUS_ICON,
+        managed_symbols_extractor=industry_etf_aggressive_strategy.extract_managed_symbols,
     ),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: StrategyRuntimeAdapter(
         status_icon=index_etf_strategy.STATUS_ICON,
@@ -87,10 +93,10 @@ def _build_runtime_adapter_for_platform(
 
 def _build_platform_runtime_adapter_map(platform_id: str) -> dict[str, StrategyRuntimeAdapter]:
     normalized_platform = str(platform_id).strip().lower()
-    research_only = get_research_backtest_only_profiles()
+    rollout_allowlist = get_qmt_rollout_allowlist()
     adapters: dict[str, StrategyRuntimeAdapter] = {}
     for profile, definition in get_strategy_definitions().items():
-        if profile in research_only:
+        if profile not in rollout_allowlist:
             continue
         if normalized_platform not in definition.supported_platforms:
             continue
