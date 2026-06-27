@@ -380,3 +380,17 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src 
 - Aggressive 行业腿在 2021–2026 样本内优于 conservative（+7.6pp 总收益），但 2017–2020 行业 ETF 池尚未完整可用，组合全样本年化被红利腿早期表现拉低，与 conservative 双轨的 16.22% 不完全可比。
 - 组合 MDD 仍由行业腿 vol targeting 锚定在 ~-15%，与 conservative 双轨一致；红利腿 MDD -34% 未传导至组合层（return-level blend）。
 - **生产默认不变**：Qmt 仍用 `cn_industry_etf_rotation`；aggressive 仅作 research / 组合研究输入。
+
+---
+
+## 14. Promotion 路线图与个股 risk 矩阵（2026-06-28）
+
+详见 **[cn_strategy_promotion_roadmap_20260628.md](./cn_strategy_promotion_roadmap_20260628.md)**，要点：
+
+1. **Aggressive vol25% live 评审** — `AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST`；推荐先加 optional QMT target，不替换 conservative 默认。
+2. **双轨 combo runtime 设计** — `DUAL_TRACK_COMBO_PRESETS` + `cn_dual_track_combo` 目标形态；阻塞项为 PIT 红利 + 统一组合模拟。
+3. **个股光模块/算力 risk preset** — `STOCK_THEMATIC_RISK_PRESETS`（vol18–20%、risk-off、混合 ETF 池、更严 gate）；运行 `--suite stock_risk`。
+
+```bash
+PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy.py --suite stock_risk
+```

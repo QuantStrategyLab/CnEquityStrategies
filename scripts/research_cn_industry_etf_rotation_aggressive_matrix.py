@@ -20,6 +20,7 @@ for candidate in (SRC, SCRIPTS):
         sys.path.insert(0, candidate_str)
 
 from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest  # noqa: E402
+from cn_equity_strategies.backtest.promotion_gate import evaluate_promotion  # noqa: E402
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_rotation  # noqa: E402
 from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
     AGGRESSIVE_RESEARCH_PRESETS,
@@ -76,55 +77,17 @@ def _run_preset(market_history, key: str, preset: dict[str, Any]) -> dict[str, A
     }
 
 
-def _evaluate_promotion(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    baseline = results["conservative_v1"]
-    baseline_oos = baseline["period_metrics"]["oos_2024_2026"]
-    baseline_train = baseline["period_metrics"]["train_2021_2023"]
-
-    candidates: list[dict[str, Any]] = []
-    for key, row in results.items():
-        if key == "conservative_v1":
-            continue
-        oos = row["period_metrics"]["oos_2024_2026"]
-        train = row["period_metrics"]["train_2021_2023"]
-        oos_lift = float(oos["total_return"]) - float(baseline_oos["total_return"])
-        mdd_delta = float(row["overall"]["max_drawdown"]) - float(baseline["overall"]["max_drawdown"])
-        passes = (
-            oos_lift >= float(PROMOTION_GATE["min_oos_total_return_lift"])
-            and mdd_delta >= -float(PROMOTION_GATE["max_mdd_regression"])
-        )
-        candidates.append(
-            {
-                "key": key,
-                "label": row["label"],
-                "passes_gate": passes,
-                "oos_total_return_lift": oos_lift,
-                "mdd_vs_baseline": mdd_delta,
-                "train_total_return": train["total_return"],
-                "oos_total_return": oos["total_return"],
-            }
-        )
-    candidates.sort(key=lambda item: (item["passes_gate"], item["oos_total_return_lift"]), reverse=True)
-    return {
-        "gate": PROMOTION_GATE,
-        "baseline_oos": baseline_oos,
-        "baseline_train": baseline_train,
-        "candidates": candidates,
-        "promoted": [item for item in candidates if item["passes_gate"]],
-    }
-
-
 def run_matrix(*, start: str, end: str, suite: str = "etf") -> dict[str, Any]:
-    if suite == "stock":
+    if suite in {"stock", "stock_risk"}:
         from research_cn_thematic_stock_rotation_proxy import run_stock_thematic_matrix
 
-        return run_stock_thematic_matrix(start=start, end=end)
+        return run_stock_thematic_matrix(start=start, end=end, suite=suite)
 
     download_start = (pd.Timestamp(start) - pd.Timedelta(days=400)).date().isoformat()
     market_history = _download_market_history(start=download_start, end=end)
     presets = {"conservative_v1": CONSERVATIVE_V1_PRESET, **AGGRESSIVE_RESEARCH_PRESETS}
     results = {key: _run_preset(market_history, key, preset) for key, preset in presets.items()}
-    promotion = _evaluate_promotion(results)
+    promotion = evaluate_promotion(results, PROMOTION_GATE)
     return {
         "start": start,
         "end": end,
@@ -171,7 +134,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Conservative v1 vs aggressive industry rotation matrix.")
     parser.add_argument("--start", default="2021-01-01")
     parser.add_argument("--end", default="2026-06-27")
-    parser.add_argument("--suite", choices=("etf", "stock"), default="etf")
+    parser.add_argument("--suite", choices=("etf", "stock", "stock_risk"), default="etf")
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
     payload = run_matrix(start=args.start, end=args.end, suite=args.suite)

@@ -235,6 +235,89 @@ STOCK_THEMATIC_PRESETS: dict[str, dict[str, Any]] = {
     },
 }
 
+# Defensive / risk-control variants for optical-compute stock sleeve (research matrix).
+STOCK_THEMATIC_RISK_PRESETS: dict[str, dict[str, Any]] = {
+    "stock_optical_vol20_top2_monthly": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Optical stocks — vol20% top2 monthly (lower vol target)",
+        "universe_symbols": OPTICAL_COMPUTE_STOCK_SYMBOLS,
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "top_n": 2,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+    },
+    "stock_optical_vol18_top2_low_gross": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Optical stocks — vol18% top2 max_gross 75%",
+        "universe_symbols": OPTICAL_COMPUTE_STOCK_SYMBOLS,
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "top_n": 2,
+        "target_annual_volatility": 0.18,
+        "max_gross_exposure": 0.75,
+        "rebalance_frequency": "monthly",
+    },
+    "stock_optical_top2_tight_corr": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Optical stocks — top2 max_pair_corr 0.70 vol20%",
+        "universe_symbols": OPTICAL_COMPUTE_STOCK_SYMBOLS,
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "top_n": 2,
+        "target_annual_volatility": 0.20,
+        "max_pair_correlation": 0.70,
+        "rebalance_frequency": "monthly",
+    },
+    "stock_optical_top2_benchmark_riskoff": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Optical stocks — top2 + CSI300 MA200 risk-off",
+        "universe_symbols": OPTICAL_COMPUTE_STOCK_SYMBOLS,
+        "defensive_symbols": ("510300",),
+        "benchmark_symbol": "510300",
+        "enable_benchmark_risk_off": True,
+        "top_n": 2,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+    },
+    "stock_optical_hybrid_etf_sleeve": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Optical stocks + 510300/512760 hybrid top3 risk-off",
+        "universe_symbols": tuple(
+            dict.fromkeys([*OPTICAL_COMPUTE_STOCK_SYMBOLS, "510300", "512760"])
+        ),
+        "defensive_symbols": ("510300",),
+        "benchmark_symbol": "510300",
+        "enable_benchmark_risk_off": True,
+        "top_n": 3,
+        "target_annual_volatility": 0.20,
+        "max_gross_exposure": 0.85,
+        "rebalance_frequency": "monthly",
+    },
+    "stock_optical_top2_min_momentum": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Optical stocks — top2 min_momentum 5% vol20%",
+        "universe_symbols": OPTICAL_COMPUTE_STOCK_SYMBOLS,
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "top_n": 2,
+        "min_momentum": 0.05,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+    },
+}
+
+STOCK_THEMATIC_RESEARCH_MATRIX: dict[str, dict[str, Any]] = {
+    **STOCK_THEMATIC_PRESETS,
+    **STOCK_THEMATIC_RISK_PRESETS,
+}
+
 PROMOTION_GATE = {
     "baseline_variant": "conservative_v1",
     "min_oos_total_return_lift": 0.05,
@@ -243,13 +326,137 @@ PROMOTION_GATE = {
     "train_period": ("2021-01-01", "2023-12-31"),
 }
 
+# Stricter gate for single-name thematic sleeves (drawdown + bear-market caps).
+STOCK_THEMATIC_PROMOTION_GATE: dict[str, Any] = {
+    **PROMOTION_GATE,
+    "max_mdd_absolute": -0.28,
+    "max_bear_total_return_regression": 0.15,
+    "bear_period": ("2021-01-01", "2022-12-31"),
+}
+
+# Human + automated checklist for promoting aggressive ETF profile to runtime.
+AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST: dict[str, Any] = {
+    "target_profile": "cn_industry_etf_rotation_aggressive",
+    "baseline_profile": "cn_industry_etf_rotation",
+    "preset_key": "full_pool_vol25_monthly",
+    "automated_gate": PROMOTION_GATE,
+    "evidence_required": [
+        {
+            "id": "oos_lift",
+            "status": "pass",
+            "note": "OOS 2024–2026 total return +5.4pp vs conservative v1 (matrix 2026-06-27)",
+        },
+        {
+            "id": "mdd_parity",
+            "status": "pass",
+            "note": "Full-sample MDD -15.42% identical to conservative v1",
+        },
+        {
+            "id": "bear_2021_2022",
+            "status": "review",
+            "note": "Confirm bear sub-period not worse than conservative by >5pp",
+        },
+        {
+            "id": "live_dry_run",
+            "status": "pass",
+            "note": "Qmt e2e smoke on conservative; aggressive uses same entrypoint shape",
+        },
+        {
+            "id": "runtime_policy",
+            "status": "pending",
+            "note": "Decide: replace default vs optional second QMT target vs stay research-only",
+        },
+        {
+            "id": "pin_and_docs",
+            "status": "pass",
+            "note": "QmtPlatform pin merged; design doc §12–§13",
+        },
+    ],
+    "rollout_options": [
+        {
+            "id": "optional_target",
+            "label": "Add QMT target cn_industry_etf_rotation_aggressive (recommended first step)",
+            "risk": "low",
+        },
+        {
+            "id": "promote_default",
+            "label": "Replace cn_industry_etf_rotation as platform default",
+            "risk": "medium",
+        },
+        {
+            "id": "stay_research",
+            "label": "Keep research_backtest_only until dual-track combo is validated live",
+            "risk": "lowest",
+        },
+    ],
+    "recommended_rollout": "optional_target",
+}
+
+# Dual-track combo (return-level blend) — research profile spec; not yet a runtime entrypoint.
+DUAL_TRACK_COMBO_PRESETS: dict[str, dict[str, Any]] = {
+    "conservative_expanded_70_30": {
+        "label": "70/30 industry conservative + expanded dividend",
+        "industry_profile": "conservative",
+        "industry_weight": 0.70,
+        "dividend_weight": 0.30,
+        "dividend_universe_mode": "expanded",
+        "expanded_top_n": 40,
+        "research_evidence": {
+            "period": "2017-2026",
+            "combo_ann": 0.1622,
+            "combo_mdd": -0.1537,
+            "combo_total": 0.697,
+        },
+    },
+    "aggressive_expanded_70_30": {
+        "label": "70/30 industry aggressive vol25% + expanded dividend",
+        "industry_profile": "aggressive",
+        "industry_weight": 0.70,
+        "dividend_weight": 0.30,
+        "dividend_universe_mode": "expanded",
+        "expanded_top_n": 40,
+        "research_evidence": {
+            "period": "2017-2026",
+            "combo_ann": 0.1295,
+            "combo_mdd": -0.1537,
+            "combo_total": 0.741,
+        },
+    },
+}
+
+DUAL_TRACK_PROMOTION_REVIEW_CHECKLIST: dict[str, Any] = {
+    "target_profile": "cn_dual_track_combo",
+    "status": "design_only",
+    "blocking_items": [
+        "Unified multi-asset simulator (not return-level blend)",
+        "Expanded dividend PIT fhps/as_of selection in Pipeline",
+        "Snapshot refresh cadence + QMT target wiring for combo weights",
+        "Evidence gate: combo MDD <= industry leg MDD + 2pp on 2017+ sample",
+    ],
+    "candidate_presets": list(DUAL_TRACK_COMBO_PRESETS.keys()),
+    "recommended_first_runtime_shape": {
+        "profile": "cn_dual_track_combo",
+        "legs": [
+            {"profile": "cn_industry_etf_rotation", "weight": 0.70},
+            {"profile": "cn_dividend_quality_snapshot", "weight": 0.30},
+        ],
+        "dividend_universe_mode": "expanded",
+    },
+}
+
 __all__ = [
+    "AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST",
     "AGGRESSIVE_RESEARCH_PRESETS",
     "AGGRESSIVE_V1_PRESET",
     "CONSERVATIVE_V1_PRESET",
+    "DUAL_TRACK_COMBO_PRESETS",
+    "DUAL_TRACK_PROMOTION_REVIEW_CHECKLIST",
     "OPTICAL_COMPUTE_STOCK_SYMBOLS",
     "PROMOTION_GATE",
     "STOCK_THEMATIC_PRESETS",
+    "STOCK_THEMATIC_PROMOTION_GATE",
+    "STOCK_THEMATIC_RESEARCH_MATRIX",
+    "STOCK_THEMATIC_RISK_PRESETS",
     "TECH_THEME_SLEEVE_SYMBOLS",
     "ProfileVariant",
 ]
