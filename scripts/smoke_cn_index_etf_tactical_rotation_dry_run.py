@@ -23,7 +23,6 @@ from cn_equity_strategies.catalog import CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE 
 from cn_equity_strategies.runtime_adapters import describe_platform_runtime_requirements  # noqa: E402
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (  # noqa: E402
     NEW_ENERGY_ETF_SYMBOL,
-    SEMICONDUCTOR_ETF_SYMBOL,
     extract_managed_symbols,
 )
 
