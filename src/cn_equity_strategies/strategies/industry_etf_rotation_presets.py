@@ -526,6 +526,14 @@ STOCK_MOMENTUM_PROMOTION_GATE: dict[str, Any] = {
     "bear_period": ("2021-01-01", "2022-12-31"),
 }
 
+# Return-focused research gate (user MDD budget ~-35%, higher OOS lift bar).
+STOCK_MOMENTUM_RETURN_FOCUSED_GATE: dict[str, Any] = {
+    **STOCK_MOMENTUM_PROMOTION_GATE,
+    "max_mdd_absolute": -0.35,
+    "max_mdd_regression": 0.10,
+    "min_oos_total_return_lift": 0.10,
+}
+
 # Best-known CSI500 risk-off tuning result (2026-06-28 matrix); research only.
 CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY = "momentum_csi500_top5_vol15_gross75_riskoff"
 
@@ -670,6 +678,7 @@ __all__ = [
     "STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS",
     "STOCK_MOMENTUM_MA120_VOL_TUNING_PRESETS",
     "STOCK_MOMENTUM_PROMOTION_GATE",
+    "STOCK_MOMENTUM_RETURN_FOCUSED_GATE",
     "STOCK_THEMATIC_PRESETS",
     "STOCK_THEMATIC_PROMOTION_GATE",
     "STOCK_THEMATIC_RESEARCH_MATRIX",

@@ -41,3 +41,23 @@ def test_evaluate_promotion_rejects_deep_mdd_absolute():
     review = evaluate_promotion(results, gate)
     assert review["promoted"] == []
     assert "max_mdd_absolute" in review["candidates"][0]["fail_reasons"]
+
+
+def test_return_focused_gate_passes_vol25_like_metrics():
+    from cn_equity_strategies.strategies.industry_etf_rotation_presets import (
+        STOCK_MOMENTUM_RETURN_FOCUSED_GATE,
+    )
+
+    results = {
+        "conservative_v1": _row(total=0.80, mdd=-0.154, oos=0.89, bear=-0.035),
+        "momentum_csi500_top5_vol25_ma120_riskoff": _row(
+            total=2.02,
+            mdd=-0.235,
+            oos=1.18,
+            bear=-0.046,
+        ),
+    }
+    review = evaluate_promotion(results, STOCK_MOMENTUM_RETURN_FOCUSED_GATE)
+    assert [item["key"] for item in review["promoted"]] == [
+        "momentum_csi500_top5_vol25_ma120_riskoff"
+    ]

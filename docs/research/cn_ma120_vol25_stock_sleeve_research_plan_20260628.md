@@ -135,3 +135,37 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src \
 4. 用户明确批准将 catalog 从 `research_backtest_only` 改为 optional QMT target（类似 aggressive ETF 路径）
 
 **当前建议：** 保持 research_only；live 主 alpha 用 **aggressive ETF optional target**，个股 sleeve 继续 Phase 2 回测。
+
+---
+
+## 7. Phase 2 回测结果（2026-06-28）
+
+**脚本：** `research_cn_ma120_phase2_return_focused.py`  
+**JSON：** `docs/research/cn_ma120_phase2_return_focused_20260628.json`
+
+### 7.1 P2.1 Promotion gate
+
+| Gate | vol25 MA120 | 结论 |
+|---|---|---|
+| Standard（MDD≥-25%, ΔMDD≤5pp） | fail（mdd_vs_baseline -8.1pp） | 预期 |
+| Return-focused（MDD≥-35%, OOS lift≥10pp, **ΔMDD≤10pp**） | **PASS**（OOS +29pp vs conservative, MDD -23.5%） | vol25 为唯一 promoted 候选 |
+
+vol18–vol22 在 return-focused gate 下仍 fail（OOS lift 或 ΔMDD 边界）。
+
+### 7.2 P2.2 Aggressive ETF + vol25 权重网格
+
+| ETF / 个股 | 年化 | MDD | OOS 2024+ |
+|---|---:|---:|---:|
+| 100% vol25 MA120 | **25.2%** | -23.5% | +118% |
+| **30% aggressive + 70% vol25** | **24.0%** | **-17.0%** | **+113%** |
+| 50% / 50% | 21.6% | -15.7% | +109% |
+| 70% / 30% | 19.0% | -15.5% | +104% |
+| 100% aggressive ETF | 14.8% | -15.4% | +94% |
+
+**Research paper 组合建议：** **30% live aggressive ETF + 70% vol25 MA120**（return blend）— 年化 24%、MDD -17%，OOS +113%，Sharpe 优于纯 vol25 单腿。
+
+### 7.3 下一步（Phase 3）
+
+1. 三轨 blend：50% aggressive + 30% vol25 + 20% expanded 红利  
+2. PIT CSI500 成分重跑 vol25  
+3. 单票 weight cap 8–10% 后复验 gate

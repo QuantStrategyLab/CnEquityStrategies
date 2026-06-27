@@ -38,3 +38,17 @@ def test_csi500_riskoff_preset_count():
     assert default["universe_mode"] == "csi500"
     assert default["top_n"] == 5
     assert default["sentiment_mode"] == "off"
+
+
+def test_stock_momentum_return_focused_gate_relaxes_mdd():
+    from cn_equity_strategies.strategies.industry_etf_rotation_presets import (
+        STOCK_MOMENTUM_PROMOTION_GATE,
+        STOCK_MOMENTUM_RETURN_FOCUSED_GATE,
+    )
+
+    assert STOCK_MOMENTUM_RETURN_FOCUSED_GATE["max_mdd_absolute"] == -0.35
+    assert STOCK_MOMENTUM_RETURN_FOCUSED_GATE["min_oos_total_return_lift"] == 0.10
+    assert STOCK_MOMENTUM_RETURN_FOCUSED_GATE["max_mdd_regression"] == 0.10
+    assert STOCK_MOMENTUM_RETURN_FOCUSED_GATE["max_mdd_absolute"] < STOCK_MOMENTUM_PROMOTION_GATE[
+        "max_mdd_absolute"
+    ]
