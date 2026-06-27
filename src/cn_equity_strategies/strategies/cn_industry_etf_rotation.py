@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from cn_equity_strategies.strategies import industry_etf_rotation_core as base
-from cn_equity_strategies.strategies.industry_etf_rotation_presets import CONSERVATIVE_V1_PRESET
 
 CN_EQUITY_DOMAIN = base.CN_EQUITY_DOMAIN
 SIGNAL_SOURCE = base.SIGNAL_SOURCE

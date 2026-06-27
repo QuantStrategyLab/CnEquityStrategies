@@ -19,14 +19,14 @@ for candidate in (SRC, SCRIPTS):
     if candidate.exists() and candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest
-from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_rotation
-from cn_equity_strategies.strategies.industry_etf_rotation_presets import (
+from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest  # noqa: E402
+from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_rotation  # noqa: E402
+from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
     AGGRESSIVE_RESEARCH_PRESETS,
     CONSERVATIVE_V1_PRESET,
     PROMOTION_GATE,
 )
-from research_cn_industry_etf_rotation_validation import (
+from research_cn_industry_etf_rotation_validation import (  # noqa: E402
     VALIDATION_PERIODS,
     _download_market_history,
     _period_metrics,

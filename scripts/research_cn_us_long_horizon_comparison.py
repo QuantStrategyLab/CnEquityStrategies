@@ -4,16 +4,14 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Literal, Mapping
+from typing import Any, Literal
 
 import pandas as pd
 
 from cn_equity_strategies.backtest.proxy_simulator import (
     ProxyBacktestConfig,
     ProxyBacktestResult,
-    compute_backtest_metrics,
     run_proxy_backtest,
 )
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_rotation
@@ -219,8 +217,6 @@ def _run_us_proxy_backtest(
     close = rotation_core.build_close_matrix(market_history, universe_symbols=universe)
     if len(close) < 220:
         raise ValueError("insufficient US history")
-    index = pd.DatetimeIndex(close.index)
-    rebalance_dates = _us_month_end_rebalance_dates(index)
 
     strategy_kwargs = {
         "min_history_days": 220,

@@ -5,11 +5,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Mapping
 
 import pandas as pd
 
@@ -589,7 +588,7 @@ def _benchmark_buy_hold(market_history: pd.DataFrame, *, symbol: str = SAFE_HAVE
     def signal_fn(_history: Any, **_kwargs: Any):
         return {symbol: 1.0}, {"label": symbol}
 
-    from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest
+    from cn_equity_strategies.backtest.proxy_simulator import run_proxy_backtest
 
     return run_proxy_backtest(
         market_history,
