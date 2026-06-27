@@ -7,6 +7,7 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -51,8 +52,15 @@ from quant_platform_kit.common.cn_equity_calendar import (  # noqa: E402
     is_cn_equity_trading_day,
 )
 
-SAFE_HAVEN = dividend_strategy.SAFE_HAVEN
-DEFAULT_UNIVERSE = tuple(dict.fromkeys([*DEFAULT_STAGING_SYMBOLS, SAFE_HAVEN]))
+from cn_equity_strategies.backtest.dividend_snapshot_proxy_helpers import (  # noqa: E402
+    SAFE_HAVEN,
+    active_stock_symbols_as_of,
+    build_close_matrix as _build_close_matrix,
+    day_prices as _day_prices,
+    slice_hist as _slice_hist,
+)
+
+_active_stock_symbols_as_of = partial(active_stock_symbols_as_of, normalize=pipeline_normalize_symbol)
 
 
 def resolve_research_universe(
@@ -93,12 +101,6 @@ def _month_end_rebalance_dates(index: pd.DatetimeIndex) -> list[pd.Timestamp]:
         if is_cn_equity_trading_day(day):
             output.append(pd.Timestamp(value))
     return output
-
-
-def _slice_hist(hist: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
-    frame = hist.copy()
-    frame["日期"] = pd.to_datetime(frame["日期"], errors="coerce").dt.normalize()
-    return frame.loc[frame["日期"] <= as_of.normalize()]
 
 
 def _slice_financials(financials: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
@@ -220,65 +222,6 @@ def _safe_haven_factor_row(as_of: pd.Timestamp, etf_hist: pd.DataFrame) -> dict[
         "is_st": False,
         "list_days": int(price["list_days"]),
     }
-
-
-def _symbol_has_price_at(hist: pd.DataFrame, as_of: pd.Timestamp, *, min_rows: int = 20) -> bool:
-    sliced = _slice_hist(hist, as_of)
-    return len(sliced) >= int(min_rows)
-
-
-def _active_stock_symbols_as_of(
-    stock_symbols: tuple[str, ...],
-    stock_histories: Mapping[str, pd.DataFrame],
-    as_of: pd.Timestamp,
-    *,
-    min_rows: int = 20,
-) -> tuple[str, ...]:
-    output: list[str] = []
-    for symbol in stock_symbols:
-        normalized = pipeline_normalize_symbol(symbol)
-        hist = stock_histories.get(normalized)
-        if hist is None or hist.empty:
-            continue
-        if _symbol_has_price_at(hist, as_of, min_rows=min_rows):
-            output.append(normalized)
-    return tuple(output)
-
-
-def _build_close_matrix(
-    market_history: pd.DataFrame,
-    *,
-    symbols: tuple[str, ...],
-    calendar_symbol: str = SAFE_HAVEN,
-) -> pd.DataFrame:
-    """Build wide close matrix; calendar follows ``calendar_symbol`` without requiring all names each day."""
-    frame = market_history.copy()
-    frame["symbol"] = frame["symbol"].map(normalize_symbol)
-    close = (
-        frame.loc[frame["symbol"].isin(symbols)]
-        .pivot_table(index="date", columns="symbol", values="close", aggfunc="last")
-        .sort_index()
-    )
-    ordered = [symbol for symbol in symbols if symbol in close.columns]
-    if not ordered:
-        raise ValueError("market_history has no requested symbols")
-    close = close.loc[:, ordered].ffill()
-    anchor = calendar_symbol if calendar_symbol in close.columns else ordered[0]
-    close = close.loc[close[anchor].notna() & (close[anchor] > 0)]
-    if close.empty:
-        raise ValueError(f"market_history has no trading days for calendar symbol {anchor}")
-    return close
-
-
-def _day_prices(close: pd.DataFrame, day_ts: pd.Timestamp) -> dict[str, float]:
-    prices: dict[str, float] = {}
-    if day_ts not in close.index:
-        return prices
-    row = close.loc[day_ts]
-    for symbol, value in row.items():
-        if pd.notna(value) and float(value) > 0:
-            prices[str(symbol)] = float(value)
-    return prices
 
 
 def build_monthly_factor_panel(
