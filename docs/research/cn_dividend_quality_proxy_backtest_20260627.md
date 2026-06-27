@@ -152,6 +152,6 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src 
 
 ## 9. 下一步
 
-1. Pipeline 增加 `as_of` 截断的 fhps/财报选取（真正 PIT）
-2. 用 expanded universe 重跑 70/30 双轨，对比 staging 版组合
-3. 提交 CnEquitySnapshotPipelines PR + CnEquityStrategies research 脚本同步 PR
+1. Pipeline 增加 `as_of` 截断的 fhps/财报选取（真正 PIT）— **仍待做**
+2. ~~用 expanded universe 重跑 70/30 双轨~~ — **已完成**（见行业轮动设计文档 §13；aggressive + expanded JSON 已归档）
+3. ~~提交 CnEquitySnapshotPipelines PR + CnEquityStrategies research 脚本同步 PR~~ — **已合入**（Pipeline #6、Strategies #7、Qmt #7）
