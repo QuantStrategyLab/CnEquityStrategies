@@ -16,6 +16,7 @@ def evaluate_cn_index_etf_tactical_rotation(ctx: StrategyContext) -> StrategyDec
     config = merge_runtime_config(cn_index_etf_tactical_rotation_manifest.default_config, ctx)
     config.pop("execution_cash_reserve_ratio", None)
     config.pop("rebalance_frequency", None)
+    config.pop("run_as_of", None)
     weights, signal_desc, has_cash_residual, status_desc, metadata = index_etf_strategy.compute_signals(
         require_market_data(ctx, "market_history"),
         get_current_holdings(ctx),
@@ -50,6 +51,7 @@ def evaluate_cn_dividend_quality_snapshot(ctx: StrategyContext) -> StrategyDecis
     config = merge_runtime_config(cn_dividend_quality_snapshot_manifest.default_config, ctx)
     config.pop("execution_cash_reserve_ratio", None)
     config.pop("rebalance_frequency", None)
+    config.pop("run_as_of", None)
     weights, signal_desc, has_cash_residual, status_desc, metadata = dividend_quality_strategy.compute_signals(
         require_market_data(ctx, "feature_snapshot"),
         get_current_holdings(ctx),
