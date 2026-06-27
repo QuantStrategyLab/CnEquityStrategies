@@ -83,6 +83,11 @@ def run_matrix(*, start: str, end: str, suite: str = "etf") -> dict[str, Any]:
 
         return run_stock_thematic_matrix(start=start, end=end, suite=suite)
 
+    if suite in {"momentum_stock", "stock_momentum"}:
+        from research_cn_momentum_stock_rotation_proxy import run_momentum_stock_matrix
+
+        return run_momentum_stock_matrix(start=start, end=end, universe_mode="csi500")
+
     download_start = (pd.Timestamp(start) - pd.Timedelta(days=400)).date().isoformat()
     market_history = _download_market_history(start=download_start, end=end)
     presets = {"conservative_v1": CONSERVATIVE_V1_PRESET, **AGGRESSIVE_RESEARCH_PRESETS}
@@ -134,7 +139,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Conservative v1 vs aggressive industry rotation matrix.")
     parser.add_argument("--start", default="2021-01-01")
     parser.add_argument("--end", default="2026-06-27")
-    parser.add_argument("--suite", choices=("etf", "stock", "stock_risk"), default="etf")
+    parser.add_argument("--suite", choices=("etf", "stock", "stock_risk", "momentum_stock", "stock_momentum"), default="etf")
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
     payload = run_matrix(start=args.start, end=args.end, suite=args.suite)

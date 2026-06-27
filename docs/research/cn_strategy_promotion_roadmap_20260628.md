@@ -94,7 +94,16 @@
 **Baseline presets：** `STOCK_THEMATIC_PRESETS`  
 **Risk-control presets：** `STOCK_THEMATIC_RISK_PRESETS`（新增）
 
-### 3.1 问题诊断（baseline top3 monthly）
+### 3.1 两条 research 轨（勿混淆）
+
+| 轨道 | 脚本 / preset | Universe | 选股 |
+|---|---|---|---|
+| **A. 固定主题 sleeve** | `research_cn_thematic_stock_rotation_proxy.py` / `STOCK_THEMATIC_*` | 手工 8 只光模块/算力 | 池内动量 top2/3 |
+| **B. Cross-section 动量** | `research_cn_momentum_stock_rotation_proxy.py` / `STOCK_MOMENTUM_CROSS_SECTION_*` | **CSI500（默认）** / CSI1000 / 流动性 Top300 | **宽池内动量 top-N** |
+
+**默认建议：** 先看 **B 轨 CSI500**（比全 A 稳、比 8 只主题广）；再对照 A 轨看「叙事集中」的增量风险。
+
+### 3.2 问题诊断（baseline 固定主题 top3 monthly）
 
 | 指标 | 个股 top3 | ETF conservative |
 |---|---:|---:|
@@ -104,7 +113,7 @@
 
 根因：top-N 集中、无 benchmark 防御、vol25% 对单票波动不足、池子非 PIT。
 
-### 3.2 新增 risk-control 参数（已编码为 preset）
+### 3.3 新增 risk-control 参数（固定主题轨，`STOCK_THEMATIC_RISK_PRESETS`）
 
 | Preset key | 设计意图 | 主要参数 |
 |---|---|---|
@@ -115,9 +124,31 @@
 | `stock_optical_hybrid_etf_sleeve` | 个股+宽基/半导体 ETF 混合池 | 510300+512760, top3, risk-off |
 | `stock_optical_top2_min_momentum` | 过滤弱动量 | min_momentum **5%** |
 
-### 3.3 更严格 promotion gate（`STOCK_THEMATIC_PROMOTION_GATE`）
+### 3.4 Cross-section 动量 preset（`STOCK_MOMENTUM_CROSS_SECTION_PRESETS`）
 
-在 ETF gate 基础上增加：
+| Preset key | Universe | top-N | 备注 |
+|---|---|---:|---|
+| `momentum_csi500_top5_vol20_monthly` | CSI500 | 5 | **默认首选** |
+| `momentum_csi500_top5_vol20_riskoff` | CSI500 | 5 | + CSI300 MA200 防御 |
+| `momentum_csi1000_top10_vol20_monthly` | CSI1000 | 10 | 更广中小盘 |
+| `momentum_liquid_top300_top5_vol20_monthly` | 成交额 Top300 | 5 | 流动性快照（非 PIT） |
+| `momentum_csi500_top5_vol18_low_gross` | CSI500 | 5 | vol18% + gross 80% |
+
+```bash
+# 默认 CSI500 cross-section（推荐起手）
+PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy.py
+
+# 三种 universe 全跑 + 与固定主题 8 股对照
+PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy.py \
+  --universe-mode all --track both \
+  --json-output docs/research/cn_momentum_stock_matrix_20260628.json
+```
+
+### 3.5 更严格 promotion gate（个股）
+
+- **Cross-section 动量：** `STOCK_MOMENTUM_PROMOTION_GATE`（MDD ≥ -25%，熊市劣化 ≤10pp vs ETF）
+
+- **固定主题 sleeve：** `STOCK_THEMATIC_PROMOTION_GATE`（MDD ≥ -28%，熊市劣化 ≤15pp）
 
 | 约束 | 阈值 |
 |---|---|
@@ -126,7 +157,7 @@
 
 **说明：** 即使 OOS 收益极高，MDD -40% 或熊市 -38% 仍会被 gate 拒绝。
 
-### 3.4 运行命令
+### 3.6 固定主题轨运行命令
 
 ```bash
 cd CnEquityStrategies

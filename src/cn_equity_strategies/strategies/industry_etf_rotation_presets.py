@@ -318,12 +318,91 @@ STOCK_THEMATIC_RESEARCH_MATRIX: dict[str, dict[str, Any]] = {
     **STOCK_THEMATIC_RISK_PRESETS,
 }
 
+# Cross-sectional momentum stock rotation (宽池 + 动量 top-N；非固定主题行业).
+# `universe_mode` is research metadata consumed by proxy scripts, not passed to strategy core.
+STOCK_MOMENTUM_CROSS_SECTION_PRESETS: dict[str, dict[str, Any]] = {
+    "momentum_csi500_top5_vol20_monthly": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Cross-section momentum — CSI500 top5 vol20% monthly",
+        "universe_mode": "csi500",
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "enable_benchmark_risk_off": False,
+        "top_n": 5,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+        "sentiment_mode": "off",
+    },
+    "momentum_csi500_top5_vol20_riskoff": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Cross-section momentum — CSI500 top5 vol20% + CSI300 risk-off",
+        "universe_mode": "csi500",
+        "defensive_symbols": ("510300",),
+        "benchmark_symbol": "510300",
+        "enable_benchmark_risk_off": True,
+        "top_n": 5,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+        "sentiment_mode": "off",
+    },
+    "momentum_csi1000_top10_vol20_monthly": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Cross-section momentum — CSI1000 top10 vol20% monthly",
+        "universe_mode": "csi1000",
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "enable_benchmark_risk_off": False,
+        "top_n": 10,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+        "sentiment_mode": "off",
+    },
+    "momentum_liquid_top300_top5_vol20_monthly": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Cross-section momentum — liquid top300 top5 vol20% monthly",
+        "universe_mode": "liquid_top",
+        "liquid_top_n": 300,
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "enable_benchmark_risk_off": False,
+        "top_n": 5,
+        "target_annual_volatility": 0.20,
+        "rebalance_frequency": "monthly",
+        "sentiment_mode": "off",
+    },
+    "momentum_csi500_top5_vol18_low_gross": {
+        **CONSERVATIVE_V1_PRESET,
+        "profile_variant": "aggressive_research",
+        "label": "Cross-section momentum — CSI500 top5 vol18% max_gross 80%",
+        "universe_mode": "csi500",
+        "defensive_symbols": (),
+        "benchmark_symbol": None,
+        "enable_benchmark_risk_off": False,
+        "top_n": 5,
+        "target_annual_volatility": 0.18,
+        "max_gross_exposure": 0.80,
+        "rebalance_frequency": "monthly",
+        "sentiment_mode": "off",
+    },
+}
+
 PROMOTION_GATE = {
     "baseline_variant": "conservative_v1",
     "min_oos_total_return_lift": 0.05,
     "max_mdd_regression": 0.05,
     "oos_period": ("2024-01-01", "2026-06-27"),
     "train_period": ("2021-01-01", "2023-12-31"),
+}
+
+STOCK_MOMENTUM_PROMOTION_GATE: dict[str, Any] = {
+    **PROMOTION_GATE,
+    "max_mdd_absolute": -0.25,
+    "max_bear_total_return_regression": 0.10,
+    "bear_period": ("2021-01-01", "2022-12-31"),
 }
 
 # Stricter gate for single-name thematic sleeves (drawdown + bear-market caps).
@@ -453,6 +532,8 @@ __all__ = [
     "DUAL_TRACK_PROMOTION_REVIEW_CHECKLIST",
     "OPTICAL_COMPUTE_STOCK_SYMBOLS",
     "PROMOTION_GATE",
+    "STOCK_MOMENTUM_CROSS_SECTION_PRESETS",
+    "STOCK_MOMENTUM_PROMOTION_GATE",
     "STOCK_THEMATIC_PRESETS",
     "STOCK_THEMATIC_PROMOTION_GATE",
     "STOCK_THEMATIC_RESEARCH_MATRIX",

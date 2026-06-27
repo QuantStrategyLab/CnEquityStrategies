@@ -389,7 +389,13 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src 
 
 1. **Aggressive vol25% live 评审** — `AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST`；推荐先加 optional QMT target，不替换 conservative 默认。
 2. **双轨 combo runtime 设计** — `DUAL_TRACK_COMBO_PRESETS` + `cn_dual_track_combo` 目标形态；阻塞项为 PIT 红利 + 统一组合模拟。
-3. **个股光模块/算力 risk preset** — `STOCK_THEMATIC_RISK_PRESETS`（vol18–20%、risk-off、混合 ETF 池、更严 gate）；运行 `--suite stock_risk`。
+3. **个股 cross-section 动量轨** — `STOCK_MOMENTUM_CROSS_SECTION_PRESETS` + `research_cn_momentum_stock_rotation_proxy.py`（**默认 CSI500 宽池 + 动量 top-N**，不限定行业）。
+
+```bash
+PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy.py
+```
+
+4. **固定主题 8 股 sleeve（对照组）** — `STOCK_THEMATIC_RISK_PRESETS`；`--suite stock_risk`。
 
 ```bash
 PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy.py --suite stock_risk
