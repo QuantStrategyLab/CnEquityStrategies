@@ -1,0 +1,343 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "live_primary_etf_conservative",
+      "kind": "single_leg",
+      "live_ready": true,
+      "notes": "Current QMT default; market_history input; e2e verified.",
+      "overall": {
+        "annual_return": 0.13791091679142387,
+        "annual_volatility": 0.154542597791082,
+        "days": 1147,
+        "max_drawdown": -0.1542440726918759,
+        "sharpe_ratio": 0.8923812512706585,
+        "total_return": 0.8004524729299969
+      },
+      "periods": {
+        "bear_2021_2022": {
+          "annual_return": -0.028607342130033464,
+          "annual_volatility": 0.05928488670669046,
+          "days": 306,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "oos_2024_2026": {
+          "annual_return": 0.30723313290056975,
+          "annual_volatility": 0.1883362009686863,
+          "days": 599,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.8904680657783053
+        }
+      },
+      "qmt_target": "qmt/industry_etf_dry_run",
+      "runtime_profile": "cn_industry_etf_rotation"
+    },
+    {
+      "candidate_id": "live_optional_etf_aggressive",
+      "kind": "single_leg",
+      "live_ready": false,
+      "notes": "research_backtest_only; passed ETF promotion gate; +~1pp ann vs conservative.",
+      "overall": {
+        "annual_return": 0.14831110121877056,
+        "annual_volatility": 0.16994706174832952,
+        "days": 1147,
+        "max_drawdown": -0.15423708466756414,
+        "sharpe_ratio": 0.8726899994211189,
+        "total_return": 0.8765768131699967
+      },
+      "periods": {
+        "bear_2021_2022": {
+          "annual_return": -0.03574779237250547,
+          "annual_volatility": 0.0744478863387139,
+          "days": 306,
+          "max_drawdown": -0.11304686868275371,
+          "total_return": -0.04324019365000065
+        },
+        "oos_2024_2026": {
+          "annual_return": 0.3227652925093878,
+          "annual_volatility": 0.20630379986772074,
+          "days": 599,
+          "max_drawdown": -0.15423708466756425,
+          "total_return": 0.9442972691579259
+        }
+      },
+      "qmt_target": "qmt/industry_etf_aggressive_dry_run (proposed)",
+      "runtime_profile": "cn_industry_etf_rotation_aggressive"
+    },
+    {
+      "candidate_id": "live_snapshot_dividend_staging",
+      "kind": "single_leg",
+      "live_ready": true,
+      "notes": "runtime_enabled; fixture e2e; staging universe smaller.",
+      "overall": {
+        "annual_return": 0.028139387218693468,
+        "annual_volatility": 0.16045500521244785,
+        "days": 1326,
+        "max_drawdown": -0.29389482838223835,
+        "sharpe_ratio": 0.17537244900173707,
+        "total_return": 0.15722141033000403
+      },
+      "periods": {
+        "bear_2021_2022": {
+          "annual_return": -0.07450538863009648,
+          "annual_volatility": 0.1471959460518467,
+          "days": 485,
+          "max_drawdown": -0.22763625994528391,
+          "total_return": -0.13844483471999958
+        },
+        "oos_2024_2026": {
+          "annual_return": 0.1900789030546426,
+          "annual_volatility": 0.17635424034039995,
+          "days": 599,
+          "max_drawdown": -0.13711683544043662,
+          "total_return": 0.5123153953089901
+        }
+      },
+      "qmt_target": "qmt/dividend_quality_dry_run",
+      "runtime_profile": "cn_dividend_quality_snapshot"
+    },
+    {
+      "candidate_id": "live_snapshot_dividend_expanded",
+      "kind": "single_leg",
+      "live_ready": "pipeline_ready",
+      "notes": "Same profile; expanded universe via CnEquitySnapshotPipelines metadata.",
+      "overall": {
+        "annual_return": 0.0770023753715805,
+        "annual_volatility": 0.17952549977550092,
+        "days": 1326,
+        "max_drawdown": -0.23804301472438671,
+        "sharpe_ratio": 0.42892165997517356,
+        "total_return": 0.47747793154999285
+      },
+      "periods": {
+        "bear_2021_2022": {
+          "annual_return": 0.02624180668963061,
+          "annual_volatility": 0.18085842078672806,
+          "days": 485,
+          "max_drawdown": -0.18939711457988895,
+          "total_return": 0.051117371889999985
+        },
+        "oos_2024_2026": {
+          "annual_return": 0.17347215097140123,
+          "annual_volatility": 0.19321481975563748,
+          "days": 599,
+          "max_drawdown": -0.176587177591207,
+          "total_return": 0.4626341616427341
+        }
+      },
+      "qmt_target": "qmt/dividend_quality_dry_run + expanded snapshot path",
+      "runtime_profile": "cn_dividend_quality_snapshot",
+      "universe_mode": "expanded"
+    },
+    {
+      "candidate_id": "combo_70_30_conservative_expanded",
+      "kind": "return_blend",
+      "live_ready": false,
+      "notes": "Not unified portfolio sim; best ann among combos in prior research.",
+      "overall": {
+        "annual_return": 0.12663465215807412,
+        "annual_volatility": 0.1474600082732812,
+        "days": 1147,
+        "max_drawdown": -0.15362232567158407,
+        "sharpe_ratio": 0.858772854016037,
+        "total_return": 0.7206610277899348
+      },
+      "periods": {
+        "2021_2022": {
+          "combo": {
+            "annual_return": -0.0025081960026491767,
+            "annual_volatility": 0.08416073256682201,
+            "days": 306,
+            "max_drawdown": -0.08909699177739216,
+            "total_return": -0.0030448475582993684
+          },
+          "dividend_quality": {
+            "annual_return": 0.02624180668963061,
+            "annual_volatility": 0.18085842078672806,
+            "days": 485,
+            "max_drawdown": -0.18939711457988895,
+            "total_return": 0.051117371889999985
+          },
+          "industry_rotation": {
+            "annual_return": -0.028607342130033464,
+            "annual_volatility": 0.05928488670669046,
+            "days": 306,
+            "max_drawdown": -0.09107871650857502,
+            "total_return": -0.03463020586999965
+          }
+        },
+        "2023_2026": {
+          "combo": {
+            "annual_return": 0.17766389547661965,
+            "annual_volatility": 0.16445736005125394,
+            "days": 841,
+            "max_drawdown": -0.1536223256715833,
+            "total_return": 0.7259161794547802
+          },
+          "dividend_quality": {
+            "annual_return": 0.10740935727130951,
+            "annual_volatility": 0.17872903991290984,
+            "days": 841,
+            "max_drawdown": -0.17965468052257882,
+            "total_return": 0.4056260233748805
+          },
+          "industry_rotation": {
+            "annual_return": 0.20534071680455135,
+            "annual_volatility": 0.1767448723055697,
+            "days": 841,
+            "max_drawdown": -0.15424407269187568,
+            "total_return": 0.8650391631038967
+          }
+        },
+        "full": {
+          "combo": {
+            "annual_return": 0.12663465215807412,
+            "annual_volatility": 0.1474600082732812,
+            "days": 1147,
+            "max_drawdown": -0.15362232567158407,
+            "total_return": 0.7206610277899348
+          },
+          "dividend_quality": {
+            "annual_return": 0.0770023753715805,
+            "annual_volatility": 0.17952549977550092,
+            "days": 1326,
+            "max_drawdown": -0.23804301472438671,
+            "total_return": 0.47747793154999285
+          },
+          "industry_rotation": {
+            "annual_return": 0.13791091679142387,
+            "annual_volatility": 0.154542597791082,
+            "days": 1147,
+            "max_drawdown": -0.1542440726918759,
+            "total_return": 0.8004524729299969
+          }
+        }
+      },
+      "runtime_profile": "cn_industry_etf_rotation+cn_dividend_quality_snapshot"
+    },
+    {
+      "candidate_id": "combo_70_30_aggressive_expanded",
+      "kind": "return_blend",
+      "live_ready": false,
+      "notes": "Higher industry vol; long-sample ann lower than conservative combo in 2017+ run.",
+      "overall": {
+        "annual_return": 0.13404511656932394,
+        "annual_volatility": 0.15768726351046686,
+        "days": 1147,
+        "max_drawdown": -0.1536173838647038,
+        "sharpe_ratio": 0.8500693942248949,
+        "total_return": 0.7727795322174023
+      },
+      "periods": {
+        "2021_2022": {
+          "combo": {
+            "annual_return": -0.007523762593654726,
+            "annual_volatility": 0.0908582954310139,
+            "days": 306,
+            "max_drawdown": -0.10054647416781748,
+            "total_return": -0.00912861818733135
+          },
+          "dividend_quality": {
+            "annual_return": 0.02624180668963061,
+            "annual_volatility": 0.18085842078672806,
+            "days": 485,
+            "max_drawdown": -0.18939711457988895,
+            "total_return": 0.051117371889999985
+          },
+          "industry_rotation": {
+            "annual_return": -0.03574779237250547,
+            "annual_volatility": 0.0744478863387139,
+            "days": 306,
+            "max_drawdown": -0.11304686868275371,
+            "total_return": -0.04324019365000065
+          }
+        },
+        "2023_2026": {
+          "combo": {
+            "annual_return": 0.19042246126717588,
+            "annual_volatility": 0.1756967388910746,
+            "days": 841,
+            "max_drawdown": -0.15361738386470325,
+            "total_return": 0.7891116493589141
+          },
+          "dividend_quality": {
+            "annual_return": 0.10740935727130951,
+            "annual_volatility": 0.17872903991290984,
+            "days": 841,
+            "max_drawdown": -0.17965468052257882,
+            "total_return": 0.4056260233748805
+          },
+          "industry_rotation": {
+            "annual_return": 0.2236709906228136,
+            "annual_volatility": 0.19314687418636498,
+            "days": 841,
+            "max_drawdown": -0.15423708466756414,
+            "total_return": 0.9613875924920652
+          }
+        },
+        "full": {
+          "combo": {
+            "annual_return": 0.13404511656932394,
+            "annual_volatility": 0.15768726351046686,
+            "days": 1147,
+            "max_drawdown": -0.1536173838647038,
+            "total_return": 0.7727795322174023
+          },
+          "dividend_quality": {
+            "annual_return": 0.0770023753715805,
+            "annual_volatility": 0.17952549977550092,
+            "days": 1326,
+            "max_drawdown": -0.23804301472438671,
+            "total_return": 0.47747793154999285
+          },
+          "industry_rotation": {
+            "annual_return": 0.14831110121877056,
+            "annual_volatility": 0.16994706174832952,
+            "days": 1147,
+            "max_drawdown": -0.15423708466756414,
+            "total_return": 0.8765768131699967
+          }
+        }
+      },
+      "runtime_profile": "cn_industry_etf_rotation_aggressive+cn_dividend_quality_snapshot"
+    }
+  ],
+  "end": "2026-06-27",
+  "live_deployment_summary": {
+    "dual_track_live": "not yet \u2014 return blend only in research",
+    "primary_qmt_target": "qmt/industry_etf_dry_run",
+    "proposed_optional_target": "qmt/industry_etf_aggressive_dry_run",
+    "secondary_qmt_target": "qmt/dividend_quality_dry_run"
+  },
+  "mdd_budgets": [
+    -0.3,
+    -0.35
+  ],
+  "recommendations": {
+    "mdd_budget_0pct": {
+      "best_live_ready_by_ann": "live_primary_etf_conservative",
+      "best_overall_by_ann": "live_optional_etf_aggressive"
+    }
+  },
+  "research_only_profiles": [
+    "cn_industry_etf_rotation_aggressive",
+    "cn_index_etf_tactical_rotation"
+  ],
+  "runtime_enabled_profiles": [
+    "cn_dividend_quality_snapshot",
+    "cn_industry_etf_rotation"
+  ],
+  "runtime_metadata": {
+    "cn_dividend_quality_snapshot": {
+      "description": "Runtime-enabled snapshot-backed A-share selector emphasizing dividend yield and quality factors with breadth-based defensive exposure control.",
+      "display_name": "CN Dividend Quality Snapshot",
+      "status": "runtime_enabled"
+    },
+    "cn_industry_etf_rotation": {
+      "description": "Conservative v1 (runtime default): monthly pure-momentum rotation across 14 A-share industry/style ETFs \u2014 top5, vol target 20%, sentiment off, benchmark risk-off off.",
+      "display_name": "CN Industry ETF Rotation",
+      "status": "runtime_enabled"
+    }
+  },
+  "start": "2021-01-01"
+}

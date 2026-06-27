@@ -468,6 +468,44 @@ STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS: dict[str, dict[str, Any]] = {
     },
 }
 
+_MA120_VOL_BASE: dict[str, Any] = {
+    **_CSI500_RISKOFF_BASE,
+    "top_n": 5,
+    "benchmark_trend_window_days": 120,
+}
+
+STOCK_MOMENTUM_MA120_VOL_TUNING_PRESETS: dict[str, dict[str, Any]] = {
+    "momentum_csi500_top5_vol18_ma120_riskoff": STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS[
+        "momentum_csi500_top5_vol18_ma120_riskoff"
+    ],
+    "momentum_csi500_top5_vol20_ma120_riskoff": {
+        **_MA120_VOL_BASE,
+        "label": "CSI500 MA120 risk-off — top5 vol20%",
+        "target_annual_volatility": 0.20,
+    },
+    "momentum_csi500_top5_vol22_ma120_riskoff": {
+        **_MA120_VOL_BASE,
+        "label": "CSI500 MA120 risk-off — top5 vol22%",
+        "target_annual_volatility": 0.22,
+    },
+    "momentum_csi500_top5_vol25_ma120_riskoff": {
+        **_MA120_VOL_BASE,
+        "label": "CSI500 MA120 risk-off — top5 vol25%",
+        "target_annual_volatility": 0.25,
+    },
+}
+
+# Research default for return-focused sleeve (MDD budget ~-30% to -35%).
+CSI500_MA120_RETURN_OPTIMIZED_PRESET_KEY = "momentum_csi500_top5_vol25_ma120_riskoff"
+
+STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS.update(
+    {
+        k: v
+        for k, v in STOCK_MOMENTUM_MA120_VOL_TUNING_PRESETS.items()
+        if k not in STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS
+    }
+)
+
 # Keep cross-section dict keys unique; risk-off baseline also listed in tuning set.
 STOCK_MOMENTUM_CROSS_SECTION_PRESETS.update(
     {k: v for k, v in STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS.items() if k not in STOCK_MOMENTUM_CROSS_SECTION_PRESETS}
@@ -528,8 +566,8 @@ AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST: dict[str, Any] = {
         },
         {
             "id": "runtime_policy",
-            "status": "pending",
-            "note": "Decide: replace default vs optional second QMT target vs stay research-only",
+            "status": "pass",
+            "note": "optional_target selected: qmt/industry_etf_aggressive_dry_run (2026-06-28)",
         },
         {
             "id": "pin_and_docs",
@@ -587,6 +625,14 @@ DUAL_TRACK_COMBO_PRESETS: dict[str, dict[str, Any]] = {
             "combo_total": 0.741,
         },
     },
+    "etf_vol15_riskoff_stock_70_30": {
+        "label": "70/30 industry ETF conservative + CSI500 vol15 risk-off stock",
+        "industry_profile": "conservative",
+        "industry_weight": 0.70,
+        "stock_weight": 0.30,
+        "stock_preset_key": "momentum_csi500_top5_vol15_gross75_riskoff",
+        "script": "research_cn_etf_momentum_stock_combo_proxy_backtest.py",
+    },
 }
 
 DUAL_TRACK_PROMOTION_REVIEW_CHECKLIST: dict[str, Any] = {
@@ -613,6 +659,7 @@ __all__ = [
     "AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST",
     "AGGRESSIVE_RESEARCH_PRESETS",
     "AGGRESSIVE_V1_PRESET",
+    "CSI500_MA120_RETURN_OPTIMIZED_PRESET_KEY",
     "CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY",
     "CONSERVATIVE_V1_PRESET",
     "DUAL_TRACK_COMBO_PRESETS",
@@ -621,6 +668,7 @@ __all__ = [
     "PROMOTION_GATE",
     "STOCK_MOMENTUM_CROSS_SECTION_PRESETS",
     "STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS",
+    "STOCK_MOMENTUM_MA120_VOL_TUNING_PRESETS",
     "STOCK_MOMENTUM_PROMOTION_GATE",
     "STOCK_THEMATIC_PRESETS",
     "STOCK_THEMATIC_PROMOTION_GATE",
