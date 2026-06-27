@@ -72,13 +72,16 @@ QuantRuntimeSettings（切换控制台）
 2. `promote_default` — 直接把平台默认改为 aggressive（+1pp 年化，风险中等，需你明确批准）。
 3. `stay_research` — 维持 `research_backtest_only`，等双轨 combo runtime 验证后再议。
 
-### 1.4 落地步骤（若选 optional_target）
+### 1.4 落地步骤（optional_target — **已完成 2026-06-28**）
 
-- [ ] `catalog.status` 改为 `runtime_enabled`（或保留 research 但 QMT allowlist 显式加入）
-- [ ] `runtime_adapters.py` 为 aggressive 注册 adapter（与 conservative 相同 `market_history`） — **已完成**
-- [ ] `QuantRuntimeSettings/examples/targets/qmt/industry_etf_aggressive_dry_run.example.json` — **已完成**
-- [ ] 控制台 strategy catalog 增加 aggressive 条目 — **已完成**（strategy-profiles + account-options）
-- [ ] 跑 `smoke_cn_industry_etf_rotation_dry_run_e2e.py` 改 profile 验证
+- [x] catalog 保留 `research_backtest_only`；QMT allowlist 通过 `get_qmt_rollout_allowlist()` 显式加入 aggressive
+- [x] `runtime_adapters.py` aggressive adapter
+- [x] `QuantRuntimeSettings/.../industry_etf_aggressive_dry_run.example.json`
+- [x] 控制台 strategy-profiles + account-options + KV sync（PR #104，deploy run 28301083243）
+- [x] `QmtPlatform/scripts/smoke_cn_industry_etf_rotation_aggressive_dry_run_e2e.py`（PR #8）
+- [x] `QmtPlatform` pin → `de6c760`（PR #8）
+
+**PR：** CnEquityStrategies #8 | QmtPlatform #8 | QuantRuntimeSettings #104
 
 ---
 
@@ -233,6 +236,21 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy
 - **研究默认 risk-off 候选：** `CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY` → `momentum_csi500_top5_vol15_gross75_riskoff`。
 
 JSON：`docs/research/cn_momentum_csi500_riskoff_tuning_20260628.json`
+
+### 3.9 MA120 vol 抬年化调参（research only，2026-06-28）
+
+**脚本：** `research_cn_ma120_vol_and_combo_scan.py`  
+**JSON：** `docs/research/cn_ma120_vol_and_combo_scan_20260628.json`  
+**Phase 2 计划：** `docs/research/cn_ma120_vol25_stock_sleeve_research_plan_20260628.md`
+
+| Preset | 年化 | MDD | OOS 2024+ |
+|---|---:|---:|---:|
+| vol18 MA120 | 20.3% | -21.6% | +98% |
+| vol20 MA120 | 22.0% | -22.2% | +106% |
+| vol22 MA120 | 23.5% | -22.7% | +111% |
+| **vol25 MA120** | **25.2%** | **-23.5%** | **+118%** |
+
+**结论（MDD 预算 -35%）：** vol25 MA120 为 research 最高年化档；100% 单腿优于 ETF blend。Live 已落地 aggressive ETF optional target；个股 sleeve 继续 Phase 2（PIT、单票 cap、gate 放宽评估）。
 
 ### 3.5 70/30 组合：ETF conservative + vol15 risk-off 个股
 
