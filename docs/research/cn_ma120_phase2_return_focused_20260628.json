@@ -290,54 +290,47 @@
         {
           "bear_total_return": -0.04640634812000011,
           "bear_vs_baseline": -0.0031661544699994604,
-          "fail_reasons": [
-            "mdd_vs_baseline"
-          ],
+          "fail_reasons": [],
           "key": "momentum_csi500_top5_vol25_ma120_riskoff",
           "label": "CSI500 MA120 risk-off \u2014 top5 vol25%",
           "mdd_vs_baseline": -0.0811657891824934,
           "oos_total_return": 1.182626634334039,
           "oos_total_return_lift": 0.23832936517611314,
           "overall_mdd": -0.23540287385005754,
-          "passes_gate": false,
+          "passes_gate": true,
           "train_total_return": 0.38174317870000074
         },
         {
           "bear_total_return": -0.048744519220000004,
           "bear_vs_baseline": -0.005504325569999358,
-          "fail_reasons": [
-            "mdd_vs_baseline"
-          ],
+          "fail_reasons": [],
           "key": "momentum_csi500_top5_vol22_ma120_riskoff",
           "label": "CSI500 MA120 risk-off \u2014 top5 vol22%",
           "mdd_vs_baseline": -0.07254299140767917,
           "oos_total_return": 1.1087916243950868,
           "oos_total_return_lift": 0.16449435523716094,
           "overall_mdd": -0.2267800760752433,
-          "passes_gate": false,
+          "passes_gate": true,
           "train_total_return": 0.3398441276200015
         },
         {
           "bear_total_return": -0.050482742639999856,
           "bear_vs_baseline": -0.007242548989999209,
-          "fail_reasons": [
-            "mdd_vs_baseline"
-          ],
+          "fail_reasons": [],
           "key": "momentum_csi500_top5_vol20_ma120_riskoff",
           "label": "CSI500 MA120 risk-off \u2014 top5 vol20%",
           "mdd_vs_baseline": -0.06743283033876024,
           "oos_total_return": 1.0564232044464044,
           "oos_total_return_lift": 0.11212593528847847,
           "overall_mdd": -0.22166991500632438,
-          "passes_gate": false,
+          "passes_gate": true,
           "train_total_return": 0.29589714954
         },
         {
           "bear_total_return": -0.0516404351000006,
           "bear_vs_baseline": -0.008400241449999957,
           "fail_reasons": [
-            "oos_lift",
-            "mdd_vs_baseline"
+            "oos_lift"
           ],
           "key": "momentum_csi500_top5_vol18_ma120_riskoff",
           "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA120",
@@ -357,7 +350,7 @@
         ],
         "max_bear_total_return_regression": 0.1,
         "max_mdd_absolute": -0.35,
-        "max_mdd_regression": 0.05,
+        "max_mdd_regression": 0.1,
         "min_oos_total_return_lift": 0.1,
         "oos_period": [
           "2024-01-01",
@@ -368,7 +361,47 @@
           "2023-12-31"
         ]
       },
-      "promoted": []
+      "promoted": [
+        {
+          "bear_total_return": -0.04640634812000011,
+          "bear_vs_baseline": -0.0031661544699994604,
+          "fail_reasons": [],
+          "key": "momentum_csi500_top5_vol25_ma120_riskoff",
+          "label": "CSI500 MA120 risk-off \u2014 top5 vol25%",
+          "mdd_vs_baseline": -0.0811657891824934,
+          "oos_total_return": 1.182626634334039,
+          "oos_total_return_lift": 0.23832936517611314,
+          "overall_mdd": -0.23540287385005754,
+          "passes_gate": true,
+          "train_total_return": 0.38174317870000074
+        },
+        {
+          "bear_total_return": -0.048744519220000004,
+          "bear_vs_baseline": -0.005504325569999358,
+          "fail_reasons": [],
+          "key": "momentum_csi500_top5_vol22_ma120_riskoff",
+          "label": "CSI500 MA120 risk-off \u2014 top5 vol22%",
+          "mdd_vs_baseline": -0.07254299140767917,
+          "oos_total_return": 1.1087916243950868,
+          "oos_total_return_lift": 0.16449435523716094,
+          "overall_mdd": -0.2267800760752433,
+          "passes_gate": true,
+          "train_total_return": 0.3398441276200015
+        },
+        {
+          "bear_total_return": -0.050482742639999856,
+          "bear_vs_baseline": -0.007242548989999209,
+          "fail_reasons": [],
+          "key": "momentum_csi500_top5_vol20_ma120_riskoff",
+          "label": "CSI500 MA120 risk-off \u2014 top5 vol20%",
+          "mdd_vs_baseline": -0.06743283033876024,
+          "oos_total_return": 1.0564232044464044,
+          "oos_total_return_lift": 0.11212593528847847,
+          "overall_mdd": -0.22166991500632438,
+          "passes_gate": true,
+          "train_total_return": 0.29589714954
+        }
+      ]
     },
     "vs_conservative_return_focused_gate": {
       "baseline_bear": {
@@ -397,54 +430,47 @@
         {
           "bear_total_return": -0.04640634812000011,
           "bear_vs_baseline": -0.011776142250000454,
-          "fail_reasons": [
-            "mdd_vs_baseline"
-          ],
+          "fail_reasons": [],
           "key": "momentum_csi500_top5_vol25_ma120_riskoff",
           "label": "CSI500 MA120 risk-off \u2014 top5 vol25%",
           "mdd_vs_baseline": -0.08115880115818164,
           "oos_total_return": 1.182626634334039,
           "oos_total_return_lift": 0.29215856855573374,
           "overall_mdd": -0.23540287385005754,
-          "passes_gate": false,
+          "passes_gate": true,
           "train_total_return": 0.38174317870000074
         },
         {
           "bear_total_return": -0.048744519220000004,
           "bear_vs_baseline": -0.014114313350000351,
-          "fail_reasons": [
-            "mdd_vs_baseline"
-          ],
+          "fail_reasons": [],
           "key": "momentum_csi500_top5_vol22_ma120_riskoff",
           "label": "CSI500 MA120 risk-off \u2014 top5 vol22%",
           "mdd_vs_baseline": -0.07253600338336741,
           "oos_total_return": 1.1087916243950868,
           "oos_total_return_lift": 0.21832355861678154,
           "overall_mdd": -0.2267800760752433,
-          "passes_gate": false,
+          "passes_gate": true,
           "train_total_return": 0.3398441276200015
         },
         {
           "bear_total_return": -0.050482742639999856,
           "bear_vs_baseline": -0.015852536770000203,
-          "fail_reasons": [
-            "mdd_vs_baseline"
-          ],
+          "fail_reasons": [],
           "key": "momentum_csi500_top5_vol20_ma120_riskoff",
           "label": "CSI500 MA120 risk-off \u2014 top5 vol20%",
           "mdd_vs_baseline": -0.06742584231444848,
           "oos_total_return": 1.0564232044464044,
           "oos_total_return_lift": 0.16595513866809908,
           "overall_mdd": -0.22166991500632438,
-          "passes_gate": false,
+          "passes_gate": true,
           "train_total_return": 0.29589714954
         },
         {
           "bear_total_return": -0.0516404351000006,
           "bear_vs_baseline": -0.01701022923000095,
           "fail_reasons": [
-            "oos_lift",
-            "mdd_vs_baseline"
+            "oos_lift"
           ],
           "key": "momentum_csi500_top5_vol18_ma120_riskoff",
           "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA120",
@@ -464,7 +490,7 @@
         ],
         "max_bear_total_return_regression": 0.1,
         "max_mdd_absolute": -0.35,
-        "max_mdd_regression": 0.05,
+        "max_mdd_regression": 0.1,
         "min_oos_total_return_lift": 0.1,
         "oos_period": [
           "2024-01-01",
@@ -475,7 +501,47 @@
           "2023-12-31"
         ]
       },
-      "promoted": []
+      "promoted": [
+        {
+          "bear_total_return": -0.04640634812000011,
+          "bear_vs_baseline": -0.011776142250000454,
+          "fail_reasons": [],
+          "key": "momentum_csi500_top5_vol25_ma120_riskoff",
+          "label": "CSI500 MA120 risk-off \u2014 top5 vol25%",
+          "mdd_vs_baseline": -0.08115880115818164,
+          "oos_total_return": 1.182626634334039,
+          "oos_total_return_lift": 0.29215856855573374,
+          "overall_mdd": -0.23540287385005754,
+          "passes_gate": true,
+          "train_total_return": 0.38174317870000074
+        },
+        {
+          "bear_total_return": -0.048744519220000004,
+          "bear_vs_baseline": -0.014114313350000351,
+          "fail_reasons": [],
+          "key": "momentum_csi500_top5_vol22_ma120_riskoff",
+          "label": "CSI500 MA120 risk-off \u2014 top5 vol22%",
+          "mdd_vs_baseline": -0.07253600338336741,
+          "oos_total_return": 1.1087916243950868,
+          "oos_total_return_lift": 0.21832355861678154,
+          "overall_mdd": -0.2267800760752433,
+          "passes_gate": true,
+          "train_total_return": 0.3398441276200015
+        },
+        {
+          "bear_total_return": -0.050482742639999856,
+          "bear_vs_baseline": -0.015852536770000203,
+          "fail_reasons": [],
+          "key": "momentum_csi500_top5_vol20_ma120_riskoff",
+          "label": "CSI500 MA120 risk-off \u2014 top5 vol20%",
+          "mdd_vs_baseline": -0.06742584231444848,
+          "oos_total_return": 1.0564232044464044,
+          "oos_total_return_lift": 0.16595513866809908,
+          "overall_mdd": -0.22166991500632438,
+          "passes_gate": true,
+          "train_total_return": 0.29589714954
+        }
+      ]
     },
     "vs_conservative_standard_gate": {
       "baseline_bear": {

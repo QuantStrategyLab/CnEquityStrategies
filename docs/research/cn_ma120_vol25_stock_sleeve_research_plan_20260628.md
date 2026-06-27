@@ -118,11 +118,15 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src 
   python3 scripts/research_cn_live_candidate_evaluation.py \
   --json-output docs/research/cn_live_candidate_evaluation_20260628.json
 
-# ETF + 个股 combo（vol15 防御版，对照）
+# Phase 2 gate + aggressive 网格
 PYTHONPATH=src:scripts:../QuantPlatformKit/src \
-  python3 scripts/research_cn_etf_momentum_stock_combo_proxy_backtest.py \
-  --stock-preset momentum_csi500_top5_vol25_ma120_riskoff \
-  --etf-weight 0.30 --stock-weight 0.70
+  python3 scripts/research_cn_ma120_phase2_return_focused.py \
+  --json-output docs/research/cn_ma120_phase2_return_focused_20260628.json
+
+# Phase 2.3 三轨 blend（50/30/20）
+PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
+  python3 scripts/research_cn_ma120_phase2_tri_track_blend.py \
+  --json-output docs/research/cn_ma120_phase2_tri_track_blend_20260628.json
 ```
 
 ---
@@ -148,9 +152,10 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src \
 | Gate | vol25 MA120 | 结论 |
 |---|---|---|
 | Standard（MDD≥-25%, ΔMDD≤5pp） | fail（mdd_vs_baseline -8.1pp） | 预期 |
-| Return-focused（MDD≥-35%, OOS lift≥10pp, **ΔMDD≤10pp**） | **PASS**（OOS +29pp vs conservative, MDD -23.5%） | vol25 为唯一 promoted 候选 |
+| Return-focused vs conservative（MDD≥-35%, OOS lift≥10pp, **ΔMDD≤10pp**） | **PASS**（OOS +29pp, MDD -23.5%） | vol25/vol22/vol20 promoted |
+| Return-focused vs aggressive | **PASS** | vol25/vol22/vol20 promoted |
 
-vol18–vol22 在 return-focused gate 下仍 fail（OOS lift 或 ΔMDD 边界）。
+vol18 仍 fail（OOS lift +9% < 10% 门槛）。
 
 ### 7.2 P2.2 Aggressive ETF + vol25 权重网格
 
@@ -162,10 +167,23 @@ vol18–vol22 在 return-focused gate 下仍 fail（OOS lift 或 ΔMDD 边界）
 | 70% / 30% | 19.0% | -15.5% | +104% |
 | 100% aggressive ETF | 14.8% | -15.4% | +94% |
 
-**Research paper 组合建议：** **30% live aggressive ETF + 70% vol25 MA120**（return blend）— 年化 24%、MDD -17%，OOS +113%，Sharpe 优于纯 vol25 单腿。
+**Research paper 组合建议（双轨）：** **30% live aggressive ETF + 70% vol25 MA120** — 年化 24%、MDD -17%，OOS +113%。
 
-### 7.3 下一步（Phase 3）
+### 7.3 P2.3 三轨 paper 组合（50/30/20）
 
-1. 三轨 blend：50% aggressive + 30% vol25 + 20% expanded 红利  
-2. PIT CSI500 成分重跑 vol25  
-3. 单票 weight cap 8–10% 后复验 gate
+**脚本：** `research_cn_ma120_phase2_tri_track_blend.py`  
+**JSON：** `docs/research/cn_ma120_phase2_tri_track_blend_20260628.json`
+
+| 腿 | 权重 | 年化 | MDD | OOS 2024+ |
+|---|---:|---:|---:|---:|
+| **组合** | 50/30/20 | **17.9%** | **-14.1%** | **+93%** |
+| aggressive ETF | 50% | 14.8% | -15.4% | +94% |
+| vol25 MA120 | 30% | 25.2% | -23.5% | +118% |
+| expanded 红利 | 20% | 7.7% | -23.8% | +46% |
+
+**解读：** 三轨组合 MDD **-14.1%** 优于任一高 beta 单腿，Bear 2021–22 仅 -2.0%（红利腿正贡献）；OOS 年化 ~32%、total +93%，略低于纯 aggressive（+94%）但波动更低。适合作为 **防御型 paper 组合**；追求 alpha 仍优先 30/70 双轨。
+
+### 7.4 下一步（Phase 3）
+
+1. PIT CSI500 成分重跑 vol25  
+2. 单票 weight cap 8–10% 后复验 gate

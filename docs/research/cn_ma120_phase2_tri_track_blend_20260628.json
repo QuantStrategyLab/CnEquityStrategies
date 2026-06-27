@@ -1,0 +1,116 @@
+{
+  "combo": {
+    "annual_return": 0.17903786324739102,
+    "annual_volatility": 0.15819150037428972,
+    "days": 1147,
+    "max_drawdown": -0.1407668604878397,
+    "sharpe_ratio": 1.1317792853837132,
+    "total_return": 1.1162394606284964
+  },
+  "dividend_universe_mode": "expanded",
+  "end": "2026-06-27",
+  "legs": {
+    "aggressive_etf": {
+      "annual_return": 0.14831110121877056,
+      "annual_volatility": 0.16994706174832952,
+      "days": 1147,
+      "max_drawdown": -0.15423708466756414,
+      "sharpe_ratio": 0.8726899994211189,
+      "total_return": 0.8765768131699967
+    },
+    "expanded_dividend": {
+      "annual_return": 0.0770023753715805,
+      "annual_volatility": 0.17952549977550092,
+      "days": 1326,
+      "max_drawdown": -0.23804301472438671,
+      "sharpe_ratio": 0.42892165997517356,
+      "total_return": 0.47747793154999285
+    },
+    "vol25_ma120": {
+      "annual_return": 0.25149128437379353,
+      "annual_volatility": 0.21130065338475712,
+      "days": 1240,
+      "max_drawdown": -0.23540287385005754,
+      "sharpe_ratio": 1.1902059001959324,
+      "total_return": 2.0158294636399985
+    }
+  },
+  "limitations": [
+    "return-level blend (50/30/20) rather than unified multi-asset portfolio simulation",
+    "ETF leg aggressive vol_target=25%",
+    "stock leg preset=momentum_csi500_top5_vol25_ma120_riskoff",
+    "dividend leg universe_mode=expanded"
+  ],
+  "mdd_budget": -0.35,
+  "periods": {
+    "bear_2021_2022": {
+      "aggressive_etf": {
+        "annual_return": -0.03574779237250547,
+        "annual_volatility": 0.0744478863387139,
+        "days": 306,
+        "max_drawdown": -0.11304686868275371,
+        "total_return": -0.04324019365000065
+      },
+      "combo": {
+        "annual_return": -0.016392230527190188,
+        "annual_volatility": 0.09068881613581066,
+        "days": 306,
+        "max_drawdown": -0.1149594729274448,
+        "total_return": -0.01986974106175554
+      },
+      "expanded_dividend": {
+        "annual_return": 0.02624180668963061,
+        "annual_volatility": 0.18085842078672806,
+        "days": 485,
+        "max_drawdown": -0.18939711457988895,
+        "total_return": 0.051117371889999985
+      },
+      "vol25_ma120": {
+        "annual_return": -0.02956527799108155,
+        "annual_volatility": 0.11814817643290922,
+        "days": 399,
+        "max_drawdown": -0.23540287385005754,
+        "total_return": -0.04640634812000011
+      }
+    },
+    "oos_2024_2026": {
+      "aggressive_etf": {
+        "annual_return": 0.3227652925093878,
+        "annual_volatility": 0.20630379986772074,
+        "days": 599,
+        "max_drawdown": -0.15423708466756425,
+        "total_return": 0.9442972691579259
+      },
+      "combo": {
+        "annual_return": 0.3181239320708982,
+        "annual_volatility": 0.189174867507567,
+        "days": 599,
+        "max_drawdown": -0.14076686048783926,
+        "total_return": 0.928120139075489
+      },
+      "expanded_dividend": {
+        "annual_return": 0.17347215097140123,
+        "annual_volatility": 0.19321481975563748,
+        "days": 599,
+        "max_drawdown": -0.176587177591207,
+        "total_return": 0.4626341616427341
+      },
+      "vol25_ma120": {
+        "annual_return": 0.3887019680519568,
+        "annual_volatility": 0.25036219164126905,
+        "days": 599,
+        "max_drawdown": -0.2090613318568676,
+        "total_return": 1.182626634334039
+      }
+    }
+  },
+  "start": "2021-01-01",
+  "stock_preset": "momentum_csi500_top5_vol25_ma120_riskoff",
+  "track": "tri_track_blend",
+  "weights": {
+    "aggressive_etf": 0.5,
+    "expanded_dividend": 0.2,
+    "vol25_ma120": 0.3
+  },
+  "within_mdd_budget": true
+}

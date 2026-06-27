@@ -250,9 +250,13 @@ JSON：`docs/research/cn_momentum_csi500_riskoff_tuning_20260628.json`
 | vol22 MA120 | 23.5% | -22.7% | +111% |
 | **vol25 MA120** | **25.2%** | **-23.5%** | **+118%** |
 
-**结论（MDD 预算 -35%）：** vol25 MA120 为 research 最高年化档；return-focused gate（ΔMDD≤10pp）下 **vol25 为 promoted 候选**。Live 已落地 aggressive ETF optional target；paper 组合建议 **30% aggressive + 70% vol25**（24% ann / -17% MDD）。
+**结论（MDD 预算 -35%）：** vol25 MA120 为 research 最高年化档；return-focused gate（ΔMDD≤10pp）下 **vol25/vol22/vol20 promoted**。Live 已落地 aggressive ETF optional target。
 
-**Phase 2 JSON：** `docs/research/cn_ma120_phase2_return_focused_20260628.json`
+**Paper 组合建议：**
+- **Alpha 型：** 30% aggressive + 70% vol25（24% ann / -17% MDD）
+- **防御型：** 50% aggressive + 30% vol25 + 20% expanded 红利（17.9% ann / -14.1% MDD）
+
+**Phase 2 JSON：** `docs/research/cn_ma120_phase2_return_focused_20260628.json` · **P2.3 JSON：** `cn_ma120_phase2_tri_track_blend_20260628.json`
 
 ### 3.5 70/30 组合：ETF conservative + vol15 risk-off 个股
 
