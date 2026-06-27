@@ -47,8 +47,35 @@ PYTHONPATH=src:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
 - fhps 未完全 point-in-time 按报告期选取
 - 需扩展 `CnEquitySnapshotPipelines` 历史 builder + 更大 universe 后再 promotion
 
-## 6. 下一步
+## 6. 双轨组合（70% 行业轮动 + 30% 红利 quality，2021–2026）
+
+```bash
+PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
+  python3 scripts/research_cn_dual_track_combo_proxy_backtest.py \
+  --industry-weight 0.7 --dividend-weight 0.3
+```
+
+| 方案 | 年化 | 最大回撤 | 总收益 |
+|---|---:|---:|---:|
+| **70/30 组合** | **10.79%** | **-16.36%** | **+59.4%** |
+| 行业轮动（100%） | 13.79% | -15.42% | +80.1% |
+| 红利 quality（100%） | 2.81% | -29.39% | +15.7% |
+| 510300 | 0.46% | -44.05% | +2.5% |
+
+**解读**
+
+- 加入 30% 红利轨**略降**年化（13.8% → 10.8%），但 MDD 与纯行业接近（-16% vs -15%）。
+- 相对 510300，组合仍有显著超额；**纯行业轮动仍是更优进攻配置**。
+- 红利轨价值在组合分散上有限（staging universe 证据不足），待扩大 universe 后再评估固定比例是否值得。
+
+## 7. 下一步
 
 1. Pipeline 增加 `as_of` 截断的 fhps/财报选取
 2. 扩大 universe（中证红利/高股息成分）
 3. 双轨组合 proxy（如 70% 行业轮动 + 30% 红利 quality）
+
+```bash
+PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
+  python3 scripts/research_cn_dual_track_combo_proxy_backtest.py \
+  --industry-weight 0.7 --dividend-weight 0.3
+```
