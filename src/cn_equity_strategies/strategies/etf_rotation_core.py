@@ -53,6 +53,7 @@ DEFAULT_WEIGHTING_MODE = "inverse_volatility"
 DEFAULT_TARGET_ANNUAL_VOLATILITY: float | None = 0.14
 DEFAULT_MAX_GROSS_EXPOSURE = 1.0
 DEFAULT_MIN_HISTORY_DAYS = 220
+DEFAULT_MAX_PAIR_CORRELATION = 0.85
 DEFAULT_EXECUTION_CASH_RESERVE_RATIO = 0.02
 
 REQUIRED_MARKET_HISTORY_COLUMNS = frozenset({"date", "symbol", "close"})
@@ -230,6 +231,40 @@ def apply_portfolio_volatility_target(
     return {symbol: float(value) * scale for symbol, value in weights.items()}, realized_volatility
 
 
+def _filter_ranked_by_correlation(
+    ranked: list[dict[str, object]],
+    returns: pd.DataFrame,
+    *,
+    top_n: int,
+    max_pair_correlation: float,
+) -> list[dict[str, object]]:
+    if not ranked or top_n <= 0:
+        return []
+    if len(returns) < 2:
+        return ranked[:top_n]
+
+    correlation = returns.corr().fillna(0.0)
+    selected: list[dict[str, object]] = []
+    for row in ranked:
+        if len(selected) >= int(top_n):
+            break
+        symbol = str(row["symbol"])
+        if symbol not in correlation.columns:
+            continue
+        if not selected:
+            selected.append(row)
+            continue
+        pairwise = [
+            abs(float(correlation.loc[symbol, str(other["symbol"])]))
+            for other in selected
+            if str(other["symbol"]) in correlation.columns
+        ]
+        if pairwise and max(pairwise) > float(max_pair_correlation):
+            continue
+        selected.append(row)
+    return selected
+
+
 def _build_weights_from_ranked_rows(
     ranked: list[dict[str, object]],
     *,
@@ -281,6 +316,7 @@ def compute_latest_signal(
     target_annual_volatility: float | None = DEFAULT_TARGET_ANNUAL_VOLATILITY,
     max_gross_exposure: float = DEFAULT_MAX_GROSS_EXPOSURE,
     min_history_days: int = DEFAULT_MIN_HISTORY_DAYS,
+    max_pair_correlation: float = DEFAULT_MAX_PAIR_CORRELATION,
 ) -> dict[str, object]:
     if momentum_window_days <= 1:
         raise ValueError("momentum_window_days must be greater than 1")
@@ -360,7 +396,16 @@ def compute_latest_signal(
         (row for row in latest_rows if row["eligible"]),
         key=lambda row: float(row["score"]) if not benchmark_risk_off else -float(row["volatility"]),
         reverse=not benchmark_risk_off,
-    )[: min(int(top_n), len(candidate_symbols))]
+    )
+    if not benchmark_risk_off:
+        ranked = _filter_ranked_by_correlation(
+            ranked,
+            returns,
+            top_n=int(top_n),
+            max_pair_correlation=float(max_pair_correlation),
+        )
+    else:
+        ranked = ranked[: min(int(top_n), len(candidate_symbols))]
 
     weights, realized_portfolio_volatility = _build_weights_from_ranked_rows(
         ranked,
@@ -400,6 +445,7 @@ def compute_latest_signal(
             None if target_annual_volatility is None else float(target_annual_volatility)
         ),
         "max_gross_exposure": float(max_gross_exposure),
+        "max_pair_correlation": float(max_pair_correlation),
         "realized_portfolio_volatility": float(realized_portfolio_volatility),
         "weights": weights,
     }

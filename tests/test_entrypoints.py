@@ -6,7 +6,12 @@ import pytest
 from quant_platform_kit.strategy_contracts import StrategyContext
 
 from cn_equity_strategies import get_strategy_entrypoint
-from cn_equity_strategies.catalog import CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE
+from cn_equity_strategies.catalog import (
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+)
+from cn_equity_strategies.strategies.cn_dividend_quality_snapshot import SAFE_HAVEN
+from test_cn_dividend_quality_snapshot import sample_factor_snapshot
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
     DEFAULT_UNIVERSE_SYMBOLS,
     NASDAQ_ETF_SYMBOL,
@@ -54,9 +59,30 @@ def test_index_etf_rotation_entrypoint_returns_volatility_targeted_weight_target
     )
 
     weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert set(weights) == {NEW_ENERGY_ETF_SYMBOL, SEMICONDUCTOR_ETF_SYMBOL}
+    assert NEW_ENERGY_ETF_SYMBOL in set(weights)
+    assert len(weights) <= 2
     assert 0.0 < sum(weights.values()) < 1.0
     assert decision.diagnostics["signal_source"] == "daily_market_history"
     assert decision.diagnostics["target_annual_volatility"] == pytest.approx(0.14)
     assert "cash_residual" in decision.risk_flags
     assert set(DEFAULT_UNIVERSE_SYMBOLS).issubset(set(decision.diagnostics["managed_symbols"]))
+
+
+def test_dividend_quality_entrypoint_consumes_feature_snapshot():
+    entrypoint = get_strategy_entrypoint(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE)
+
+    decision = entrypoint.evaluate(
+        StrategyContext(
+            as_of="2026-05-29",
+            market_data={"feature_snapshot": sample_factor_snapshot()},
+            state={"current_holdings": {"601088": 1000}},
+            runtime_config={"holdings_count": 2},
+        )
+    )
+
+    weights = {position.symbol: position.target_weight for position in decision.positions}
+    assert weights
+    assert sum(weights.values()) == pytest.approx(1.0)
+    assert SAFE_HAVEN not in weights or len(weights) > 1
+    assert decision.diagnostics["signal_source"] == "factor_snapshot"
+    assert decision.diagnostics["snapshot_contract_version"] == "cn_dividend_quality_snapshot.factor_snapshot.v1"

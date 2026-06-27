@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from quant_platform_kit.strategy_contracts import StrategyManifest
 
+from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
+CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 
 
 def _manifest(
     *,
     profile: str,
+    domain: str,
     display_name: str,
     description: str,
     aliases: tuple[str, ...] = (),
@@ -18,7 +21,7 @@ def _manifest(
 ) -> StrategyManifest:
     return StrategyManifest(
         profile=profile,
-        domain=index_etf_strategy.CN_EQUITY_DOMAIN,
+        domain=domain,
         display_name=display_name,
         description=description,
         aliases=aliases,
@@ -29,6 +32,7 @@ def _manifest(
 
 cn_index_etf_tactical_rotation_manifest = _manifest(
     profile=CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+    domain=index_etf_strategy.CN_EQUITY_DOMAIN,
     display_name="CN Index ETF Tactical Rotation",
     description=(
         "Monthly volatility-targeted rotation across A-share listed broad index, sector, "
@@ -55,8 +59,45 @@ cn_index_etf_tactical_rotation_manifest = _manifest(
     },
 )
 
+cn_dividend_quality_snapshot_manifest = _manifest(
+    profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    domain=dividend_quality_strategy.CN_EQUITY_DOMAIN,
+    display_name="CN Dividend Quality Snapshot",
+    description=(
+        "Snapshot-backed monthly A-share selector emphasizing dividend yield and quality "
+        "factors with breadth-based defensive exposure control."
+    ),
+    aliases=(),
+    required_inputs=frozenset({"feature_snapshot"}),
+    default_config={
+        "safe_haven": dividend_quality_strategy.SAFE_HAVEN,
+        "holdings_count": dividend_quality_strategy.DEFAULT_HOLDINGS_COUNT,
+        "single_name_cap": dividend_quality_strategy.DEFAULT_SINGLE_NAME_CAP,
+        "sector_cap": dividend_quality_strategy.DEFAULT_SECTOR_CAP,
+        "min_adv20_cny": dividend_quality_strategy.DEFAULT_MIN_ADV20_CNY,
+        "min_market_cap_cny": dividend_quality_strategy.DEFAULT_MIN_MARKET_CAP_CNY,
+        "min_dividend_yield": dividend_quality_strategy.DEFAULT_MIN_DIVIDEND_YIELD,
+        "max_dividend_yield": dividend_quality_strategy.DEFAULT_MAX_DIVIDEND_YIELD,
+        "min_dividend_stability": dividend_quality_strategy.DEFAULT_MIN_DIVIDEND_STABILITY,
+        "min_roe_ttm": dividend_quality_strategy.DEFAULT_MIN_ROE_TTM,
+        "max_payout_ratio": dividend_quality_strategy.DEFAULT_MAX_PAYOUT_RATIO,
+        "max_suspension_days_63": dividend_quality_strategy.DEFAULT_MAX_SUSPENSION_DAYS_63,
+        "min_list_days": dividend_quality_strategy.DEFAULT_MIN_LIST_DAYS,
+        "hold_buffer": dividend_quality_strategy.DEFAULT_HOLD_BUFFER,
+        "hold_bonus": dividend_quality_strategy.DEFAULT_HOLD_BONUS,
+        "risk_on_exposure": dividend_quality_strategy.DEFAULT_RISK_ON_EXPOSURE,
+        "soft_defense_exposure": dividend_quality_strategy.DEFAULT_SOFT_DEFENSE_EXPOSURE,
+        "hard_defense_exposure": dividend_quality_strategy.DEFAULT_HARD_DEFENSE_EXPOSURE,
+        "soft_breadth_threshold": dividend_quality_strategy.DEFAULT_SOFT_BREADTH_THRESHOLD,
+        "hard_breadth_threshold": dividend_quality_strategy.DEFAULT_HARD_BREADTH_THRESHOLD,
+        "execution_cash_reserve_ratio": dividend_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+        "rebalance_frequency": "monthly",
+    },
+)
+
 MANIFESTS = {
     cn_index_etf_tactical_rotation_manifest.profile: cn_index_etf_tactical_rotation_manifest,
+    cn_dividend_quality_snapshot_manifest.profile: cn_dividend_quality_snapshot_manifest,
 }
 
 MANIFEST_ALIASES = {
@@ -72,8 +113,10 @@ def get_strategy_manifest(profile: str) -> StrategyManifest:
 
 
 __all__ = [
+    "CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE",
     "CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE",
     "MANIFESTS",
     "get_strategy_manifest",
+    "cn_dividend_quality_snapshot_manifest",
     "cn_index_etf_tactical_rotation_manifest",
 ]

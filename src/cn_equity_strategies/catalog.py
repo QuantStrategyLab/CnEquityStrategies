@@ -15,22 +15,26 @@ from quant_platform_kit.common.strategies import (
     normalize_profile_name as qpk_normalize_profile_name,
 )
 
+from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 
 CN_EQUITY_DOMAIN = index_etf_strategy.CN_EQUITY_DOMAIN
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
+CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 
 CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE})
-CN_SNAPSHOT_BACKED_PROFILES = frozenset()
-CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES = frozenset({"cn_dividend_low_vol_quality_snapshot"})
+CN_SNAPSHOT_BACKED_PROFILES = frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
+CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES = frozenset({"cn_small_cap_quality_snapshot"})
 CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset()
 
 STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
 }
 
 STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
 }
 
 STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
@@ -51,14 +55,40 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "min_history_days": index_etf_strategy.DEFAULT_MIN_HISTORY_DAYS,
         "execution_cash_reserve_ratio": index_etf_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
     },
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: {
+        "safe_haven": dividend_quality_strategy.SAFE_HAVEN,
+        "holdings_count": dividend_quality_strategy.DEFAULT_HOLDINGS_COUNT,
+        "single_name_cap": dividend_quality_strategy.DEFAULT_SINGLE_NAME_CAP,
+        "sector_cap": dividend_quality_strategy.DEFAULT_SECTOR_CAP,
+        "min_adv20_cny": dividend_quality_strategy.DEFAULT_MIN_ADV20_CNY,
+        "min_market_cap_cny": dividend_quality_strategy.DEFAULT_MIN_MARKET_CAP_CNY,
+        "min_dividend_yield": dividend_quality_strategy.DEFAULT_MIN_DIVIDEND_YIELD,
+        "max_dividend_yield": dividend_quality_strategy.DEFAULT_MAX_DIVIDEND_YIELD,
+        "min_dividend_stability": dividend_quality_strategy.DEFAULT_MIN_DIVIDEND_STABILITY,
+        "min_roe_ttm": dividend_quality_strategy.DEFAULT_MIN_ROE_TTM,
+        "max_payout_ratio": dividend_quality_strategy.DEFAULT_MAX_PAYOUT_RATIO,
+        "max_suspension_days_63": dividend_quality_strategy.DEFAULT_MAX_SUSPENSION_DAYS_63,
+        "min_list_days": dividend_quality_strategy.DEFAULT_MIN_LIST_DAYS,
+        "hold_buffer": dividend_quality_strategy.DEFAULT_HOLD_BUFFER,
+        "hold_bonus": dividend_quality_strategy.DEFAULT_HOLD_BONUS,
+        "risk_on_exposure": dividend_quality_strategy.DEFAULT_RISK_ON_EXPOSURE,
+        "soft_defense_exposure": dividend_quality_strategy.DEFAULT_SOFT_DEFENSE_EXPOSURE,
+        "hard_defense_exposure": dividend_quality_strategy.DEFAULT_HARD_DEFENSE_EXPOSURE,
+        "soft_breadth_threshold": dividend_quality_strategy.DEFAULT_SOFT_BREADTH_THRESHOLD,
+        "hard_breadth_threshold": dividend_quality_strategy.DEFAULT_HARD_BREADTH_THRESHOLD,
+        "execution_cash_reserve_ratio": dividend_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+        "rebalance_frequency": "monthly",
+    },
 }
 
 STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "cn_index_etf_tactical_rotation_entrypoint",
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "cn_dividend_quality_snapshot_entrypoint",
 }
 
 STRATEGY_TARGET_MODES: dict[str, str] = {
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "weight",
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "weight",
 }
 
 
@@ -94,6 +124,11 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
         component_name="signal_logic",
         module_path="cn_equity_strategies.strategies.cn_index_etf_tactical_rotation",
     ),
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: _build_strategy_definition(
+        CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_dividend_quality_snapshot",
+    ),
 }
 
 STRATEGY_METADATA: dict[str, StrategyMetadata] = {
@@ -109,6 +144,20 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         asset_scope="cn_listed_index_etfs",
         benchmark="510300",
         role="cn_non_snapshot_index_etf_rotation",
+        status="runtime_enabled",
+    ),
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: StrategyMetadata(
+        canonical_profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+        display_name="CN Dividend Quality Snapshot",
+        description=(
+            "Runtime-enabled snapshot-backed A-share selector emphasizing dividend yield and "
+            "quality factors with breadth-based defensive exposure control."
+        ),
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_single_name_snapshot_factor",
+        benchmark="510300",
+        role="cn_snapshot_dividend_quality",
         status="runtime_enabled",
     ),
 }

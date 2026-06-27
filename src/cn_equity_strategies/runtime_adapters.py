@@ -8,11 +8,13 @@ from quant_platform_kit.strategy_contracts import (
 )
 
 from cn_equity_strategies.catalog import (
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     get_strategy_definition,
     get_strategy_definitions,
     resolve_canonical_profile,
 )
+from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 
 QMT_PLATFORM = "qmt"
@@ -26,6 +28,14 @@ BASE_RUNTIME_ADAPTERS: dict[str, StrategyRuntimeAdapter] = {
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: StrategyRuntimeAdapter(
         status_icon=index_etf_strategy.STATUS_ICON,
         managed_symbols_extractor=index_etf_strategy.extract_managed_symbols,
+    ),
+    CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: StrategyRuntimeAdapter(
+        status_icon=dividend_quality_strategy.STATUS_ICON,
+        available_inputs=frozenset({"feature_snapshot"}),
+        required_feature_columns=dividend_quality_strategy.REQUIRED_FACTOR_COLUMNS,
+        require_snapshot_manifest=dividend_quality_strategy.REQUIRE_SNAPSHOT_MANIFEST,
+        snapshot_contract_version=dividend_quality_strategy.SNAPSHOT_CONTRACT_VERSION,
+        managed_symbols_extractor=dividend_quality_strategy.extract_managed_symbols,
     ),
 }
 
