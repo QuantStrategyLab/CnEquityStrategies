@@ -16,7 +16,6 @@ from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
     DEFAULT_UNIVERSE_SYMBOLS,
     NASDAQ_ETF_SYMBOL,
     NEW_ENERGY_ETF_SYMBOL,
-    SEMICONDUCTOR_ETF_SYMBOL,
     extract_managed_symbols,
 )
 
