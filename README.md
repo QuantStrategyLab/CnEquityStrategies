@@ -18,15 +18,21 @@ These profiles use platform-provided `market_history` and do not require a separ
 
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
-| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | A-share ETF tactical rotation with CSI300 benchmark risk-off defensive switching. |
+| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | A-share ETF tactical rotation with CSI300 benchmark risk-off and correlation filtering. |
 
-### Planned snapshot-backed strategy
+### Snapshot-backed runtime strategy
 
-The following profile is planned but not yet implemented in this repository. `CnEquitySnapshotPipelines` will own the artifact contract when it is promoted.
+`CnEquitySnapshotPipelines` owns the artifact contract, production data lineage, and promotion evidence.
 
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
-| `cn_dividend_low_vol_quality_snapshot` | CN Dividend Low-Vol Quality Snapshot | `feature_snapshot` + manifest | `510300` | Planned A-share single-name selector; scaffold only. |
+| `cn_dividend_quality_snapshot` | CN Dividend Quality Snapshot | `feature_snapshot` + manifest | `510300` | Dividend + quality composite selector for defensive allocation. |
+
+### Planned research scaffold
+
+| Profile | Name | Notes |
+| --- | --- | --- |
+| `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | Community-popular but higher tail risk; not runtime-enabled yet. |
 
 ## Performance and evidence boundary
 
