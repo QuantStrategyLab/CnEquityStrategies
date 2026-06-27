@@ -390,6 +390,89 @@ STOCK_MOMENTUM_CROSS_SECTION_PRESETS: dict[str, dict[str, Any]] = {
     },
 }
 
+# CSI500 + CSI300 MA200 risk-off tuning (target: MDD ≥ -25%, bear period closer to ETF).
+_CSI500_RISKOFF_BASE: dict[str, Any] = {
+    **CONSERVATIVE_V1_PRESET,
+    "profile_variant": "aggressive_research",
+    "universe_mode": "csi500",
+    "defensive_symbols": ("510300",),
+    "benchmark_symbol": "510300",
+    "enable_benchmark_risk_off": True,
+    "rebalance_frequency": "monthly",
+    "sentiment_mode": "off",
+}
+
+STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS: dict[str, dict[str, Any]] = {
+    "momentum_csi500_top5_vol20_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol20% (baseline)",
+        "top_n": 5,
+        "target_annual_volatility": 0.20,
+    },
+    "momentum_csi500_top8_vol18_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top8 vol18% diversified",
+        "top_n": 8,
+        "target_annual_volatility": 0.18,
+        "max_gross_exposure": 0.90,
+    },
+    "momentum_csi500_top5_vol18_gross85_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol18% gross85%",
+        "top_n": 5,
+        "target_annual_volatility": 0.18,
+        "max_gross_exposure": 0.85,
+    },
+    "momentum_csi500_top5_vol16_gross80_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol16% gross80%",
+        "top_n": 5,
+        "target_annual_volatility": 0.16,
+        "max_gross_exposure": 0.80,
+    },
+    "momentum_csi500_top5_vol15_gross75_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol15% gross75% (MDD-optimized candidate)",
+        "top_n": 5,
+        "target_annual_volatility": 0.15,
+        "max_gross_exposure": 0.75,
+    },
+    "momentum_csi500_top5_vol18_corr70_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol18% max_pair_corr 0.70",
+        "top_n": 5,
+        "target_annual_volatility": 0.18,
+        "max_pair_correlation": 0.70,
+    },
+    "momentum_csi500_top5_vol18_minmom5_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol18% min_momentum 5%",
+        "top_n": 5,
+        "target_annual_volatility": 0.18,
+        "min_momentum": 0.05,
+    },
+    "momentum_csi500_top5_vol18_ma120_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol18% benchmark MA120",
+        "top_n": 5,
+        "target_annual_volatility": 0.18,
+        "benchmark_trend_window_days": 120,
+    },
+    "momentum_csi500_top5_vol18_ma250_riskoff": {
+        **_CSI500_RISKOFF_BASE,
+        "label": "CSI500 risk-off — top5 vol18% benchmark MA250",
+        "top_n": 5,
+        "target_annual_volatility": 0.18,
+        "benchmark_trend_window_days": 250,
+        "min_history_days": 270,
+    },
+}
+
+# Keep cross-section dict keys unique; risk-off baseline also listed in tuning set.
+STOCK_MOMENTUM_CROSS_SECTION_PRESETS.update(
+    {k: v for k, v in STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS.items() if k not in STOCK_MOMENTUM_CROSS_SECTION_PRESETS}
+)
+
 PROMOTION_GATE = {
     "baseline_variant": "conservative_v1",
     "min_oos_total_return_lift": 0.05,
@@ -404,6 +487,9 @@ STOCK_MOMENTUM_PROMOTION_GATE: dict[str, Any] = {
     "max_bear_total_return_regression": 0.10,
     "bear_period": ("2021-01-01", "2022-12-31"),
 }
+
+# Best-known CSI500 risk-off tuning result (2026-06-28 matrix); research only.
+CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY = "momentum_csi500_top5_vol15_gross75_riskoff"
 
 # Stricter gate for single-name thematic sleeves (drawdown + bear-market caps).
 STOCK_THEMATIC_PROMOTION_GATE: dict[str, Any] = {
@@ -527,12 +613,14 @@ __all__ = [
     "AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST",
     "AGGRESSIVE_RESEARCH_PRESETS",
     "AGGRESSIVE_V1_PRESET",
+    "CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY",
     "CONSERVATIVE_V1_PRESET",
     "DUAL_TRACK_COMBO_PRESETS",
     "DUAL_TRACK_PROMOTION_REVIEW_CHECKLIST",
     "OPTICAL_COMPUTE_STOCK_SYMBOLS",
     "PROMOTION_GATE",
     "STOCK_MOMENTUM_CROSS_SECTION_PRESETS",
+    "STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS",
     "STOCK_MOMENTUM_PROMOTION_GATE",
     "STOCK_THEMATIC_PRESETS",
     "STOCK_THEMATIC_PROMOTION_GATE",

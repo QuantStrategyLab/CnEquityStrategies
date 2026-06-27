@@ -1,0 +1,1328 @@
+{
+  "end": "2026-06-27",
+  "momentum": {
+    "conservative_etf_baseline": {
+      "key": "conservative_v1",
+      "label": "Conservative v1 \u2014 pure momentum industry rotation",
+      "overall": {
+        "annual_return": 0.13791091679142387,
+        "annual_volatility": 0.154542597791082,
+        "days": 1147,
+        "max_drawdown": -0.1542440726918759,
+        "sharpe_ratio": 0.8923812512706585,
+        "total_return": 0.8004524729299969
+      },
+      "period_metrics": {
+        "2022": {
+          "annual_return": -0.036035113838727484,
+          "annual_volatility": 0.06665746775077656,
+          "days": 242,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "2023": {
+          "annual_return": -0.014003036230138433,
+          "annual_volatility": 0.1432728314555984,
+          "days": 242,
+          "max_drawdown": -0.10605979141871491,
+          "total_return": -0.013451114639135286
+        },
+        "2024": {
+          "annual_return": 0.1541882735579081,
+          "annual_volatility": 0.15473997347748222,
+          "days": 242,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.14763916726142123
+        },
+        "2025": {
+          "annual_return": 0.426904493985514,
+          "annual_volatility": 0.19909346165532973,
+          "days": 243,
+          "max_drawdown": -0.15123625406602936,
+          "total_return": 0.4089020530351877
+        },
+        "2026_ytd": {
+          "annual_return": 0.41272477028956267,
+          "annual_volatility": 0.22541918661593568,
+          "days": 114,
+          "max_drawdown": -0.0912771984483095,
+          "total_return": 0.16918485718337828
+        },
+        "bear_2021_2022": {
+          "annual_return": -0.028607342130033464,
+          "annual_volatility": 0.05928488670669046,
+          "days": 306,
+          "max_drawdown": -0.09107871650857502,
+          "total_return": -0.03463020586999965
+        },
+        "full": {
+          "annual_return": 0.13791091679142387,
+          "annual_volatility": 0.154542597791082,
+          "days": 1147,
+          "max_drawdown": -0.1542440726918759,
+          "total_return": 0.8004524729299969
+        },
+        "oos_2024_2026": {
+          "annual_return": 0.30723313290056975,
+          "annual_volatility": 0.1883362009686863,
+          "days": 599,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.8904680657783053
+        },
+        "recovery_2023": {
+          "annual_return": -0.014003036230138433,
+          "annual_volatility": 0.1432728314555984,
+          "days": 242,
+          "max_drawdown": -0.10605979141871491,
+          "total_return": -0.013451114639135286
+        },
+        "theme_2024_2025": {
+          "annual_return": 0.28360307536937124,
+          "annual_volatility": 0.17848157183494573,
+          "days": 485,
+          "max_drawdown": -0.15424407269187468,
+          "total_return": 0.6169111788982051
+        },
+        "train_2021_2023": {
+          "annual_return": -0.022184857475289532,
+          "annual_volatility": 0.10501434683995932,
+          "days": 548,
+          "max_drawdown": -0.1060597914187148,
+          "total_return": -0.0476155056399995
+        }
+      },
+      "profile_variant": "conservative_v1",
+      "rebalance_count": 46
+    },
+    "default_universe_mode": "csi500_riskoff",
+    "end": "2026-06-27",
+    "limitations": [
+      "index constituents (CSI500/1000) use latest csindex table \u2014 not fully point-in-time",
+      "liquid_top uses current spot turnover snapshot \u2014 not historical liquidity PIT",
+      "selection is cross-sectional momentum within broad pool, not fixed thematic industry list",
+      "not runtime-enabled; compare vs ETF conservative_v1 and thematic 8-name sleeve separately"
+    ],
+    "promotion_gate": {
+      "baseline_variant": "conservative_v1",
+      "bear_period": [
+        "2021-01-01",
+        "2022-12-31"
+      ],
+      "max_bear_total_return_regression": 0.1,
+      "max_mdd_absolute": -0.25,
+      "max_mdd_regression": 0.05,
+      "min_oos_total_return_lift": 0.05,
+      "oos_period": [
+        "2024-01-01",
+        "2026-06-27"
+      ],
+      "train_period": [
+        "2021-01-01",
+        "2023-12-31"
+      ]
+    },
+    "promotion_review": {
+      "baseline_bear": {
+        "annual_return": -0.028607342130033464,
+        "annual_volatility": 0.05928488670669046,
+        "days": 306,
+        "max_drawdown": -0.09107871650857502,
+        "total_return": -0.03463020586999965
+      },
+      "baseline_key": "conservative_v1",
+      "baseline_oos": {
+        "annual_return": 0.30723313290056975,
+        "annual_volatility": 0.1883362009686863,
+        "days": 599,
+        "max_drawdown": -0.15424407269187468,
+        "total_return": 0.8904680657783053
+      },
+      "baseline_train": {
+        "annual_return": -0.022184857475289532,
+        "annual_volatility": 0.10501434683995932,
+        "days": 548,
+        "max_drawdown": -0.1060597914187148,
+        "total_return": -0.0476155056399995
+      },
+      "candidates": [
+        {
+          "bear_total_return": -0.0516404351000006,
+          "bear_vs_baseline": -0.01701022923000095,
+          "fail_reasons": [
+            "mdd_vs_baseline"
+          ],
+          "key": "momentum_csi500_top5_vol18_ma120_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA120",
+          "mdd_vs_baseline": -0.06173015026404227,
+          "oos_total_return": 0.9812343301584119,
+          "oos_total_return_lift": 0.0907662643801066,
+          "overall_mdd": -0.21597422295591817,
+          "passes_gate": false,
+          "train_total_return": 0.2552979008399987
+        },
+        {
+          "bear_total_return": -0.0424294436400009,
+          "bear_vs_baseline": -0.007799237770001244,
+          "fail_reasons": [
+            "oos_lift",
+            "mdd_vs_baseline"
+          ],
+          "key": "momentum_csi500_top5_vol20_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol20% (baseline)",
+          "mdd_vs_baseline": -0.060697577358576726,
+          "oos_total_return": 0.8924548396973011,
+          "oos_total_return_lift": 0.001986773918995821,
+          "overall_mdd": -0.21494165005045263,
+          "passes_gate": false,
+          "train_total_return": 0.3071505884999979
+        },
+        {
+          "bear_total_return": -0.11540022707000042,
+          "bear_vs_baseline": -0.08077002120000076,
+          "fail_reasons": [
+            "oos_lift",
+            "mdd_vs_baseline"
+          ],
+          "key": "momentum_csi500_top5_vol18_ma250_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA250",
+          "mdd_vs_baseline": -0.05558897357319703,
+          "oos_total_return": 0.8669949782783084,
+          "oos_total_return_lift": -0.02347308749999688,
+          "overall_mdd": -0.20983304626507293,
+          "passes_gate": false,
+          "train_total_return": 0.1688567559900005
+        },
+        {
+          "bear_total_return": -0.044285230640002005,
+          "bear_vs_baseline": -0.009655024770002352,
+          "fail_reasons": [
+            "oos_lift",
+            "mdd_vs_baseline"
+          ],
+          "key": "momentum_csi500_top5_vol18_corr70_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol18% max_pair_corr 0.70",
+          "mdd_vs_baseline": -0.05557466289732427,
+          "oos_total_return": 0.8398560248996738,
+          "oos_total_return_lift": -0.05061204087863147,
+          "overall_mdd": -0.20981873558920017,
+          "passes_gate": false,
+          "train_total_return": 0.26324329961999604
+        },
+        {
+          "bear_total_return": -0.044285230640002005,
+          "bear_vs_baseline": -0.009655024770002352,
+          "fail_reasons": [
+            "oos_lift",
+            "mdd_vs_baseline"
+          ],
+          "key": "momentum_csi500_top5_vol18_minmom5_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol18% min_momentum 5%",
+          "mdd_vs_baseline": -0.05557466289732427,
+          "oos_total_return": 0.8398560248996738,
+          "oos_total_return_lift": -0.05061204087863147,
+          "overall_mdd": -0.20981873558920017,
+          "passes_gate": false,
+          "train_total_return": 0.26324329961999604
+        },
+        {
+          "bear_total_return": -0.037320311300000686,
+          "bear_vs_baseline": -0.002690105430001033,
+          "fail_reasons": [
+            "oos_lift"
+          ],
+          "key": "momentum_csi500_top8_vol18_riskoff",
+          "label": "CSI500 risk-off \u2014 top8 vol18% diversified",
+          "mdd_vs_baseline": -0.040880347130809014,
+          "oos_total_return": 0.7713871709535327,
+          "oos_total_return_lift": -0.11908089482477258,
+          "overall_mdd": -0.1951244198226849,
+          "passes_gate": false,
+          "train_total_return": 0.20477213189999977
+        },
+        {
+          "bear_total_return": -0.033460988060001084,
+          "bear_vs_baseline": 0.0011692178099985684,
+          "fail_reasons": [
+            "oos_lift"
+          ],
+          "key": "momentum_csi500_top5_vol18_gross85_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol18% gross85%",
+          "mdd_vs_baseline": -0.03314136325140604,
+          "oos_total_return": 0.7471672073213322,
+          "oos_total_return_lift": -0.14330085845697305,
+          "overall_mdd": -0.18738543594328194,
+          "passes_gate": false,
+          "train_total_return": 0.28532953449999865
+        },
+        {
+          "bear_total_return": -0.03235320201000047,
+          "bear_vs_baseline": 0.0022770038599991826,
+          "fail_reasons": [
+            "oos_lift"
+          ],
+          "key": "momentum_csi500_top5_vol16_gross80_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol16% gross80%",
+          "mdd_vs_baseline": -0.02071572867395466,
+          "oos_total_return": 0.665776189063626,
+          "oos_total_return_lift": -0.22469187671467927,
+          "overall_mdd": -0.17495980136583056,
+          "passes_gate": false,
+          "train_total_return": 0.247665649169998
+        },
+        {
+          "bear_total_return": -0.02993998512999896,
+          "bear_vs_baseline": 0.0046902207400006946,
+          "fail_reasons": [
+            "oos_lift"
+          ],
+          "key": "momentum_csi500_top5_vol15_gross75_riskoff",
+          "label": "CSI500 risk-off \u2014 top5 vol15% gross75%",
+          "mdd_vs_baseline": -0.010483248418169389,
+          "oos_total_return": 0.6252210548346253,
+          "oos_total_return_lift": -0.26524701094368,
+          "overall_mdd": -0.1647273211100453,
+          "passes_gate": false,
+          "train_total_return": 0.2337697418300002
+        }
+      ],
+      "gate": {
+        "baseline_variant": "conservative_v1",
+        "bear_period": [
+          "2021-01-01",
+          "2022-12-31"
+        ],
+        "max_bear_total_return_regression": 0.1,
+        "max_mdd_absolute": -0.25,
+        "max_mdd_regression": 0.05,
+        "min_oos_total_return_lift": 0.05,
+        "oos_period": [
+          "2024-01-01",
+          "2026-06-27"
+        ],
+        "train_period": [
+          "2021-01-01",
+          "2023-12-31"
+        ]
+      },
+      "promoted": []
+    },
+    "start": "2021-01-01",
+    "status": "research_only",
+    "track": "cross_section_momentum_riskoff",
+    "universe_diagnostics": {
+      "momentum_csi500_top5_vol15_gross75_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol16_gross80_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol18_corr70_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol18_gross85_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol18_ma120_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol18_ma250_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol18_minmom5_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top5_vol20_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      },
+      "momentum_csi500_top8_vol18_riskoff": {
+        "active_count": 432,
+        "candidate_count": 500,
+        "sample_active": [
+          "000009",
+          "000021",
+          "000027",
+          "000032",
+          "000034",
+          "000039",
+          "000050",
+          "000060",
+          "000062",
+          "000088",
+          "000155",
+          "000400"
+        ],
+        "universe_mode": "csi500"
+      }
+    },
+    "variants": {
+      "momentum_csi500_top5_vol15_gross75_riskoff": {
+        "key": "momentum_csi500_top5_vol15_gross75_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol15% gross75%",
+        "overall": {
+          "annual_return": 0.15187135241482386,
+          "annual_volatility": 0.1413606007960393,
+          "days": 1240,
+          "max_drawdown": -0.1647273211100453,
+          "sharpe_ratio": 1.07435418044063,
+          "total_return": 1.0051485612400026
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.031157701286998907,
+            "annual_volatility": 0.10540981675664125,
+            "days": 242,
+            "max_drawdown": -0.1647273211100453,
+            "total_return": -0.02993998512999896
+          },
+          "2023": {
+            "annual_return": 0.28455004388195104,
+            "annual_volatility": 0.1450639396875024,
+            "days": 242,
+            "max_drawdown": -0.12048682151902324,
+            "total_return": 0.2718488783349544
+          },
+          "2024": {
+            "annual_return": 0.17007138738309924,
+            "annual_volatility": 0.16979020567621633,
+            "days": 242,
+            "max_drawdown": -0.12344044384059327,
+            "total_return": 0.1628013296160684
+          },
+          "2025": {
+            "annual_return": 0.13048531099145655,
+            "annual_volatility": 0.1683213235989477,
+            "days": 243,
+            "max_drawdown": -0.10754255931881351,
+            "total_return": 0.1255443311947655
+          },
+          "2026_ytd": {
+            "annual_return": 0.6139401803919549,
+            "annual_volatility": 0.1629428190748487,
+            "days": 114,
+            "max_drawdown": -0.08909949756384172,
+            "total_return": 0.24177901198585783
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.019015204962139598,
+            "annual_volatility": 0.08209620938208327,
+            "days": 399,
+            "max_drawdown": -0.1647273211100453,
+            "total_return": -0.02993998512999896
+          },
+          "full": {
+            "annual_return": 0.15187135241482386,
+            "annual_volatility": 0.1413606007960393,
+            "days": 1240,
+            "max_drawdown": -0.1647273211100453,
+            "total_return": 1.0051485612400026
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.22667950701568818,
+            "annual_volatility": 0.1681207176868253,
+            "days": 599,
+            "max_drawdown": -0.13180662899735596,
+            "total_return": 0.6252210548346253
+          },
+          "recovery_2023": {
+            "annual_return": 0.28455004388195104,
+            "annual_volatility": 0.1450639396875024,
+            "days": 242,
+            "max_drawdown": -0.12048682151902324,
+            "total_return": 0.2718488783349544
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.15006723781720321,
+            "annual_volatility": 0.1690593320062373,
+            "days": 485,
+            "max_drawdown": -0.13180662899735596,
+            "total_return": 0.3087844448551007
+          },
+          "train_2021_2023": {
+            "annual_return": 0.08609393868711757,
+            "annual_volatility": 0.11050534171849517,
+            "days": 641,
+            "max_drawdown": -0.1647273211100453,
+            "total_return": 0.2337697418300002
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top5_vol16_gross80_riskoff": {
+        "key": "momentum_csi500_top5_vol16_gross80_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol16% gross80%",
+        "overall": {
+          "annual_return": 0.16029350260668584,
+          "annual_volatility": 0.15037606626763156,
+          "days": 1240,
+          "max_drawdown": -0.17495980136583056,
+          "sharpe_ratio": 1.0659508962111282,
+          "total_return": 1.0783317302999955
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.033667354281666784,
+            "annual_volatility": 0.11246163420916074,
+            "days": 242,
+            "max_drawdown": -0.17495980136583056,
+            "total_return": -0.03235320201000047
+          },
+          "2023": {
+            "annual_return": 0.30299445448205486,
+            "annual_volatility": 0.15454780388181732,
+            "days": 242,
+            "max_drawdown": -0.12806601698782416,
+            "total_return": 0.2893812615942688
+          },
+          "2024": {
+            "annual_return": 0.17964742690947277,
+            "annual_volatility": 0.18079135589317644,
+            "days": 242,
+            "max_drawdown": -0.13110422189592053,
+            "total_return": 0.1719387495942588
+          },
+          "2025": {
+            "annual_return": 0.13753736191428767,
+            "annual_volatility": 0.17762457524086875,
+            "days": 243,
+            "max_drawdown": -0.11348070749000994,
+            "total_return": 0.13231404917977763
+          },
+          "2026_ytd": {
+            "annual_return": 0.6530198431565823,
+            "annual_volatility": 0.1752387656058029,
+            "days": 114,
+            "max_drawdown": -0.09551809352082152,
+            "total_return": 0.2552922276088865
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.020557213833499288,
+            "annual_volatility": 0.08758839329516642,
+            "days": 399,
+            "max_drawdown": -0.17495980136583056,
+            "total_return": -0.03235320201000047
+          },
+          "full": {
+            "annual_return": 0.16029350260668584,
+            "annual_volatility": 0.15037606626763156,
+            "days": 1240,
+            "max_drawdown": -0.17495980136583056,
+            "total_return": 1.0783317302999955
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.23946533084428667,
+            "annual_volatility": 0.17868173154053965,
+            "days": 599,
+            "max_drawdown": -0.13866612893319963,
+            "total_return": 0.665776189063626
+          },
+          "recovery_2023": {
+            "annual_return": 0.30299445448205486,
+            "annual_volatility": 0.15454780388181732,
+            "days": 242,
+            "max_drawdown": -0.12806601698782416,
+            "total_return": 0.2893812615942688
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.15835765343545227,
+            "annual_volatility": 0.17921542055134845,
+            "days": 485,
+            "max_drawdown": -0.13866612893319963,
+            "total_return": 0.3270027109437599
+          },
+          "train_2021_2023": {
+            "annual_return": 0.09088668952117263,
+            "annual_volatility": 0.11778463548579311,
+            "days": 641,
+            "max_drawdown": -0.17495980136583056,
+            "total_return": 0.247665649169998
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top5_vol18_corr70_riskoff": {
+        "key": "momentum_csi500_top5_vol18_corr70_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol18% max_pair_corr 0.70",
+        "overall": {
+          "annual_return": 0.18695891688520638,
+          "annual_volatility": 0.17559201981649725,
+          "days": 1240,
+          "max_drawdown": -0.20981873558920017,
+          "sharpe_ratio": 1.064734701956206,
+          "total_return": 1.3241857957199956
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.04607239374734018,
+            "annual_volatility": 0.13680284928285516,
+            "days": 242,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": -0.044285230640002005
+          },
+          "2023": {
+            "annual_return": 0.3371042337282453,
+            "annual_volatility": 0.17908982110324426,
+            "days": 242,
+            "max_drawdown": -0.15575366942157265,
+            "total_return": 0.32177856837551766
+          },
+          "2024": {
+            "annual_return": 0.23631727583783424,
+            "annual_volatility": 0.2165351124051443,
+            "days": 242,
+            "max_drawdown": -0.15313816770327926,
+            "total_return": 0.22595347229299612
+          },
+          "2025": {
+            "annual_return": 0.15768600833272006,
+            "annual_volatility": 0.2025036220060207,
+            "days": 243,
+            "max_drawdown": -0.12938633231473362,
+            "total_return": 0.15164780727834737
+          },
+          "2026_ytd": {
+            "annual_return": 0.7955139698796154,
+            "annual_volatility": 0.19788498696113432,
+            "days": 114,
+            "max_drawdown": -0.10646169742075395,
+            "total_return": 0.30313727101574006
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.028202523766729604,
+            "annual_volatility": 0.10654727219448445,
+            "days": 399,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": -0.044285230640002005
+          },
+          "full": {
+            "annual_return": 0.18695891688520638,
+            "annual_volatility": 0.17559201981649725,
+            "days": 1240,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": 1.3241857957199956
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.2923938140189253,
+            "annual_volatility": 0.2076896812005871,
+            "days": 599,
+            "max_drawdown": -0.15768671826858804,
+            "total_return": 0.8398560248996738
+          },
+          "recovery_2023": {
+            "annual_return": 0.3371042337282453,
+            "annual_volatility": 0.17908982110324426,
+            "days": 242,
+            "max_drawdown": -0.15575366942157265,
+            "total_return": 0.32177856837551766
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.1962747591417875,
+            "annual_volatility": 0.20963335395333005,
+            "days": 485,
+            "max_drawdown": -0.15768671826858804,
+            "total_return": 0.4118666281915042
+          },
+          "train_2021_2023": {
+            "annual_return": 0.09622112423269447,
+            "annual_volatility": 0.13883969844177313,
+            "days": 641,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": 0.26324329961999604
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top5_vol18_gross85_riskoff": {
+        "key": "momentum_csi500_top5_vol18_gross85_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol18% gross85%",
+        "overall": {
+          "annual_return": 0.1786997056579338,
+          "annual_volatility": 0.16638662392903156,
+          "days": 1240,
+          "max_drawdown": -0.18738543594328194,
+          "sharpe_ratio": 1.0740028341109567,
+          "total_return": 1.2456856132800005
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.03481932271366994,
+            "annual_volatility": 0.12138799583856627,
+            "days": 242,
+            "max_drawdown": -0.18738543594328194,
+            "total_return": -0.033460988060001084
+          },
+          "2023": {
+            "annual_return": 0.3455833325246711,
+            "annual_volatility": 0.17124456696307644,
+            "days": 242,
+            "max_drawdown": -0.1368000849549772,
+            "total_return": 0.32982685501761044
+          },
+          "2024": {
+            "annual_return": 0.1779634011383282,
+            "annual_volatility": 0.19620842054482418,
+            "days": 242,
+            "max_drawdown": -0.14385893068360267,
+            "total_return": 0.1703320726736146
+          },
+          "2025": {
+            "annual_return": 0.15466123089573713,
+            "annual_volatility": 0.20026979035150608,
+            "days": 243,
+            "max_drawdown": -0.12975275302301903,
+            "total_return": 0.14874613514612944
+          },
+          "2026_ytd": {
+            "annual_return": 0.7846816882422474,
+            "annual_volatility": 0.1974718829082846,
+            "days": 114,
+            "max_drawdown": -0.10674453885719781,
+            "total_return": 0.29957485461537514
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.021265546663547408,
+            "annual_volatility": 0.09453990104614382,
+            "days": 399,
+            "max_drawdown": -0.18738543594328194,
+            "total_return": -0.033460988060001084
+          },
+          "full": {
+            "annual_return": 0.1786997056579338,
+            "annual_volatility": 0.16638662392903156,
+            "days": 1240,
+            "max_drawdown": -0.18738543594328194,
+            "total_return": 1.2456856132800005
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.2645918968297747,
+            "annual_volatility": 0.19838575205362252,
+            "days": 599,
+            "max_drawdown": -0.15686830854713896,
+            "total_return": 0.7471672073213322
+          },
+          "recovery_2023": {
+            "annual_return": 0.3455833325246711,
+            "annual_volatility": 0.17124456696307644,
+            "days": 242,
+            "max_drawdown": -0.1368000849549772,
+            "total_return": 0.32982685501761044
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.16623009705860325,
+            "annual_volatility": 0.1982545854835465,
+            "days": 485,
+            "max_drawdown": -0.15686830854713896,
+            "total_return": 0.344414445321372
+          },
+          "train_2021_2023": {
+            "annual_return": 0.10371638392205873,
+            "annual_volatility": 0.12936489100107976,
+            "days": 641,
+            "max_drawdown": -0.18738543594328194,
+            "total_return": 0.28532953449999865
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top5_vol18_ma120_riskoff": {
+        "key": "momentum_csi500_top5_vol18_ma120_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA120",
+        "overall": {
+          "annual_return": 0.20340808541932676,
+          "annual_volatility": 0.1733948822564607,
+          "days": 1240,
+          "max_drawdown": -0.21597422295591817,
+          "sharpe_ratio": 1.17309163207294,
+          "total_return": 1.4870392957199954
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.053715991281593545,
+            "annual_volatility": 0.1379807367426913,
+            "days": 242,
+            "max_drawdown": -0.21597422295591817,
+            "total_return": -0.0516404351000006
+          },
+          "2023": {
+            "annual_return": 0.3390776083774649,
+            "annual_volatility": 0.17932743622215125,
+            "days": 242,
+            "max_drawdown": -0.15571759406236452,
+            "total_return": 0.3236518587465991
+          },
+          "2024": {
+            "annual_return": 0.4089750911081089,
+            "annual_volatility": 0.2186662371946885,
+            "days": 242,
+            "max_drawdown": -0.1076856316830983,
+            "total_return": 0.3899348804156022
+          },
+          "2025": {
+            "annual_return": 0.14489324739714293,
+            "annual_volatility": 0.19185812585889825,
+            "days": 243,
+            "max_drawdown": -0.14627705075124353,
+            "total_return": 0.13937384072328207
+          },
+          "2026_ytd": {
+            "annual_return": 0.6407003549992083,
+            "annual_volatility": 0.19213813916205214,
+            "days": 114,
+            "max_drawdown": -0.10594240024071688,
+            "total_return": 0.25105138169274355
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.03293280858112191,
+            "annual_volatility": 0.1074674488714041,
+            "days": 399,
+            "max_drawdown": -0.21597422295591817,
+            "total_return": -0.0516404351000006
+          },
+          "full": {
+            "annual_return": 0.20340808541932676,
+            "annual_volatility": 0.1733948822564607,
+            "days": 1240,
+            "max_drawdown": -0.21597422295591817,
+            "total_return": 1.4870392957199954
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.33327966960847255,
+            "annual_volatility": 0.20335200924917016,
+            "days": 599,
+            "max_drawdown": -0.17315822812842285,
+            "total_return": 0.9812343301584119
+          },
+          "recovery_2023": {
+            "annual_return": 0.3390776083774649,
+            "annual_volatility": 0.17932743622215125,
+            "days": 242,
+            "max_drawdown": -0.15571759406236452,
+            "total_return": 0.3236518587465991
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.2698172676526944,
+            "annual_volatility": 0.20578084830011092,
+            "days": 485,
+            "max_drawdown": -0.17315822812842285,
+            "total_return": 0.583655443054379
+          },
+          "train_2021_2023": {
+            "annual_return": 0.09350530893764741,
+            "annual_volatility": 0.139409848618171,
+            "days": 641,
+            "max_drawdown": -0.21597422295591817,
+            "total_return": 0.2552979008399987
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top5_vol18_ma250_riskoff": {
+        "key": "momentum_csi500_top5_vol18_ma250_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol18% benchmark MA250",
+        "overall": {
+          "annual_return": 0.17185567724931494,
+          "annual_volatility": 0.1706654703145651,
+          "days": 1240,
+          "max_drawdown": -0.20983304626507293,
+          "sharpe_ratio": 1.0069739176445949,
+          "total_return": 1.1822496937599993
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.11987110545270341,
+            "annual_volatility": 0.1278103785130628,
+            "days": 242,
+            "max_drawdown": -0.20983304626507293,
+            "total_return": -0.11540022707000042
+          },
+          "2023": {
+            "annual_return": 0.3366418839161198,
+            "annual_volatility": 0.17932370004319498,
+            "days": 242,
+            "max_drawdown": -0.15571518243345928,
+            "total_return": 0.32133965185009616
+          },
+          "2024": {
+            "annual_return": 0.2514362072612928,
+            "annual_volatility": 0.201355588887024,
+            "days": 242,
+            "max_drawdown": -0.12880879309809168,
+            "total_return": 0.24034725780581678
+          },
+          "2025": {
+            "annual_return": 0.1546486415684316,
+            "annual_volatility": 0.20107032637489114,
+            "days": 243,
+            "max_drawdown": -0.1292718763551367,
+            "total_return": 0.14873405762457392
+          },
+          "2026_ytd": {
+            "annual_return": 0.8174914590602547,
+            "annual_volatility": 0.19941889658260295,
+            "days": 114,
+            "max_drawdown": -0.10497429669990743,
+            "total_return": 0.3103290268726593
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.07452132768156716,
+            "annual_volatility": 0.09960559419188991,
+            "days": 399,
+            "max_drawdown": -0.20983304626507293,
+            "total_return": -0.11540022707000042
+          },
+          "full": {
+            "annual_return": 0.17185567724931494,
+            "annual_volatility": 0.1706654703145651,
+            "days": 1240,
+            "max_drawdown": -0.20983304626507293,
+            "total_return": 1.1822496937599993
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.30037987608057026,
+            "annual_volatility": 0.20114601992002293,
+            "days": 599,
+            "max_drawdown": -0.15827131213394818,
+            "total_return": 0.8669949782783084
+          },
+          "recovery_2023": {
+            "annual_return": 0.3366418839161198,
+            "annual_volatility": 0.17932370004319498,
+            "days": 242,
+            "max_drawdown": -0.15571518243345928,
+            "total_return": 0.32133965185009616
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.20196893227643886,
+            "annual_volatility": 0.20122853358758902,
+            "days": 485,
+            "max_drawdown": -0.15827131213394818,
+            "total_return": 0.4248291383227891
+          },
+          "train_2021_2023": {
+            "annual_return": 0.06325977596516674,
+            "annual_volatility": 0.13583025666749052,
+            "days": 641,
+            "max_drawdown": -0.20983304626507293,
+            "total_return": 0.1688567559900005
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 48
+      },
+      "momentum_csi500_top5_vol18_minmom5_riskoff": {
+        "key": "momentum_csi500_top5_vol18_minmom5_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol18% min_momentum 5%",
+        "overall": {
+          "annual_return": 0.18695891688520638,
+          "annual_volatility": 0.17559201981649725,
+          "days": 1240,
+          "max_drawdown": -0.20981873558920017,
+          "sharpe_ratio": 1.064734701956206,
+          "total_return": 1.3241857957199956
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.04607239374734018,
+            "annual_volatility": 0.13680284928285516,
+            "days": 242,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": -0.044285230640002005
+          },
+          "2023": {
+            "annual_return": 0.3371042337282453,
+            "annual_volatility": 0.17908982110324426,
+            "days": 242,
+            "max_drawdown": -0.15575366942157265,
+            "total_return": 0.32177856837551766
+          },
+          "2024": {
+            "annual_return": 0.23631727583783424,
+            "annual_volatility": 0.2165351124051443,
+            "days": 242,
+            "max_drawdown": -0.15313816770327926,
+            "total_return": 0.22595347229299612
+          },
+          "2025": {
+            "annual_return": 0.15768600833272006,
+            "annual_volatility": 0.2025036220060207,
+            "days": 243,
+            "max_drawdown": -0.12938633231473362,
+            "total_return": 0.15164780727834737
+          },
+          "2026_ytd": {
+            "annual_return": 0.7955139698796154,
+            "annual_volatility": 0.19788498696113432,
+            "days": 114,
+            "max_drawdown": -0.10646169742075395,
+            "total_return": 0.30313727101574006
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.028202523766729604,
+            "annual_volatility": 0.10654727219448445,
+            "days": 399,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": -0.044285230640002005
+          },
+          "full": {
+            "annual_return": 0.18695891688520638,
+            "annual_volatility": 0.17559201981649725,
+            "days": 1240,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": 1.3241857957199956
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.2923938140189253,
+            "annual_volatility": 0.2076896812005871,
+            "days": 599,
+            "max_drawdown": -0.15768671826858804,
+            "total_return": 0.8398560248996738
+          },
+          "recovery_2023": {
+            "annual_return": 0.3371042337282453,
+            "annual_volatility": 0.17908982110324426,
+            "days": 242,
+            "max_drawdown": -0.15575366942157265,
+            "total_return": 0.32177856837551766
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.1962747591417875,
+            "annual_volatility": 0.20963335395333005,
+            "days": 485,
+            "max_drawdown": -0.15768671826858804,
+            "total_return": 0.4118666281915042
+          },
+          "train_2021_2023": {
+            "annual_return": 0.09622112423269447,
+            "annual_volatility": 0.13883969844177313,
+            "days": 641,
+            "max_drawdown": -0.20981873558920017,
+            "total_return": 0.26324329961999604
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top5_vol20_riskoff": {
+        "key": "momentum_csi500_top5_vol20_riskoff",
+        "label": "CSI500 risk-off \u2014 top5 vol20% (baseline)",
+        "overall": {
+          "annual_return": 0.20209586743487806,
+          "annual_volatility": 0.18857382736672187,
+          "days": 1240,
+          "max_drawdown": -0.21494165005045263,
+          "sharpe_ratio": 1.0717068760653603,
+          "total_return": 1.4737234574199967
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.044143457673298525,
+            "annual_volatility": 0.1407377589228795,
+            "days": 242,
+            "max_drawdown": -0.21494165005045263,
+            "total_return": -0.0424294436400009
+          },
+          "2023": {
+            "annual_return": 0.38273752721605914,
+            "annual_volatility": 0.19317227720362745,
+            "days": 242,
+            "max_drawdown": -0.1579724670194883,
+            "total_return": 0.3650697380137229
+          },
+          "2024": {
+            "annual_return": 0.21415912306947948,
+            "annual_volatility": 0.22479681058900933,
+            "days": 242,
+            "max_drawdown": -0.1628282628968658,
+            "total_return": 0.2048454372248456
+          },
+          "2025": {
+            "annual_return": 0.176766969695477,
+            "annual_volatility": 0.22437065193602376,
+            "days": 243,
+            "max_drawdown": -0.14346569881227889,
+            "total_return": 0.16994598183038256
+          },
+          "2026_ytd": {
+            "annual_return": 0.9177369852598904,
+            "annual_volatility": 0.22178884550127956,
+            "days": 114,
+            "max_drawdown": -0.11949911550359804,
+            "total_return": 0.34254353348055555
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.027011150071927337,
+            "annual_volatility": 0.10961075782085386,
+            "days": 399,
+            "max_drawdown": -0.21494165005045263,
+            "total_return": -0.0424294436400009
+          },
+          "full": {
+            "annual_return": 0.20209586743487806,
+            "annual_volatility": 0.18857382736672187,
+            "days": 1240,
+            "max_drawdown": -0.21494165005045263,
+            "total_return": 1.4737234574199967
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.3078109278236947,
+            "annual_volatility": 0.2243611066708481,
+            "days": 599,
+            "max_drawdown": -0.17392255963351233,
+            "total_return": 0.8924548396973011
+          },
+          "recovery_2023": {
+            "annual_return": 0.38273752721605914,
+            "annual_volatility": 0.19317227720362745,
+            "days": 242,
+            "max_drawdown": -0.1579724670194883,
+            "total_return": 0.3650697380137229
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.19527829525252405,
+            "annual_volatility": 0.2245855076185537,
+            "days": 485,
+            "max_drawdown": -0.17392255963351233,
+            "total_return": 0.40960407800788023
+          },
+          "train_2021_2023": {
+            "annual_return": 0.11104527839632405,
+            "annual_volatility": 0.1472760838519766,
+            "days": 641,
+            "max_drawdown": -0.21494165005045263,
+            "total_return": 0.3071505884999979
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      },
+      "momentum_csi500_top8_vol18_riskoff": {
+        "key": "momentum_csi500_top8_vol18_riskoff",
+        "label": "CSI500 risk-off \u2014 top8 vol18% diversified",
+        "overall": {
+          "annual_return": 0.1665562276531074,
+          "annual_volatility": 0.16578969668029114,
+          "days": 1240,
+          "max_drawdown": -0.1951244198226849,
+          "sharpe_ratio": 1.004623513934611,
+          "total_return": 1.134117898369999
+        },
+        "period_metrics": {
+          "2022": {
+            "annual_return": -0.03883214276069258,
+            "annual_volatility": 0.12657442453467205,
+            "days": 242,
+            "max_drawdown": -0.1951244198226849,
+            "total_return": -0.037320311300000686
+          },
+          "2023": {
+            "annual_return": 0.26313233372444755,
+            "annual_volatility": 0.15675466541446917,
+            "days": 242,
+            "max_drawdown": -0.1418346637960064,
+            "total_return": 0.25147766805688243
+          },
+          "2024": {
+            "annual_return": 0.2447499036577292,
+            "annual_volatility": 0.19536170830499847,
+            "days": 242,
+            "max_drawdown": -0.10114779643184191,
+            "total_return": 0.2339825039158503
+          },
+          "2025": {
+            "annual_return": 0.1566612421776803,
+            "annual_volatility": 0.20722336464794586,
+            "days": 243,
+            "max_drawdown": -0.13546321894095892,
+            "total_return": 0.15066477840558812
+          },
+          "2026_ytd": {
+            "annual_return": 0.6305480209358332,
+            "annual_volatility": 0.19800376047094131,
+            "days": 114,
+            "max_drawdown": -0.08678736064993309,
+            "total_return": 0.24754342976606414
+          },
+          "bear_2021_2022": {
+            "annual_return": -0.023735587848665807,
+            "annual_volatility": 0.0985798980676614,
+            "days": 399,
+            "max_drawdown": -0.1951244198226849,
+            "total_return": -0.037320311300000686
+          },
+          "full": {
+            "annual_return": 0.1665562276531074,
+            "annual_volatility": 0.16578969668029114,
+            "days": 1240,
+            "max_drawdown": -0.1951244198226849,
+            "total_return": 1.134117898369999
+          },
+          "oos_2024_2026": {
+            "annual_return": 0.2719375173057188,
+            "annual_volatility": 0.20090479521676566,
+            "days": 599,
+            "max_drawdown": -0.14344238802177034,
+            "total_return": 0.7713871709535327
+          },
+          "recovery_2023": {
+            "annual_return": 0.26313233372444755,
+            "annual_volatility": 0.15675466541446917,
+            "days": 242,
+            "max_drawdown": -0.1418346637960064,
+            "total_return": 0.25147766805688243
+          },
+          "theme_2024_2025": {
+            "annual_return": 0.1998066937860039,
+            "annual_volatility": 0.2014044294241764,
+            "days": 485,
+            "max_drawdown": -0.14344238802177034,
+            "total_return": 0.4199002044247051
+          },
+          "train_2021_2023": {
+            "annual_return": 0.07598597792197981,
+            "annual_volatility": 0.12406230570979297,
+            "days": 641,
+            "max_drawdown": -0.1951244198226849,
+            "total_return": 0.20477213189999977
+          }
+        },
+        "profile_variant": "aggressive_research",
+        "rebalance_count": 50
+      }
+    }
+  },
+  "start": "2021-01-01",
+  "suite": "csi500_riskoff",
+  "thematic_reference": null
+}

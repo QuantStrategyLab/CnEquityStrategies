@@ -20,7 +20,16 @@ def test_resolve_momentum_stock_universe_liquid_top(monkeypatch: pytest.MonkeyPa
     assert len(result) == 60
 
 
-def test_momentum_cross_section_presets_declare_universe_mode():
+def test_csi500_riskoff_preset_count():
+    from cn_equity_strategies.strategies.industry_etf_rotation_presets import (
+        STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS,
+    )
+
+    assert len(STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS) >= 8
+    for preset in STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS.values():
+        assert preset["enable_benchmark_risk_off"] is True
+        assert preset["benchmark_symbol"] == "510300"
+
     from cn_equity_strategies.strategies.industry_etf_rotation_presets import (
         STOCK_MOMENTUM_CROSS_SECTION_PRESETS,
     )

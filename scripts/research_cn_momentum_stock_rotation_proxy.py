@@ -31,6 +31,7 @@ from cn_equity_strategies.research.momentum_stock_universe import (  # noqa: E40
 from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
     CONSERVATIVE_V1_PRESET,
     OPTICAL_COMPUTE_STOCK_SYMBOLS,
+    STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS,
     STOCK_MOMENTUM_CROSS_SECTION_PRESETS,
     STOCK_MOMENTUM_PROMOTION_GATE,
 )
@@ -67,7 +68,10 @@ def _select_presets(
     *,
     universe_mode: str | None,
     preset_keys: tuple[str, ...] | None,
+    suite: str | None = None,
 ) -> dict[str, dict[str, Any]]:
+    if suite == "csi500_riskoff":
+        return dict(STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS)
     if preset_keys:
         missing = [key for key in preset_keys if key not in STOCK_MOMENTUM_CROSS_SECTION_PRESETS]
         if missing:
@@ -85,11 +89,16 @@ def _select_presets(
     return dict(STOCK_MOMENTUM_CROSS_SECTION_PRESETS)
 
 
-def _download_history_for_preset(
+def _universe_cache_key(preset: dict[str, Any]) -> tuple[str, int]:
+    return (str(preset["universe_mode"]), int(preset.get("liquid_top_n") or 300))
+
+
+def _load_universe_bundle(
     preset: dict[str, Any],
     *,
-    start: str,
+    download_start: str,
     end: str,
+    start: str,
     max_symbols: int | None,
 ) -> tuple[pd.DataFrame, tuple[str, ...], tuple[str, ...]]:
     mode = str(preset["universe_mode"])
@@ -99,7 +108,7 @@ def _download_history_for_preset(
         candidate_universe = candidate_universe[: int(max_symbols)]
     extras = _extra_symbols_for_preset(preset)
     download_symbols = tuple(dict.fromkeys([*candidate_universe, *extras, BENCHMARK_SYMBOL]))
-    history = download_symbol_histories(download_symbols, start=start, end=end)
+    history = download_symbol_histories(download_symbols, start=download_start, end=end)
     active = active_stock_symbols_at_start(
         history,
         candidates=candidate_universe,
@@ -118,20 +127,26 @@ def run_momentum_stock_matrix(
     universe_mode: str | None = "csi500",
     preset_keys: tuple[str, ...] | None = None,
     max_symbols: int | None = None,
+    suite: str | None = None,
 ) -> dict[str, Any]:
-    preset_source = _select_presets(universe_mode=universe_mode, preset_keys=preset_keys)
+    preset_source = _select_presets(universe_mode=universe_mode, preset_keys=preset_keys, suite=suite)
     download_start = (pd.Timestamp(start) - pd.Timedelta(days=400)).date().isoformat()
 
     results: dict[str, dict[str, Any]] = {}
     universe_diagnostics: dict[str, Any] = {}
+    history_cache: dict[tuple[str, int], tuple[pd.DataFrame, tuple[str, ...], tuple[str, ...]]] = {}
 
     for key, preset in preset_source.items():
-        market_history, candidate_universe, active = _download_history_for_preset(
-            preset,
-            start=download_start,
-            end=end,
-            max_symbols=max_symbols,
-        )
+        cache_key = _universe_cache_key(preset)
+        if cache_key not in history_cache:
+            history_cache[cache_key] = _load_universe_bundle(
+                preset,
+                download_start=download_start,
+                end=end,
+                start=start,
+                max_symbols=max_symbols,
+            )
+        market_history, candidate_universe, active = history_cache[cache_key]
         if len(active) < (40 if max_symbols is not None else 80):
             raise ValueError(
                 f"{key}: insufficient active symbols at {start} ({len(active)}); "
@@ -156,9 +171,9 @@ def run_momentum_stock_matrix(
     return {
         "start": start,
         "end": end,
-        "track": "cross_section_momentum",
+        "track": "cross_section_momentum_riskoff" if suite == "csi500_riskoff" else "cross_section_momentum",
         "status": "research_only",
-        "default_universe_mode": universe_mode or "all_presets",
+        "default_universe_mode": suite or universe_mode or "all_presets",
         "conservative_etf_baseline": conservative,
         "variants": results,
         "promotion_review": promotion,
@@ -198,6 +213,12 @@ def _print_momentum_report(payload: dict[str, Any]) -> None:
     )
     print()
     rows = sorted(payload["variants"].values(), key=lambda item: item["overall"]["annual_return"], reverse=True)
+    if payload.get("track") == "cross_section_momentum_riskoff":
+        rows = sorted(
+            payload["variants"].values(),
+            key=lambda item: (item["overall"]["max_drawdown"], -item["overall"]["annual_return"]),
+            reverse=True,
+        )
     for index, row in enumerate(rows, start=1):
         overall = row["overall"]
         print(
@@ -206,6 +227,7 @@ def _print_momentum_report(payload: dict[str, Any]) -> None:
             f"total={overall['total_return']:7.2%}"
         )
     print("\n=== vs ETF conservative v1 (momentum stock gate) ===")
+    promoted = {item["key"] for item in payload["promotion_review"].get("promoted") or []}
     for item in payload["promotion_review"]["candidates"]:
         flag = "PASS" if item["passes_gate"] else "fail"
         reasons = ",".join(item.get("fail_reasons") or []) or "-"
@@ -213,6 +235,8 @@ def _print_momentum_report(payload: dict[str, Any]) -> None:
             f"  [{flag}] {item['key']:<36} oos_lift={item['oos_total_return_lift']:+7.2%} "
             f"mdd={item['overall_mdd']:7.2%} bearΔ={item.get('bear_vs_baseline')} reasons={reasons}"
         )
+    if promoted:
+        print("\nPromoted variants:", ", ".join(sorted(promoted)))
     if not rows:
         return
     best = rows[0]
@@ -254,10 +278,10 @@ def main() -> None:
         help="Default CSI500; all=run every cross-section preset (slow)",
     )
     parser.add_argument(
-        "--track",
-        choices=("momentum", "thematic", "both"),
+        "--suite",
+        choices=("momentum", "thematic", "both", "csi500_riskoff"),
         default="momentum",
-        help="momentum=cross-section; thematic=fixed 8-name sleeve; both=compare",
+        help="momentum=default csi500 presets; csi500_riskoff=CSI500 risk-off tuning matrix",
     )
     parser.add_argument(
         "--max-symbols",
@@ -271,16 +295,19 @@ def main() -> None:
     universe_mode = None if args.universe_mode == "all" else args.universe_mode
     momentum_payload = None
     thematic_payload = None
+    run_riskoff = args.suite == "csi500_riskoff"
+    run_momentum = args.suite in {"momentum", "both", "csi500_riskoff"}
 
-    if args.track in {"momentum", "both"}:
+    if run_momentum:
         momentum_payload = run_momentum_stock_matrix(
             start=args.start,
             end=args.end,
-            universe_mode=universe_mode,
+            universe_mode=universe_mode if not run_riskoff else "csi500",
             max_symbols=args.max_symbols,
+            suite="csi500_riskoff" if run_riskoff else None,
         )
         _print_momentum_report(momentum_payload)
-    if args.track in {"thematic", "both"}:
+    if args.suite in {"thematic", "both"}:
         thematic_payload = run_thematic_reference(start=args.start, end=args.end)
         from research_cn_thematic_stock_rotation_proxy import _print_report
 
@@ -291,7 +318,7 @@ def main() -> None:
     output = {
         "start": args.start,
         "end": args.end,
-        "track": args.track,
+        "suite": args.suite,
         "momentum": momentum_payload,
         "thematic_reference": thematic_payload,
     }

@@ -203,6 +203,43 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy
 
 JSON：`docs/research/cn_momentum_stock_csi500_full_20260628.json`
 
+### 3.8 CSI500 risk-off 调参矩阵（2021–2026，2026-06-28）
+
+**命令：**
+
+```bash
+PYTHONPATH=src:scripts python3 scripts/research_cn_momentum_stock_rotation_proxy.py \
+  --suite csi500_riskoff \
+  --json-output docs/research/cn_momentum_csi500_riskoff_tuning_20260628.json
+```
+
+**设置：** 432/500 只在 2021 初可交易；9 个 risk-off 变体共享一次行情下载。
+
+| Preset | 年化 | MDD | 总收益 | OOS 2024–26 | 2021–22 熊市 |
+|---|---:|---:|---:|---:|---:|
+| **vol15% gross75%（MDD 优选）** | **15.19%** | **-16.47%** | **+100.5%** | +62.5% | **-2.99%** |
+| vol16% gross80% | 16.03% | -17.50% | +107.8% | +66.6% | -3.2% |
+| vol18% gross85% | 17.87% | -18.74% | +124.6% | +74.7% | -3.5% |
+| vol18 MA120 risk-off | 20.34% | -21.60% | +148.7% | **+98.1%** | -5.0% |
+| vol20% baseline risk-off | 20.21% | -21.49% | +147.4% | +89.3% | -4.3% |
+| ETF conservative（对照） | 13.79% | -15.42% | +80.0% | +89.1% | -3.5% |
+
+**结论**
+
+- **压 MDD 目标达成：** `vol15 + gross75%` 将 MDD 拉到 **-16.5%**（接近 ETF -15.4%），熊市 **-2.99% 略优于 ETF**。
+- **OOS 代价：** 同一 preset OOS 仅 +62.5%（比 ETF +89% 低 ~27pp）——典型 **收益/防御 trade-off**。
+- **偏 OOS 的 risk-off：** `MA120` 或 `vol20` 维持 OOS ~+89–98%，但 MDD 仍在 **-21%** 量级。
+- **仍无 variant 过完整** `STOCK_MOMENTUM_PROMOTION_GATE`（OOS lift + MDD 双重要求同时满足很难）。
+- **研究默认 risk-off 候选：** `CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY` → `momentum_csi500_top5_vol15_gross75_riskoff`。
+
+**下一步（若继续压 MDD 且抬 OOS）**
+
+- 70% ETF conservative + 30% vol15 risk-off 个股 sleeve（组合层，非单策略）
+- PIT 成分 + 动态 vol scaling
+- 单票 weight cap 8%（需 core 支持）
+
+JSON：`docs/research/cn_momentum_csi500_riskoff_tuning_20260628.json`
+
 ### 3.5 更严格 promotion gate（个股）
 
 - **Cross-section 动量：** `STOCK_MOMENTUM_PROMOTION_GATE`（MDD ≥ -25%，熊市劣化 ≤10pp vs ETF）
