@@ -6,6 +6,7 @@ from cn_equity_strategies.catalog import (
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_EQUITY_DOMAIN,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+    CN_INDUSTRY_ETF_ROTATION_PROFILE,
     get_compatible_platforms,
     get_direct_market_history_profiles,
     get_external_snapshot_scaffold_profiles,
@@ -23,14 +24,22 @@ from cn_equity_strategies.catalog import (
 def test_catalog_declares_runtime_enabled_cn_strategies():
     catalog = get_strategy_definitions()
     assert set(catalog) == {
+        CN_INDUSTRY_ETF_ROTATION_PROFILE,
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
         CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     }
+
+    industry_definition = catalog[CN_INDUSTRY_ETF_ROTATION_PROFILE]
+    assert industry_definition.domain == CN_EQUITY_DOMAIN
+    assert industry_definition.required_inputs == frozenset({"market_history"})
+    assert get_compatible_platforms(CN_INDUSTRY_ETF_ROTATION_PROFILE) == frozenset({"qmt"})
+    assert get_strategy_metadata(CN_INDUSTRY_ETF_ROTATION_PROFILE).status == "runtime_enabled"
 
     etf_definition = catalog[CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE]
     assert etf_definition.domain == CN_EQUITY_DOMAIN
     assert etf_definition.required_inputs == frozenset({"market_history"})
     assert get_compatible_platforms(CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE) == frozenset({"qmt"})
+    assert get_strategy_metadata(CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE).status == "research_backtest_only"
 
     dividend_definition = catalog[CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE]
     assert dividend_definition.domain == CN_EQUITY_DOMAIN
@@ -44,21 +53,23 @@ def test_catalog_declares_runtime_enabled_cn_strategies():
 
 
 def test_profile_groups_keep_runtime_and_scaffolds_separate():
-    assert get_direct_market_history_profiles() == frozenset({CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE})
+    assert get_direct_market_history_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
     assert get_snapshot_backed_profiles() == frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
     assert get_external_snapshot_scaffold_profiles() == frozenset({"cn_small_cap_quality_snapshot"})
-    assert get_research_backtest_only_profiles() == frozenset()
+    assert get_research_backtest_only_profiles() == frozenset({CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE})
     assert get_runtime_enabled_profiles() == frozenset(
         {
-            CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+            CN_INDUSTRY_ETF_ROTATION_PROFILE,
             CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         }
     )
     assert get_external_snapshot_scaffold_profiles().isdisjoint(get_runtime_enabled_profiles())
+    assert get_research_backtest_only_profiles().isdisjoint(get_runtime_enabled_profiles())
 
 
 def test_canonical_profiles_resolve_without_legacy_aliases():
     assert get_profile_aliases() == {}
+    assert resolve_canonical_profile("cn-industry-etf-rotation") == CN_INDUSTRY_ETF_ROTATION_PROFILE
     assert resolve_canonical_profile("cn-index-etf-tactical-rotation") == CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE
     assert resolve_canonical_profile("cn-dividend-quality-snapshot") == CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE
 

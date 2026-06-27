@@ -70,16 +70,24 @@ def _history_slice(market_history: Any, as_of: pd.Timestamp) -> Any:
 
 
 def _rebalance_dates_from_index(index: pd.DatetimeIndex, *, frequency: str) -> list[pd.Timestamp]:
-    if frequency != "monthly":
-        raise ValueError("rebalance_frequency must be 'monthly'")
-    normalized = pd.Series(index).dt.normalize()
-    grouped = normalized.groupby([normalized.dt.year, normalized.dt.month]).max()
-    output: list[pd.Timestamp] = []
-    for value in grouped.sort_index():
-        day = pd.Timestamp(value).date()
-        if is_cn_equity_trading_day(day):
-            output.append(pd.Timestamp(value))
-    return output
+    if frequency == "monthly":
+        normalized = pd.Series(index).dt.normalize()
+        grouped = normalized.groupby([normalized.dt.year, normalized.dt.month]).max()
+        output: list[pd.Timestamp] = []
+        for value in grouped.sort_index():
+            day = pd.Timestamp(value).date()
+            if is_cn_equity_trading_day(day):
+                output.append(pd.Timestamp(value))
+        return output
+    if frequency == "biweekly":
+        output: list[pd.Timestamp] = []
+        last_index: int | None = None
+        for position, value in enumerate(index):
+            if last_index is None or position - last_index >= 10:
+                output.append(pd.Timestamp(value))
+                last_index = position
+        return output
+    raise ValueError("rebalance_frequency must be 'monthly' or 'biweekly'")
 
 
 def _portfolio_value(

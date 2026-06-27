@@ -4,8 +4,10 @@ from quant_platform_kit.strategy_contracts import StrategyManifest
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
+from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
+CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 
 
@@ -29,6 +31,37 @@ def _manifest(
         default_config=default_config or {},
     )
 
+
+cn_industry_etf_rotation_manifest = _manifest(
+    profile=CN_INDUSTRY_ETF_ROTATION_PROFILE,
+    domain=industry_etf_strategy.CN_EQUITY_DOMAIN,
+    display_name="CN Industry ETF Rotation",
+    description=(
+        "Monthly volatility-targeted rotation across pure A-share industry and domestic style ETFs "
+        "with momentum and trend filters; default pure-momentum mode without benchmark risk-off."
+    ),
+    aliases=(),
+    required_inputs=frozenset({"market_history"}),
+    default_config={
+        "universe_symbols": industry_etf_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": industry_etf_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": industry_etf_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "enable_benchmark_risk_off": industry_etf_strategy.DEFAULT_ENABLE_BENCHMARK_RISK_OFF,
+        "momentum_window_days": industry_etf_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": industry_etf_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": industry_etf_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": industry_etf_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": industry_etf_strategy.DEFAULT_TOP_N,
+        "min_momentum": industry_etf_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": industry_etf_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": industry_etf_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": industry_etf_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": industry_etf_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": industry_etf_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "sentiment_mode": industry_etf_strategy.DEFAULT_SENTIMENT_MODE,
+        "execution_cash_reserve_ratio": industry_etf_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+    },
+)
 
 cn_index_etf_tactical_rotation_manifest = _manifest(
     profile=CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
@@ -96,6 +129,7 @@ cn_dividend_quality_snapshot_manifest = _manifest(
 )
 
 MANIFESTS = {
+    cn_industry_etf_rotation_manifest.profile: cn_industry_etf_rotation_manifest,
     cn_index_etf_tactical_rotation_manifest.profile: cn_index_etf_tactical_rotation_manifest,
     cn_dividend_quality_snapshot_manifest.profile: cn_dividend_quality_snapshot_manifest,
 }
@@ -115,8 +149,10 @@ def get_strategy_manifest(profile: str) -> StrategyManifest:
 __all__ = [
     "CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE",
     "CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE",
+    "CN_INDUSTRY_ETF_ROTATION_PROFILE",
     "MANIFESTS",
     "get_strategy_manifest",
     "cn_dividend_quality_snapshot_manifest",
     "cn_index_etf_tactical_rotation_manifest",
+    "cn_industry_etf_rotation_manifest",
 ]
