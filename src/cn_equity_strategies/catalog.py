@@ -18,25 +18,34 @@ from quant_platform_kit.common.strategies import (
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
+from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
 
 CN_EQUITY_DOMAIN = index_etf_strategy.CN_EQUITY_DOMAIN
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
+CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE = industry_etf_aggressive_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 
 CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
 CN_SNAPSHOT_BACKED_PROFILES = frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
 CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES = frozenset({"cn_small_cap_quality_snapshot"})
-CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset({CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE})
+CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset(
+    {
+        CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+        CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
+    }
+)
 
 STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"qmt"}),
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"qmt"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
 }
 
 STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"market_history"}),
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"market_history"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
 }
@@ -58,8 +67,29 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "target_annual_volatility": industry_etf_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
         "max_gross_exposure": industry_etf_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
         "min_history_days": industry_etf_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "max_pair_correlation": industry_etf_strategy.DEFAULT_MAX_PAIR_CORRELATION,
         "sentiment_mode": industry_etf_strategy.DEFAULT_SENTIMENT_MODE,
         "execution_cash_reserve_ratio": industry_etf_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+    },
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: {
+        "universe_symbols": industry_etf_aggressive_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": industry_etf_aggressive_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": industry_etf_aggressive_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "enable_benchmark_risk_off": industry_etf_aggressive_strategy.DEFAULT_ENABLE_BENCHMARK_RISK_OFF,
+        "momentum_window_days": industry_etf_aggressive_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": industry_etf_aggressive_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": industry_etf_aggressive_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": industry_etf_aggressive_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": industry_etf_aggressive_strategy.DEFAULT_TOP_N,
+        "min_momentum": industry_etf_aggressive_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": industry_etf_aggressive_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": industry_etf_aggressive_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": industry_etf_aggressive_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": industry_etf_aggressive_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": industry_etf_aggressive_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "max_pair_correlation": industry_etf_aggressive_strategy.DEFAULT_MAX_PAIR_CORRELATION,
+        "sentiment_mode": industry_etf_aggressive_strategy.DEFAULT_SENTIMENT_MODE,
+        "execution_cash_reserve_ratio": industry_etf_aggressive_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
     },
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: {
         "universe_symbols": index_etf_strategy.DEFAULT_UNIVERSE_SYMBOLS,
@@ -106,12 +136,14 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
 
 STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: "cn_industry_etf_rotation_entrypoint",
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "cn_industry_etf_rotation_aggressive_entrypoint",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "cn_index_etf_tactical_rotation_entrypoint",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "cn_dividend_quality_snapshot_entrypoint",
 }
 
 STRATEGY_TARGET_MODES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: "weight",
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "weight",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "weight",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "weight",
 }
@@ -149,6 +181,11 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
         component_name="signal_logic",
         module_path="cn_equity_strategies.strategies.cn_industry_etf_rotation",
     ),
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: _build_strategy_definition(
+        CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_industry_etf_rotation_aggressive",
+    ),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: _build_strategy_definition(
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
         component_name="signal_logic",
@@ -166,8 +203,8 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         canonical_profile=CN_INDUSTRY_ETF_ROTATION_PROFILE,
         display_name="CN Industry ETF Rotation",
         description=(
-            "Runtime-enabled monthly volatility-targeted rotation across pure A-share industry "
-            "and domestic style ETFs with momentum and trend filters; default pure-momentum mode."
+            "Conservative v1 (runtime default): monthly pure-momentum rotation across 14 A-share "
+            "industry/style ETFs — top5, vol target 20%, sentiment off, benchmark risk-off off."
         ),
         aliases=(),
         cadence="monthly review",
@@ -175,6 +212,20 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         benchmark="510300",
         role="cn_non_snapshot_industry_etf_rotation",
         status="runtime_enabled",
+    ),
+    CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: StrategyMetadata(
+        canonical_profile=CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
+        display_name="CN Industry ETF Rotation Aggressive",
+        description=(
+            "Research-only aggressive v1 preset: full 14-ETF pool with vol target 25% and pure momentum; "
+            "passed OOS promotion gate vs conservative v1 — not a runtime default."
+        ),
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_listed_industry_etfs",
+        benchmark="510300",
+        role="cn_non_snapshot_industry_etf_rotation_aggressive",
+        status="research_backtest_only",
     ),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: StrategyMetadata(
         canonical_profile=CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,

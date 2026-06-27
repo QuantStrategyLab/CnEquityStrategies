@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from cn_equity_strategies.strategies import industry_etf_rotation_core as base
+from cn_equity_strategies.strategies.industry_etf_rotation_presets import CONSERVATIVE_V1_PRESET
 
 CN_EQUITY_DOMAIN = base.CN_EQUITY_DOMAIN
 SIGNAL_SOURCE = base.SIGNAL_SOURCE
@@ -26,6 +27,7 @@ DEFAULT_MIN_HISTORY_DAYS = base.DEFAULT_MIN_HISTORY_DAYS
 DEFAULT_ENABLE_BENCHMARK_RISK_OFF = base.DEFAULT_ENABLE_BENCHMARK_RISK_OFF
 DEFAULT_SENTIMENT_MODE = base.DEFAULT_SENTIMENT_MODE
 DEFAULT_EXECUTION_CASH_RESERVE_RATIO = base.DEFAULT_EXECUTION_CASH_RESERVE_RATIO
+DEFAULT_MAX_PAIR_CORRELATION = base.DEFAULT_MAX_PAIR_CORRELATION
 
 normalize_symbol = base.normalize_symbol
 normalize_universe_symbols = base.normalize_universe_symbols

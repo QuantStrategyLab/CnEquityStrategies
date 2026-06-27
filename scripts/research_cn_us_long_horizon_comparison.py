@@ -156,6 +156,7 @@ def _run_cn_rotation(
     *,
     universe: tuple[str, ...],
     sentiment_mode: Literal["off", "flow", "flow_crowding"] = "off",
+    target_annual_volatility: float = 0.20,
 ) -> ProxyBacktestResult:
     strategy_kwargs = {
         "min_history_days": industry_rotation.DEFAULT_MIN_HISTORY_DAYS,
@@ -164,7 +165,7 @@ def _run_cn_rotation(
         "sentiment_mode": sentiment_mode,
         "enable_benchmark_risk_off": False,
         "top_n": 5,
-        "target_annual_volatility": 0.20,
+        "target_annual_volatility": float(target_annual_volatility),
         "benchmark_symbol": None,
     }
 

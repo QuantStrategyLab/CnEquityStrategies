@@ -28,12 +28,12 @@ from cn_equity_strategies.backtest.proxy_simulator import (  # noqa: E402
 )
 
 from research_cn_dividend_quality_snapshot_proxy_backtest import (  # noqa: E402
-    DEFAULT_UNIVERSE,
     SAFE_HAVEN,
     build_market_history_from_downloads,
     build_monthly_factor_panel,
     run_snapshot_proxy_backtest,
 )
+from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_aggressive_rotation  # noqa: E402
 from research_cn_us_long_horizon_comparison import (  # noqa: E402
     CN_BENCHMARK,
     CN_UNIVERSE_FULL,
@@ -80,14 +80,24 @@ def run_dual_track_combo(
     industry_weight: float = DEFAULT_INDUSTRY_WEIGHT,
     dividend_weight: float = DEFAULT_DIVIDEND_WEIGHT,
     holdings_count: int = 4,
+    industry_profile: str = "conservative",
+    dividend_universe_mode: str = "staging",
+    expanded_top_n: int = 40,
+    refresh_sector_map: bool = False,
 ) -> dict[str, Any]:
     download_start = (pd.Timestamp(start) - pd.Timedelta(days=400)).date().isoformat()
     industry_history = _download_cn_history(start=download_start, end=end)
     industry_window = _window_with_warmup(industry_history, start, end)
+    target_vol = (
+        float(industry_aggressive_rotation.DEFAULT_TARGET_ANNUAL_VOLATILITY)
+        if industry_profile == "aggressive"
+        else 0.20
+    )
     industry_result = _run_cn_rotation(
         industry_window,
         universe=CN_UNIVERSE_FULL,
         sentiment_mode="off",
+        target_annual_volatility=target_vol,
     )
     industry_bench = run_proxy_backtest(
         industry_window,
@@ -97,12 +107,15 @@ def run_dual_track_combo(
     )
 
     dividend_panel, panel_diag = build_monthly_factor_panel(
-        symbols=DEFAULT_UNIVERSE,
         start=start,
         end=end,
+        universe_mode=dividend_universe_mode,
+        expanded_top_n=expanded_top_n,
+        refresh_sector_map=refresh_sector_map,
     )
+    dividend_universe = tuple(panel_diag["symbols"])
     dividend_history = build_market_history_from_downloads(
-        symbols=DEFAULT_UNIVERSE,
+        symbols=dividend_universe,
         start=start,
         end=end,
     )
@@ -146,8 +159,11 @@ def run_dual_track_combo(
             "industry_rotation": industry_weight,
             "dividend_quality": dividend_weight,
         },
+        "industry_profile": industry_profile,
+        "industry_vol_target": target_vol,
         "industry_universe": list(CN_UNIVERSE_FULL),
-        "dividend_universe": list(DEFAULT_UNIVERSE),
+        "dividend_universe": list(dividend_universe),
+        "dividend_universe_mode": dividend_universe_mode,
         "dividend_panel_diagnostics": panel_diag,
         "full_sample": {
             "combo": _metrics_from_returns(combo_slice),
@@ -170,8 +186,8 @@ def run_dual_track_combo(
         },
         "limitations": [
             "return-level blend (70/30) rather than unified multi-asset portfolio simulation",
-            "dividend leg uses staging universe (8 stocks + 510300)",
-            "industry leg uses full 14-ETF pool from 2021+",
+            f"industry leg profile={industry_profile} vol_target={target_vol:.0%}",
+            f"dividend leg uses universe_mode={dividend_universe_mode}",
         ],
     }
 
@@ -181,7 +197,8 @@ def _print_report(payload: dict[str, Any]) -> None:
     print("\n========== 双轨组合 proxy（行业 + 红利 quality）==========")
     print(
         f"权重: industry={weights['industry_rotation']:.0%} | "
-        f"dividend={weights['dividend_quality']:.0%}"
+        f"dividend={weights['dividend_quality']:.0%} | "
+        f"industry_profile={payload.get('industry_profile', 'conservative')}"
     )
     print(f"区间: {payload['start']} ~ {payload['end']}")
     full = payload["full_sample"]
@@ -224,6 +241,19 @@ def main() -> None:
     parser.add_argument("--industry-weight", type=float, default=DEFAULT_INDUSTRY_WEIGHT)
     parser.add_argument("--dividend-weight", type=float, default=DEFAULT_DIVIDEND_WEIGHT)
     parser.add_argument("--holdings-count", type=int, default=4)
+    parser.add_argument(
+        "--industry-profile",
+        choices=("conservative", "aggressive"),
+        default="conservative",
+        help="conservative=vol20%% production preset; aggressive=vol25%% research profile",
+    )
+    parser.add_argument(
+        "--dividend-universe-mode",
+        choices=("staging", "expanded", "custom"),
+        default="staging",
+    )
+    parser.add_argument("--expanded-top-n", type=int, default=40)
+    parser.add_argument("--refresh-sector-map", action="store_true")
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
 
@@ -233,6 +263,10 @@ def main() -> None:
         industry_weight=args.industry_weight,
         dividend_weight=args.dividend_weight,
         holdings_count=args.holdings_count,
+        industry_profile=args.industry_profile,
+        dividend_universe_mode=args.dividend_universe_mode,
+        expanded_top_n=args.expanded_top_n,
+        refresh_sector_map=args.refresh_sector_map,
     )
     _print_report(payload)
     if args.json_output:

@@ -22,6 +22,7 @@ from cn_equity_strategies import get_strategy_entrypoint  # noqa: E402
 from cn_equity_strategies.catalog import CN_INDUSTRY_ETF_ROTATION_PROFILE  # noqa: E402
 from cn_equity_strategies.runtime_adapters import describe_platform_runtime_requirements  # noqa: E402
 from cn_equity_strategies.strategies.cn_industry_etf_rotation import (  # noqa: E402
+    CONSERVATIVE_V1_PRESET,
     DEFAULT_UNIVERSE_SYMBOLS,
     extract_managed_symbols,
 )
@@ -63,7 +64,10 @@ def build_smoke_report() -> dict[str, object]:
         StrategyContext(
             as_of=SYNTHETIC_AS_OF,
             market_data={"market_history": build_synthetic_market_history()},
-            runtime_config={"min_history_days": 220, "sentiment_mode": "off"},
+            runtime_config={
+                "min_history_days": 220,
+                **{k: v for k, v in CONSERVATIVE_V1_PRESET.items() if k not in {"profile_variant", "label"}},
+            },
         )
     )
     target_weights = {
@@ -84,6 +88,8 @@ def build_smoke_report() -> dict[str, object]:
         "gross_exposure_lte_one": 0.0 < gross_exposure <= 1.0,
         "qmt_direct_inputs": requirements["input_mode"] == "market_history",
         "pure_momentum_mode": decision.diagnostics.get("sentiment_mode") == "off",
+        "conservative_v1_preset": decision.diagnostics.get("sentiment_mode") == CONSERVATIVE_V1_PRESET["sentiment_mode"]
+        and int(decision.diagnostics.get("top_n") or 0) == int(CONSERVATIVE_V1_PRESET["top_n"]),
         "excludes_global_gold": "513100" not in managed and "518880" not in managed,
         "covers_industry_universe": set(DEFAULT_UNIVERSE_SYMBOLS).issubset(managed),
         "top_n_respected": len(target_weights) <= 5,

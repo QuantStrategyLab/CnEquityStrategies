@@ -1,0 +1,240 @@
+{
+  "dividend_panel_diagnostics": {
+    "avg_active_symbols_per_month": 37.69298245614035,
+    "errors": {},
+    "min_active_symbols_per_month": 0,
+    "month_count": 113,
+    "row_count": 4410,
+    "sector_map_size": 5609,
+    "symbols": [
+      "600256",
+      "000937",
+      "002582",
+      "603565",
+      "600566",
+      "603519",
+      "000672",
+      "601666",
+      "002327",
+      "600546",
+      "603886",
+      "002271",
+      "300616",
+      "002088",
+      "601886",
+      "002572",
+      "600067",
+      "601919",
+      "601717",
+      "600295",
+      "000915",
+      "601168",
+      "601101",
+      "300737",
+      "002884",
+      "603303",
+      "600985",
+      "002563",
+      "600096",
+      "000683",
+      "603801",
+      "002233",
+      "603897",
+      "601088",
+      "601225",
+      "600894",
+      "603156",
+      "001299",
+      "601001",
+      "301003",
+      "510300"
+    ],
+    "universe_mode": "expanded"
+  },
+  "dividend_universe": [
+    "600256",
+    "000937",
+    "002582",
+    "603565",
+    "600566",
+    "603519",
+    "000672",
+    "601666",
+    "002327",
+    "600546",
+    "603886",
+    "002271",
+    "300616",
+    "002088",
+    "601886",
+    "002572",
+    "600067",
+    "601919",
+    "601717",
+    "600295",
+    "000915",
+    "601168",
+    "601101",
+    "300737",
+    "002884",
+    "603303",
+    "600985",
+    "002563",
+    "600096",
+    "000683",
+    "603801",
+    "002233",
+    "603897",
+    "601088",
+    "601225",
+    "600894",
+    "603156",
+    "001299",
+    "601001",
+    "301003",
+    "510300"
+  ],
+  "dividend_universe_mode": "expanded",
+  "end": "2026-06-27",
+  "full_sample": {
+    "510300_from_dividend_data": {
+      "annual_return": 0.033302527582288466,
+      "annual_volatility": 0.20173241871293457,
+      "days": 2300,
+      "max_drawdown": -0.44049344874707885,
+      "sharpe_ratio": 0.16508267632322396,
+      "total_return": 0.3485097510000068
+    },
+    "510300_from_industry_data": {
+      "annual_return": 0.06905465278702527,
+      "annual_volatility": 0.206768937088148,
+      "days": 2300,
+      "max_drawdown": -0.44050693463568147,
+      "sharpe_ratio": 0.33397014928594654,
+      "total_return": 0.8394233707981549
+    },
+    "combo": {
+      "annual_return": 0.1295104930554225,
+      "annual_volatility": 0.15894206272425812,
+      "days": 1147,
+      "max_drawdown": -0.15365418910759487,
+      "sharpe_ratio": 0.8148283143909161,
+      "total_return": 0.7407430926566008
+    },
+    "dividend_quality": {
+      "annual_return": 0.07539428844084473,
+      "annual_volatility": 0.21768325065805721,
+      "days": 2300,
+      "max_drawdown": -0.3362649697793788,
+      "sharpe_ratio": 0.3463485969312179,
+      "total_return": 0.9414138790500084
+    },
+    "industry_rotation": {
+      "annual_return": 0.14831110121877056,
+      "annual_volatility": 0.16994706174832952,
+      "days": 1147,
+      "max_drawdown": -0.15423708466756414,
+      "sharpe_ratio": 0.8726899994211189,
+      "total_return": 0.8765768131699967
+    }
+  },
+  "industry_profile": "aggressive",
+  "industry_universe": [
+    "159819",
+    "159995",
+    "512760",
+    "159994",
+    "159852",
+    "512170",
+    "515030",
+    "159792",
+    "512800",
+    "512690",
+    "159928",
+    "159915",
+    "588000",
+    "512100"
+  ],
+  "industry_vol_target": 0.25,
+  "limitations": [
+    "return-level blend (70/30) rather than unified multi-asset portfolio simulation",
+    "industry leg profile=aggressive vol_target=25%",
+    "dividend leg uses universe_mode=expanded"
+  ],
+  "periods": {
+    "2021_2022": {
+      "combo": {
+        "annual_return": -0.022098263658527073,
+        "annual_volatility": 0.09855214738005065,
+        "days": 306,
+        "max_drawdown": -0.1007437743492946,
+        "total_return": -0.026769701337887475
+      },
+      "dividend_quality": {
+        "annual_return": 0.07102047146140711,
+        "annual_volatility": 0.24619259090117782,
+        "days": 485,
+        "max_drawdown": -0.23101512056794893,
+        "total_return": 0.14116616509261526
+      },
+      "industry_rotation": {
+        "annual_return": -0.03574779237250547,
+        "annual_volatility": 0.0744478863387139,
+        "days": 306,
+        "max_drawdown": -0.11304686868275371,
+        "total_return": -0.04324019365000065
+      }
+    },
+    "2023_2026": {
+      "combo": {
+        "annual_return": 0.1903252321524962,
+        "annual_volatility": 0.17571295232044287,
+        "days": 841,
+        "max_drawdown": -0.15365418910759454,
+        "total_return": 0.7886240235734374
+      },
+      "dividend_quality": {
+        "annual_return": 0.10710270842138025,
+        "annual_volatility": 0.1788068636587581,
+        "days": 841,
+        "max_drawdown": -0.18057991439304122,
+        "total_return": 0.40432747584862194
+      },
+      "industry_rotation": {
+        "annual_return": 0.2236709906228136,
+        "annual_volatility": 0.19314687418636498,
+        "days": 841,
+        "max_drawdown": -0.15423708466756414,
+        "total_return": 0.9613875924920652
+      }
+    },
+    "full": {
+      "combo": {
+        "annual_return": 0.1295104930554225,
+        "annual_volatility": 0.15894206272425812,
+        "days": 1147,
+        "max_drawdown": -0.15365418910759487,
+        "total_return": 0.7407430926566008
+      },
+      "dividend_quality": {
+        "annual_return": 0.07539428844084473,
+        "annual_volatility": 0.21768325065805721,
+        "days": 2300,
+        "max_drawdown": -0.3362649697793788,
+        "total_return": 0.9414138790500084
+      },
+      "industry_rotation": {
+        "annual_return": 0.14831110121877056,
+        "annual_volatility": 0.16994706174832952,
+        "days": 1147,
+        "max_drawdown": -0.15423708466756414,
+        "total_return": 0.8765768131699967
+      }
+    }
+  },
+  "start": "2017-01-01",
+  "weights": {
+    "dividend_quality": 0.3,
+    "industry_rotation": 0.7
+  }
+}

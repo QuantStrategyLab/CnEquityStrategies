@@ -39,8 +39,13 @@ from cn_equity_snapshot_pipelines.akshare_enrichment import (  # noqa: E402
     normalize_symbol as pipeline_normalize_symbol,
     stamp_as_of,
 )
+from cn_equity_snapshot_pipelines.akshare_metadata import (  # noqa: E402
+    build_symbol_sector_map,
+    lookup_sector,
+)
 from cn_equity_snapshot_pipelines.akshare_staging import (  # noqa: E402
     DEFAULT_STAGING_SYMBOLS,
+    resolve_universe_symbols,
 )
 from quant_platform_kit.common.cn_equity_calendar import (  # noqa: E402
     add_cn_equity_trading_days,
@@ -49,6 +54,24 @@ from quant_platform_kit.common.cn_equity_calendar import (  # noqa: E402
 
 SAFE_HAVEN = dividend_strategy.SAFE_HAVEN
 DEFAULT_UNIVERSE = tuple(dict.fromkeys([*DEFAULT_STAGING_SYMBOLS, SAFE_HAVEN]))
+
+
+def resolve_research_universe(
+    ak: Any,
+    fhps_table: pd.DataFrame,
+    *,
+    universe_mode: str = "staging",
+    expanded_top_n: int = 40,
+    custom_symbols: tuple[str, ...] | None = None,
+) -> tuple[str, ...]:
+    stock_symbols = resolve_universe_symbols(
+        ak,
+        fhps_table,
+        mode=universe_mode,
+        custom_symbols=custom_symbols,
+        expanded_top_n=expanded_top_n,
+    )
+    return tuple(dict.fromkeys([*stock_symbols, SAFE_HAVEN]))
 
 
 @dataclass(frozen=True)
@@ -153,7 +176,7 @@ def _build_factor_row_as_of(
     hist_slice = _slice_hist(stock_hist, as_of)
     if hist_slice.empty:
         raise ValueError(f"no price history for {normalized} as of {as_of.date()}")
-    price = compute_price_features(hist_slice)
+    price = compute_price_features(hist_slice, as_of=as_of.date())
     financial_slice = _slice_financials(financials, as_of)
     financial_features = compute_financial_features(financial_slice)
     dividend_stability_3y = compute_dividend_stability(_slice_dividends(dividends, as_of))
@@ -178,7 +201,7 @@ def _safe_haven_factor_row(as_of: pd.Timestamp, etf_hist: pd.DataFrame) -> dict[
     hist_slice = _slice_hist(etf_hist, as_of)
     if hist_slice.empty:
         raise ValueError(f"no ETF history for {SAFE_HAVEN} as of {as_of.date()}")
-    price = compute_price_features(hist_slice)
+    price = compute_price_features(hist_slice, as_of=as_of.date())
     return {
         "symbol": SAFE_HAVEN,
         "sector": "benchmark",
@@ -200,22 +223,102 @@ def _safe_haven_factor_row(as_of: pd.Timestamp, etf_hist: pd.DataFrame) -> dict[
     }
 
 
-def build_monthly_factor_panel(
+def _symbol_has_price_at(hist: pd.DataFrame, as_of: pd.Timestamp, *, min_rows: int = 20) -> bool:
+    sliced = _slice_hist(hist, as_of)
+    return len(sliced) >= int(min_rows)
+
+
+def _active_stock_symbols_as_of(
+    stock_symbols: tuple[str, ...],
+    stock_histories: Mapping[str, pd.DataFrame],
+    as_of: pd.Timestamp,
+    *,
+    min_rows: int = 20,
+) -> tuple[str, ...]:
+    output: list[str] = []
+    for symbol in stock_symbols:
+        normalized = pipeline_normalize_symbol(symbol)
+        hist = stock_histories.get(normalized)
+        if hist is None or hist.empty:
+            continue
+        if _symbol_has_price_at(hist, as_of, min_rows=min_rows):
+            output.append(normalized)
+    return tuple(output)
+
+
+def _build_close_matrix(
+    market_history: pd.DataFrame,
     *,
     symbols: tuple[str, ...],
+    calendar_symbol: str = SAFE_HAVEN,
+) -> pd.DataFrame:
+    """Build wide close matrix; calendar follows ``calendar_symbol`` without requiring all names each day."""
+    frame = market_history.copy()
+    frame["symbol"] = frame["symbol"].map(normalize_symbol)
+    close = (
+        frame.loc[frame["symbol"].isin(symbols)]
+        .pivot_table(index="date", columns="symbol", values="close", aggfunc="last")
+        .sort_index()
+    )
+    ordered = [symbol for symbol in symbols if symbol in close.columns]
+    if not ordered:
+        raise ValueError("market_history has no requested symbols")
+    close = close.loc[:, ordered].ffill()
+    anchor = calendar_symbol if calendar_symbol in close.columns else ordered[0]
+    close = close.loc[close[anchor].notna() & (close[anchor] > 0)]
+    if close.empty:
+        raise ValueError(f"market_history has no trading days for calendar symbol {anchor}")
+    return close
+
+
+def _day_prices(close: pd.DataFrame, day_ts: pd.Timestamp) -> dict[str, float]:
+    prices: dict[str, float] = {}
+    if day_ts not in close.index:
+        return prices
+    row = close.loc[day_ts]
+    for symbol, value in row.items():
+        if pd.notna(value) and float(value) > 0:
+            prices[str(symbol)] = float(value)
+    return prices
+
+
+def build_monthly_factor_panel(
+    *,
+    symbols: tuple[str, ...] | None = None,
     start: str,
     end: str,
+    universe_mode: str = "staging",
+    expanded_top_n: int = 40,
+    custom_symbols: tuple[str, ...] | None = None,
+    refresh_sector_map: bool = False,
+    sector_map: dict[str, str] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     import akshare as ak
 
-    stock_symbols = tuple(symbol for symbol in symbols if symbol != SAFE_HAVEN)
-    diagnostics: dict[str, object] = {"symbols": list(symbols), "errors": {}}
-
     fhps_table = _fetch_fhps_table(ak)
+    if symbols is None:
+        symbols = resolve_research_universe(
+            ak,
+            fhps_table,
+            universe_mode=universe_mode,
+            expanded_top_n=expanded_top_n,
+            custom_symbols=custom_symbols,
+        )
+
+    stock_symbols = tuple(symbol for symbol in symbols if symbol != SAFE_HAVEN)
+    diagnostics: dict[str, object] = {
+        "symbols": list(symbols),
+        "universe_mode": universe_mode,
+        "errors": {},
+    }
+
+    if sector_map is None:
+        sector_map = build_symbol_sector_map(ak, force_refresh=refresh_sector_map)
+    diagnostics["sector_map_size"] = int(len(sector_map))
+
     stock_histories: dict[str, pd.DataFrame] = {}
     financials_map: dict[str, pd.DataFrame] = {}
     dividends_map: dict[str, pd.DataFrame] = {}
-    sector_map: dict[str, str] = {}
     for symbol in stock_symbols:
         normalized = pipeline_normalize_symbol(symbol)
         try:
@@ -225,13 +328,6 @@ def build_monthly_factor_panel(
                 start_year=str(pd.Timestamp(start).year - 4),
             )
             dividends_map[normalized] = ak.stock_history_dividend_detail(symbol=normalized, indicator="分红")
-            try:
-                profile = ak.stock_profile_cninfo(symbol=normalized)
-                sector_map[normalized] = (
-                    str(profile.iloc[0]["所属行业"]).strip() if not profile.empty and "所属行业" in profile.columns else "unknown"
-                )
-            except Exception:
-                sector_map[normalized] = "unknown"
         except Exception as exc:
             diagnostics["errors"][normalized] = str(exc)
 
@@ -239,17 +335,24 @@ def build_monthly_factor_panel(
     if etf_hist.empty:
         raise ValueError(f"failed to download ETF history for {SAFE_HAVEN}")
 
-    combined = pd.concat([frame.assign(_symbol=symbol) for symbol, frame in stock_histories.items()])
-    all_dates = pd.to_datetime(combined["日期"], errors="coerce").dropna().dt.normalize().sort_values().unique()
-    trading_index = pd.DatetimeIndex(all_dates)
+    etf_dates = pd.to_datetime(etf_hist["日期"], errors="coerce").dropna().dt.normalize().sort_values().unique()
+    trading_index = pd.DatetimeIndex(etf_dates)
     month_ends = _month_end_rebalance_dates(trading_index)
     month_ends = [day for day in month_ends if pd.Timestamp(start) <= day <= pd.Timestamp(end)]
 
+    min_panel_history_rows = 20
+    active_counts: list[int] = []
     rows: list[dict[str, object]] = []
     for as_of in month_ends:
+        active_symbols = _active_stock_symbols_as_of(
+            stock_symbols,
+            stock_histories,
+            as_of,
+            min_rows=min_panel_history_rows,
+        )
+        active_counts.append(len(active_symbols))
         month_rows: list[dict[str, object]] = []
-        for symbol in stock_symbols:
-            normalized = pipeline_normalize_symbol(symbol)
+        for normalized in active_symbols:
             hist = stock_histories.get(normalized)
             if hist is None or hist.empty:
                 continue
@@ -263,15 +366,20 @@ def build_monthly_factor_panel(
                         stock_hist=hist,
                         financials=financials_map.get(normalized, pd.DataFrame()),
                         dividends=dividends_map.get(normalized, pd.DataFrame()),
-                        sector=sector_map.get(normalized, "unknown"),
+                        sector=lookup_sector(normalized, sector_map),
                     )
                 )
             except Exception as exc:
                 diagnostics.setdefault("month_errors", {})[f"{normalized}@{as_of.date()}"] = str(exc)
-        if month_rows:
+        if not month_rows:
+            continue
+        try:
             month_rows.append(_safe_haven_factor_row(as_of, etf_hist))
-            stamped = stamp_as_of(pd.DataFrame(month_rows, columns=list(FACTOR_SNAPSHOT_COLUMNS)), as_of=as_of.date().isoformat())
-            rows.extend(stamped.to_dict(orient="records"))
+        except Exception as exc:
+            diagnostics.setdefault("month_errors", {})[f"{SAFE_HAVEN}@{as_of.date()}"] = str(exc)
+            continue
+        stamped = stamp_as_of(pd.DataFrame(month_rows, columns=list(FACTOR_SNAPSHOT_COLUMNS)), as_of=as_of.date().isoformat())
+        rows.extend(stamped.to_dict(orient="records"))
 
     if not rows:
         raise ValueError("factor panel is empty; check AkShare downloads and date range")
@@ -280,6 +388,10 @@ def build_monthly_factor_panel(
     panel["as_of"] = pd.to_datetime(panel["as_of"], errors="coerce").dt.normalize()
     diagnostics["month_count"] = int(panel["as_of"].nunique())
     diagnostics["row_count"] = int(len(panel))
+    diagnostics["avg_active_symbols_per_month"] = (
+        float(sum(active_counts) / len(active_counts)) if active_counts else 0.0
+    )
+    diagnostics["min_active_symbols_per_month"] = int(min(active_counts)) if active_counts else 0
     return panel, diagnostics
 
 
@@ -311,21 +423,6 @@ def build_market_history_from_downloads(
     output = pd.DataFrame(rows)
     output["date"] = pd.to_datetime(output["date"], utc=False).dt.tz_localize(None).dt.normalize()
     return output.sort_values(["date", "symbol"]).reset_index(drop=True)
-
-
-def _build_close_matrix(market_history: pd.DataFrame, *, symbols: tuple[str, ...]) -> pd.DataFrame:
-    frame = market_history.copy()
-    frame["symbol"] = frame["symbol"].map(normalize_symbol)
-    close = (
-        frame.loc[frame["symbol"].isin(symbols)]
-        .pivot_table(index="date", columns="symbol", values="close", aggfunc="last")
-        .sort_index()
-    )
-    close = close.loc[:, [symbol for symbol in symbols if symbol in close.columns]].ffill().dropna(how="any")
-    close = close.loc[(close > 0).all(axis=1)]
-    if close.empty:
-        raise ValueError("market_history has no overlapping close history")
-    return close
 
 
 def run_snapshot_proxy_backtest(
@@ -382,13 +479,9 @@ def run_snapshot_proxy_backtest(
 
     for day in index:
         day_ts = pd.Timestamp(day)
-        prices = {symbol: float(close.loc[day_ts, symbol]) for symbol in close.columns}
+        prices = _day_prices(close, day_ts)
         prev_day_pos = index.get_loc(day_ts) - 1
-        prev_prices = (
-            {symbol: float(close.iloc[prev_day_pos][symbol]) for symbol in close.columns}
-            if prev_day_pos >= 0
-            else prices
-        )
+        prev_prices = _day_prices(close, pd.Timestamp(index[prev_day_pos])) if prev_day_pos >= 0 else prices
 
         execution_due = False
         if pending_targets is not None and pending_signal_day is not None:
@@ -527,20 +620,47 @@ def main() -> None:
     parser.add_argument("--start", default="2021-01-01")
     parser.add_argument("--end", default="2026-06-27")
     parser.add_argument("--holdings-count", type=int, default=4)
+    parser.add_argument(
+        "--universe-mode",
+        choices=("staging", "expanded", "custom"),
+        default="staging",
+        help="staging=8-symbol default; expanded=fhps dividend-yield pool; custom=use --symbols",
+    )
+    parser.add_argument("--expanded-top-n", type=int, default=40)
+    parser.add_argument("--refresh-sector-map", action="store_true")
+    parser.add_argument(
+        "--symbols",
+        default=",".join(DEFAULT_STAGING_SYMBOLS),
+        help="Used when --universe-mode=custom (510300 is appended automatically)",
+    )
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
+
+    custom_symbols: tuple[str, ...] | None = None
+    if args.universe_mode == "custom":
+        custom_symbols = tuple(
+            dict.fromkeys(
+                pipeline_normalize_symbol(item)
+                for item in args.symbols.split(",")
+                if pipeline_normalize_symbol(item)
+            )
+        )
 
     strategy_kwargs = {
         "holdings_count": int(args.holdings_count),
     }
 
     panel, panel_diag = build_monthly_factor_panel(
-        symbols=DEFAULT_UNIVERSE,
         start=args.start,
         end=args.end,
+        universe_mode=args.universe_mode,
+        expanded_top_n=args.expanded_top_n,
+        custom_symbols=custom_symbols,
+        refresh_sector_map=args.refresh_sector_map,
     )
+    universe = tuple(panel_diag["symbols"])
     market_history = build_market_history_from_downloads(
-        symbols=DEFAULT_UNIVERSE,
+        symbols=universe,
         start=args.start,
         end=args.end,
     )
@@ -561,7 +681,8 @@ def main() -> None:
         "profile": dividend_strategy.PROFILE_NAME,
         "start": args.start,
         "end": args.end,
-        "universe": list(DEFAULT_UNIVERSE),
+        "universe": list(universe),
+        "universe_mode": args.universe_mode,
         "panel_diagnostics": panel_diag,
         "strategy_full": strategy.metrics,
         "benchmark_510300_full": benchmark.metrics,
@@ -573,14 +694,18 @@ def main() -> None:
             for key, (pstart, pend) in periods.items()
         },
         "limitations": [
-            "staging universe only (8 stocks + 510300), not full A-share dividend pool",
+            f"universe_mode={args.universe_mode}; expanded pool uses fhps dividend-yield filter, not full A-share",
             "fhps table uses latest available report table, not fully point-in-time report selection",
-            "evidence gate only; not promotion-ready without expanded universe + PIT fhps",
+            "proxy uses 510300 calendar + per-symbol ffill; monthly panel filters symbols with price history at as_of",
+            "evidence gate only; not promotion-ready without PIT fhps and live data validation",
         ],
     }
 
     print("\n========== P3.5 cn_dividend_quality_snapshot proxy ==========")
-    print(f"universe: {len(DEFAULT_UNIVERSE)} symbols | months: {panel_diag.get('month_count')}")
+    print(
+        f"universe: {len(universe)} symbols ({args.universe_mode}) | "
+        f"months: {panel_diag.get('month_count')}"
+    )
     sm = output["strategy_full"]
     bm = output["benchmark_510300_full"]
     print(
