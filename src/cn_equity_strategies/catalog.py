@@ -17,27 +17,50 @@ from quant_platform_kit.common.strategies import (
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
+from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 
 CN_EQUITY_DOMAIN = index_etf_strategy.CN_EQUITY_DOMAIN
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
+CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 
-CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE})
+CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
 CN_SNAPSHOT_BACKED_PROFILES = frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
 CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES = frozenset({"cn_small_cap_quality_snapshot"})
-CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset()
+CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset({CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE})
 
 STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
 }
 
 STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
 }
 
 STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: {
+        "universe_symbols": industry_etf_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": industry_etf_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": industry_etf_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "enable_benchmark_risk_off": industry_etf_strategy.DEFAULT_ENABLE_BENCHMARK_RISK_OFF,
+        "momentum_window_days": industry_etf_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": industry_etf_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": industry_etf_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": industry_etf_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": industry_etf_strategy.DEFAULT_TOP_N,
+        "min_momentum": industry_etf_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": industry_etf_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": industry_etf_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": industry_etf_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": industry_etf_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": industry_etf_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "sentiment_mode": industry_etf_strategy.DEFAULT_SENTIMENT_MODE,
+        "execution_cash_reserve_ratio": industry_etf_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+    },
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: {
         "universe_symbols": index_etf_strategy.DEFAULT_UNIVERSE_SYMBOLS,
         "defensive_symbols": index_etf_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
@@ -82,11 +105,13 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
 }
 
 STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: "cn_industry_etf_rotation_entrypoint",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "cn_index_etf_tactical_rotation_entrypoint",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "cn_dividend_quality_snapshot_entrypoint",
 }
 
 STRATEGY_TARGET_MODES: dict[str, str] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: "weight",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "weight",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "weight",
 }
@@ -119,6 +144,11 @@ def _build_strategy_definition(
 
 
 STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: _build_strategy_definition(
+        CN_INDUSTRY_ETF_ROTATION_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_industry_etf_rotation",
+    ),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: _build_strategy_definition(
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
         component_name="signal_logic",
@@ -132,19 +162,33 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
 }
 
 STRATEGY_METADATA: dict[str, StrategyMetadata] = {
+    CN_INDUSTRY_ETF_ROTATION_PROFILE: StrategyMetadata(
+        canonical_profile=CN_INDUSTRY_ETF_ROTATION_PROFILE,
+        display_name="CN Industry ETF Rotation",
+        description=(
+            "Runtime-enabled monthly volatility-targeted rotation across pure A-share industry "
+            "and domestic style ETFs with momentum and trend filters; default pure-momentum mode."
+        ),
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_listed_industry_etfs",
+        benchmark="510300",
+        role="cn_non_snapshot_industry_etf_rotation",
+        status="runtime_enabled",
+    ),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: StrategyMetadata(
         canonical_profile=CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
         display_name="CN Index ETF Tactical Rotation",
         description=(
-            "Runtime-enabled volatility-targeted rotation across A-share listed broad index, "
-            "sector, and cross-market ETFs with CSI300 benchmark risk-off defensive switching."
+            "Legacy volatility-targeted rotation across broad index, sector, and cross-market ETFs "
+            "with CSI300 benchmark risk-off defensive switching; retained for research/backtest only."
         ),
         aliases=(),
         cadence="monthly review",
         asset_scope="cn_listed_index_etfs",
         benchmark="510300",
         role="cn_non_snapshot_index_etf_rotation",
-        status="runtime_enabled",
+        status="research_backtest_only",
     ),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: StrategyMetadata(
         canonical_profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,

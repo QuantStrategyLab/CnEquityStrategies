@@ -336,7 +336,12 @@ def compute_latest_signal(
         raise ValueError("max_gross_exposure must be positive")
 
     offensive_symbols = normalize_universe_symbols(universe_symbols)
-    defensive = normalize_universe_symbols(defensive_symbols or DEFAULT_DEFENSIVE_SYMBOLS)
+    if defensive_symbols is None:
+        defensive = normalize_universe_symbols(DEFAULT_DEFENSIVE_SYMBOLS)
+    elif defensive_symbols:
+        defensive = normalize_universe_symbols(defensive_symbols)
+    else:
+        defensive = ()
     benchmark = normalize_symbol(benchmark_symbol) if benchmark_symbol else None
 
     close = build_close_matrix(
