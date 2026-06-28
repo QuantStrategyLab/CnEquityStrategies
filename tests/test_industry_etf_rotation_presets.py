@@ -39,7 +39,8 @@ def test_stock_risk_presets_lower_vol_or_add_controls():
 
 def test_aggressive_promotion_checklist_targets_registered_profile():
     assert AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST["target_profile"] == "cn_industry_etf_rotation_aggressive"
-    assert AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST["recommended_rollout"] == "optional_target"
+    assert AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST["status"] == "runtime_enabled"
+    assert AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST["promoted_at"] == "2026-06-28"
 
 
 def test_dual_track_combo_presets_declare_weights():

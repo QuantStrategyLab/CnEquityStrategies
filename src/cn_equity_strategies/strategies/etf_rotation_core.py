@@ -216,12 +216,11 @@ def apply_portfolio_volatility_target(
     if not selected_symbols:
         return dict(weights), 0.0
 
-    covariance = returns.loc[:, selected_symbols].tail(int(volatility_window_days)).cov() * 252
-    portfolio_variance = 0.0
-    for left in selected_symbols:
-        for right in selected_symbols:
-            portfolio_variance += float(weights[left]) * float(weights[right]) * float(covariance.loc[left, right])
-    realized_volatility = math.sqrt(max(portfolio_variance, 0.0))
+    sub_returns = returns.loc[:, selected_symbols].tail(int(volatility_window_days))
+    cov_matrix = sub_returns.cov() * 252
+    weight_vec = pd.Series({s: float(weights[s]) for s in selected_symbols})
+    portfolio_variance = float(weight_vec.dot(cov_matrix).dot(weight_vec))
+    realized_volatility = math.sqrt(max(portfolio_variance, 1e-10))
 
     gross_exposure = sum(float(value) for value in weights.values())
     scale = min(1.0, float(max_gross_exposure) / max(gross_exposure, 1e-12))

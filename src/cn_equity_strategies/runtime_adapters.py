@@ -8,19 +8,25 @@ from quant_platform_kit.strategy_contracts import (
 )
 
 from cn_equity_strategies.catalog import (
+    CN_CSI500_MULTI_FACTOR_SNAPSHOT_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_EQUITY_COMBO_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
+    CN_STOCK_MOMENTUM_ROTATION_PROFILE,
     get_qmt_rollout_allowlist,
     get_strategy_definition,
     get_strategy_definitions,
     resolve_canonical_profile,
 )
+from cn_equity_strategies.strategies import cn_csi500_multi_factor_snapshot as csi500_multi_factor_strategy
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
+from cn_equity_strategies.strategies import cn_equity_combo as combo_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
+from cn_equity_strategies.strategies import cn_stock_momentum_rotation as stock_momentum_strategy
 
 QMT_PLATFORM = "qmt"
 SUPPORTED_RUNTIME_PLATFORMS = frozenset({QMT_PLATFORM})
@@ -49,6 +55,22 @@ BASE_RUNTIME_ADAPTERS: dict[str, StrategyRuntimeAdapter] = {
         require_snapshot_manifest=dividend_quality_strategy.REQUIRE_SNAPSHOT_MANIFEST,
         snapshot_contract_version=dividend_quality_strategy.SNAPSHOT_CONTRACT_VERSION,
         managed_symbols_extractor=dividend_quality_strategy.extract_managed_symbols,
+    ),
+    CN_STOCK_MOMENTUM_ROTATION_PROFILE: StrategyRuntimeAdapter(
+        status_icon=stock_momentum_strategy.STATUS_ICON,
+        managed_symbols_extractor=stock_momentum_strategy.extract_managed_symbols,
+    ),
+    CN_CSI500_MULTI_FACTOR_SNAPSHOT_PROFILE: StrategyRuntimeAdapter(
+        status_icon=csi500_multi_factor_strategy.STATUS_ICON,
+        available_inputs=frozenset({"feature_snapshot"}),
+        required_feature_columns=csi500_multi_factor_strategy.REQUIRED_FACTOR_COLUMNS,
+        require_snapshot_manifest=csi500_multi_factor_strategy.REQUIRE_SNAPSHOT_MANIFEST,
+        snapshot_contract_version=csi500_multi_factor_strategy.SNAPSHOT_CONTRACT_VERSION,
+        managed_symbols_extractor=csi500_multi_factor_strategy.extract_managed_symbols,
+    ),
+    CN_EQUITY_COMBO_PROFILE: StrategyRuntimeAdapter(
+        status_icon=combo_strategy.STATUS_ICON,
+        managed_symbols_extractor=combo_strategy.extract_managed_symbols,
     ),
 }
 

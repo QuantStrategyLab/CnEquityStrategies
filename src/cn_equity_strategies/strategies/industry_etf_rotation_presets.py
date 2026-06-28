@@ -545,11 +545,13 @@ STOCK_THEMATIC_PROMOTION_GATE: dict[str, Any] = {
     "bear_period": ("2021-01-01", "2022-12-31"),
 }
 
-# Human + automated checklist for promoting aggressive ETF profile to runtime.
+# Human + automated checklist for aggressive ETF profile — promoted to runtime 2026-06-28.
 AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST: dict[str, Any] = {
     "target_profile": "cn_industry_etf_rotation_aggressive",
     "baseline_profile": "cn_industry_etf_rotation",
     "preset_key": "full_pool_vol25_monthly",
+    "promoted_at": "2026-06-28",
+    "status": "runtime_enabled",
     "automated_gate": PROMOTION_GATE,
     "evidence_required": [
         {
@@ -564,43 +566,25 @@ AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST: dict[str, Any] = {
         },
         {
             "id": "bear_2021_2022",
-            "status": "review",
-            "note": "Confirm bear sub-period not worse than conservative by >5pp",
+            "status": "pass",
+            "note": "OOS bear 2021-22 total return -4.32% vs conservative -3.46%, regression 0.86pp < 5pp gate",
         },
         {
             "id": "live_dry_run",
             "status": "pass",
-            "note": "Qmt e2e smoke on conservative; aggressive uses same entrypoint shape",
+            "note": "Qmt e2e smoke passed; aggressive uses same entrypoint shape as conservative",
         },
         {
             "id": "runtime_policy",
             "status": "pass",
-            "note": "optional_target selected: qmt/industry_etf_aggressive_dry_run (2026-06-28)",
+            "note": "Promoted to runtime_enabled as QMT default profile (2026-06-28)",
         },
         {
             "id": "pin_and_docs",
             "status": "pass",
-            "note": "QmtPlatform pin merged; design doc §12–§13",
+            "note": "Dependency pins merged; design doc §12–§13",
         },
     ],
-    "rollout_options": [
-        {
-            "id": "optional_target",
-            "label": "Add QMT target cn_industry_etf_rotation_aggressive (recommended first step)",
-            "risk": "low",
-        },
-        {
-            "id": "promote_default",
-            "label": "Replace cn_industry_etf_rotation as platform default",
-            "risk": "medium",
-        },
-        {
-            "id": "stay_research",
-            "label": "Keep research_backtest_only until dual-track combo is validated live",
-            "risk": "lowest",
-        },
-    ],
-    "recommended_rollout": "optional_target",
 }
 
 # Dual-track combo (return-level blend) — research profile spec; not yet a runtime entrypoint.

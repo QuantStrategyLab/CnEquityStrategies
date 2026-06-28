@@ -1,3 +1,27 @@
+"""CSI500 multi-factor snapshot strategy — momentum + quality + low-vol.
+
+Consumes a monthly factor snapshot (feature_snapshot) produced by the
+CnEquitySnapshotPipelines CSI500 pipeline.  Multi-factor scoring mirrors
+the Russell Top50 Leader Rotation approach, adapted for A-share factors.
+
+Factor weights
+--------------
+mom_6_1                         0.25  — 6-month price momentum
+rel_mom_6m_vs_benchmark         0.20  — relative momentum vs CSI300
+mom_12_1                        0.15  — 12-1 month price momentum
+sma200_gap                      0.15  — distance above 200-day MA (trend)
+roe_ttm                         0.10  — trailing ROE (quality)
+realized_vol_126 (inverted)     0.10  — low volatility preference
+maxdd_126 (inverted)            0.05  — drawdown recovery signal
+
+Defence
+-------
+Breadth-based regime switching (same as dividend_quality_snapshot):
+  risk_on       breadth ≥ soft_breadth_threshold → full exposure
+  soft_defense  hard_threshold ≤ breadth < soft_threshold → partial
+  hard_defense  breadth < hard_threshold → safe haven only
+"""
+
 from __future__ import annotations
 
 import math
@@ -7,54 +31,74 @@ from typing import Any
 import pandas as pd
 
 CN_EQUITY_DOMAIN = "cn_equity"
-SIGNAL_SOURCE = "factor_snapshot"
+SIGNAL_SOURCE = "feature_snapshot"
 STATUS_ICON = "🇨🇳"
-PROFILE_NAME = "cn_dividend_quality_snapshot"
+PROFILE_NAME = "cn_csi500_multi_factor_snapshot"
+BENCHMARK_SYMBOL = "510300"
+BROAD_BENCHMARK_SYMBOL = "510300"
 SAFE_HAVEN = "510300"
-DEFAULT_HOLDINGS_COUNT = 20
-DEFAULT_SINGLE_NAME_CAP = 0.08
-DEFAULT_SECTOR_CAP = 0.25
-DEFAULT_MIN_ADV20_CNY = 30_000_000.0
-DEFAULT_MIN_MARKET_CAP_CNY = 5_000_000_000.0
-DEFAULT_MIN_DIVIDEND_YIELD = 0.025
-DEFAULT_MAX_DIVIDEND_YIELD = 0.12
-DEFAULT_MIN_DIVIDEND_STABILITY = 0.50
-DEFAULT_MIN_ROE_TTM = 0.04
-DEFAULT_MAX_PAYOUT_RATIO = 1.20
-DEFAULT_MAX_SUSPENSION_DAYS_63 = 0
-DEFAULT_MIN_LIST_DAYS = 252
+DEFAULT_DYNAMIC_UNIVERSE_SIZE = 20
+DEFAULT_HOLDINGS_COUNT = 10
+DEFAULT_SINGLE_NAME_CAP = 0.12
+DEFAULT_SECTOR_CAP = 0.30
+DEFAULT_MIN_ADV20_CNY = 20_000_000.0
+DEFAULT_MIN_MARKET_CAP_CNY = 3_000_000_000.0
+DEFAULT_MIN_ROE_TTM = 0.0
 DEFAULT_HOLD_BUFFER = 2
 DEFAULT_HOLD_BONUS = 0.05
 DEFAULT_RISK_ON_EXPOSURE = 1.0
 DEFAULT_SOFT_DEFENSE_EXPOSURE = 0.50
-DEFAULT_HARD_DEFENSE_EXPOSURE = 0.00
-DEFAULT_SOFT_BREADTH_THRESHOLD = 0.45
-DEFAULT_HARD_BREADTH_THRESHOLD = 0.30
+DEFAULT_HARD_DEFENSE_EXPOSURE = 0.0
+DEFAULT_SOFT_BREADTH_THRESHOLD = 0.40
+DEFAULT_HARD_BREADTH_THRESHOLD = 0.25
 DEFAULT_EXECUTION_CASH_RESERVE_RATIO = 0.02
-SNAPSHOT_CONTRACT_VERSION = "cn_dividend_quality_snapshot.factor_snapshot.v1"
+SNAPSHOT_CONTRACT_VERSION = "cn_csi500_multi_factor_snapshot.feature_snapshot.v1"
 REQUIRE_SNAPSHOT_MANIFEST = True
 
 REQUIRED_FACTOR_COLUMNS = frozenset(
     {
         "symbol",
         "sector",
-        "close_cny",
+        "close",
         "adv20_cny",
         "market_cap_cny",
-        "dividend_yield_ttm",
-        "dividend_stability_3y",
-        "earnings_positive",
-        "payout_ratio",
         "roe_ttm",
-        "roe_stability_3y",
-        "realized_vol_126",
+        "earnings_positive",
+        "mom_6_1",
         "mom_12_1",
+        "rel_mom_6m_vs_benchmark",
         "sma200_gap",
-        "suspension_days_63",
-        "is_st",
-        "list_days",
+        "realized_vol_126",
+        "maxdd_126",
     }
 )
+
+FEATURE_SNAPSHOT_COLUMNS = (
+    "symbol",
+    "sector",
+    "close",
+    "adv20_cny",
+    "market_cap_cny",
+    "roe_ttm",
+    "earnings_positive",
+    "mom_6_1",
+    "mom_12_1",
+    "rel_mom_6m_vs_benchmark",
+    "sma200_gap",
+    "realized_vol_126",
+    "maxdd_126",
+)
+
+# Multi-factor scoring weights
+FACTOR_WEIGHTS: dict[str, float] = {
+    "mom_6_1": 0.25,
+    "rel_mom_6m_vs_benchmark": 0.20,
+    "mom_12_1": 0.15,
+    "sma200_gap": 0.15,
+    "roe_ttm": 0.10,
+    "realized_vol_126": -0.10,
+    "maxdd_126": -0.05,
+}
 
 
 def _coerce_bool(value: Any) -> bool:
@@ -92,21 +136,20 @@ def _normalize_holdings(current_holdings: Any) -> set[str]:
     return normalized
 
 
-def _to_frame(factor_snapshot: Any) -> pd.DataFrame:
-    frame = factor_snapshot.copy() if isinstance(factor_snapshot, pd.DataFrame) else pd.DataFrame(list(factor_snapshot))
+def _to_frame(feature_snapshot: Any) -> pd.DataFrame:
+    frame = feature_snapshot.copy() if isinstance(feature_snapshot, pd.DataFrame) else pd.DataFrame(list(feature_snapshot))
     if frame.empty:
-        raise ValueError("factor_snapshot must contain at least one row")
+        raise ValueError("feature_snapshot must contain at least one row")
 
     missing = REQUIRED_FACTOR_COLUMNS - set(frame.columns)
     if missing:
         missing_text = ", ".join(sorted(missing))
-        raise ValueError(f"factor_snapshot missing required columns: {missing_text}")
+        raise ValueError(f"feature_snapshot missing required columns: {missing_text}")
 
     frame["symbol"] = frame["symbol"].map(normalize_symbol)
     frame["sector"] = frame["sector"].fillna("unknown").astype(str).str.strip().replace("", "unknown")
     frame["earnings_positive"] = frame["earnings_positive"].map(_coerce_bool)
-    frame["is_st"] = frame["is_st"].map(_coerce_bool)
-    numeric_columns = REQUIRED_FACTOR_COLUMNS - {"symbol", "sector", "earnings_positive", "is_st"}
+    numeric_columns = REQUIRED_FACTOR_COLUMNS - {"symbol", "sector", "earnings_positive"}
     for column in sorted(numeric_columns):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     return frame
@@ -123,96 +166,54 @@ def _zscore(values: pd.Series) -> pd.Series:
 def _candidate_frame(
     frame: pd.DataFrame,
     *,
-    safe_haven: str,
     min_adv20_cny: float,
     min_market_cap_cny: float,
-    min_dividend_yield: float,
-    max_dividend_yield: float,
-    min_dividend_stability: float,
-    min_roe_ttm: float,
-    max_payout_ratio: float,
-    max_suspension_days_63: int,
-    min_list_days: int,
 ) -> pd.DataFrame:
-    safe_haven = normalize_symbol(safe_haven)
-    required_numeric = [
-        "adv20_cny",
-        "market_cap_cny",
-        "dividend_yield_ttm",
-        "dividend_stability_3y",
-        "payout_ratio",
-        "roe_ttm",
-        "roe_stability_3y",
-        "realized_vol_126",
-        "mom_12_1",
-        "sma200_gap",
-        "suspension_days_63",
-        "list_days",
-    ]
+    excluded = {normalize_symbol(BENCHMARK_SYMBOL), normalize_symbol(BROAD_BENCHMARK_SYMBOL), normalize_symbol(SAFE_HAVEN)}
+    feature_columns = list(FACTOR_WEIGHTS)
     return frame.loc[
-        (frame["symbol"] != safe_haven)
-        & ~frame["is_st"]
+        ~frame["symbol"].isin(excluded)
         & frame["earnings_positive"]
         & frame["adv20_cny"].ge(float(min_adv20_cny))
         & frame["market_cap_cny"].ge(float(min_market_cap_cny))
-        & frame["dividend_yield_ttm"].between(float(min_dividend_yield), float(max_dividend_yield), inclusive="both")
-        & frame["dividend_stability_3y"].ge(float(min_dividend_stability))
-        & frame["roe_ttm"].ge(float(min_roe_ttm))
-        & frame["payout_ratio"].between(0.0, float(max_payout_ratio), inclusive="both")
-        & frame["suspension_days_63"].le(int(max_suspension_days_63))
-        & frame["list_days"].ge(int(min_list_days))
-        & frame[required_numeric].notna().all(axis=1)
+        & frame[feature_columns].notna().all(axis=1)
     ].copy()
 
 
 def score_candidates(
-    factor_snapshot: Any,
+    feature_snapshot: Any,
     current_holdings: Iterable[str] | None = None,
     *,
-    safe_haven: str = SAFE_HAVEN,
     min_adv20_cny: float = DEFAULT_MIN_ADV20_CNY,
     min_market_cap_cny: float = DEFAULT_MIN_MARKET_CAP_CNY,
-    min_dividend_yield: float = DEFAULT_MIN_DIVIDEND_YIELD,
-    max_dividend_yield: float = DEFAULT_MAX_DIVIDEND_YIELD,
-    min_dividend_stability: float = DEFAULT_MIN_DIVIDEND_STABILITY,
-    min_roe_ttm: float = DEFAULT_MIN_ROE_TTM,
-    max_payout_ratio: float = DEFAULT_MAX_PAYOUT_RATIO,
-    max_suspension_days_63: int = DEFAULT_MAX_SUSPENSION_DAYS_63,
-    min_list_days: int = DEFAULT_MIN_LIST_DAYS,
     hold_bonus: float = DEFAULT_HOLD_BONUS,
 ) -> pd.DataFrame:
-    frame = _to_frame(factor_snapshot)
+    frame = _to_frame(feature_snapshot)
     eligible = _candidate_frame(
         frame,
-        safe_haven=safe_haven,
         min_adv20_cny=float(min_adv20_cny),
         min_market_cap_cny=float(min_market_cap_cny),
-        min_dividend_yield=float(min_dividend_yield),
-        max_dividend_yield=float(max_dividend_yield),
-        min_dividend_stability=float(min_dividend_stability),
-        min_roe_ttm=float(min_roe_ttm),
-        max_payout_ratio=float(max_payout_ratio),
-        max_suspension_days_63=int(max_suspension_days_63),
-        min_list_days=int(min_list_days),
     )
     if eligible.empty:
         return pd.DataFrame(columns=["rank", "symbol", "sector", "score", "eligible"])
 
-    eligible["score"] = (
-        _zscore(eligible["dividend_yield_ttm"]) * 0.35
-        + _zscore(eligible["dividend_stability_3y"]) * 0.15
-        + _zscore(eligible["roe_ttm"]) * 0.25
-        + _zscore(eligible["roe_stability_3y"]) * 0.10
-        + _zscore(eligible["mom_12_1"]) * 0.10
-        - _zscore(eligible["realized_vol_126"]) * 0.05
-    )
+    factor_columns = list(FACTOR_WEIGHTS)
+    for column in factor_columns:
+        eligible[f"z_{column}"] = _zscore(eligible[column])
+
+    score = pd.Series(0.0, index=eligible.index)
+    for column, weight in FACTOR_WEIGHTS.items():
+        score += float(weight) * eligible[f"z_{column}"]
+
+    eligible["score"] = score
+
     current_holdings_set = _normalize_holdings(current_holdings)
     if current_holdings_set:
         eligible.loc[eligible["symbol"].isin(current_holdings_set), "score"] += float(hold_bonus)
 
     ranked = eligible.sort_values(
-        by=["score", "dividend_stability_3y", "roe_ttm", "realized_vol_126", "symbol"],
-        ascending=[False, False, False, True, True],
+        by=["score", "mom_6_1", "rel_mom_6m_vs_benchmark", "symbol"],
+        ascending=[False, False, False, True],
     ).reset_index(drop=True)
     ranked.insert(0, "rank", range(1, len(ranked) + 1))
     ranked["eligible"] = True
@@ -224,16 +225,16 @@ def score_candidates(
             "sector",
             "score",
             "eligible",
-            "close_cny",
+            "close",
             "adv20_cny",
             "market_cap_cny",
-            "dividend_yield_ttm",
-            "dividend_stability_3y",
             "roe_ttm",
-            "roe_stability_3y",
-            "realized_vol_126",
+            "mom_6_1",
             "mom_12_1",
+            "rel_mom_6m_vs_benchmark",
             "sma200_gap",
+            "realized_vol_126",
+            "maxdd_126",
         ],
     ]
 
@@ -241,16 +242,8 @@ def score_candidates(
 def _resolve_stock_exposure(
     frame: pd.DataFrame,
     *,
-    safe_haven: str,
     min_adv20_cny: float,
     min_market_cap_cny: float,
-    min_dividend_yield: float,
-    max_dividend_yield: float,
-    min_dividend_stability: float,
-    min_roe_ttm: float,
-    max_payout_ratio: float,
-    max_suspension_days_63: int,
-    min_list_days: int,
     risk_on_exposure: float,
     soft_defense_exposure: float,
     hard_defense_exposure: float,
@@ -259,16 +252,8 @@ def _resolve_stock_exposure(
 ) -> tuple[float, str, float]:
     candidates = _candidate_frame(
         frame,
-        safe_haven=safe_haven,
         min_adv20_cny=float(min_adv20_cny),
         min_market_cap_cny=float(min_market_cap_cny),
-        min_dividend_yield=float(min_dividend_yield),
-        max_dividend_yield=float(max_dividend_yield),
-        min_dividend_stability=float(min_dividend_stability),
-        min_roe_ttm=float(min_roe_ttm),
-        max_payout_ratio=float(max_payout_ratio),
-        max_suspension_days_63=int(max_suspension_days_63),
-        min_list_days=int(min_list_days),
     )
     breadth_ratio = float((candidates["sma200_gap"] > 0).mean()) if not candidates.empty else 0.0
     if breadth_ratio < float(hard_breadth_threshold):
@@ -299,12 +284,12 @@ def _select_with_sector_cap(
     sector_map = dict(zip(ranked["symbol"].astype(str), ranked["sector"].astype(str)))
     max_hold_rank = int(holdings_count) + max(int(hold_buffer), 0)
 
-    preferred_symbols = [
+    preferred = [
         symbol
         for symbol in ranked["symbol"].astype(str).tolist()
         if symbol in current_holdings and int(rank_map[symbol]) <= max_hold_rank
     ]
-    all_symbols = preferred_symbols + [symbol for symbol in ranked["symbol"].astype(str).tolist() if symbol not in preferred_symbols]
+    all_symbols = preferred + [symbol for symbol in ranked["symbol"].astype(str).tolist() if symbol not in preferred]
     for symbol in all_symbols:
         if len(selected) >= int(holdings_count):
             break
@@ -317,22 +302,14 @@ def _select_with_sector_cap(
 
 
 def build_target_weights(
-    factor_snapshot: Any,
+    feature_snapshot: Any,
     current_holdings: Iterable[str] | None = None,
     *,
-    safe_haven: str = SAFE_HAVEN,
     holdings_count: int = DEFAULT_HOLDINGS_COUNT,
     single_name_cap: float = DEFAULT_SINGLE_NAME_CAP,
     sector_cap: float = DEFAULT_SECTOR_CAP,
     min_adv20_cny: float = DEFAULT_MIN_ADV20_CNY,
     min_market_cap_cny: float = DEFAULT_MIN_MARKET_CAP_CNY,
-    min_dividend_yield: float = DEFAULT_MIN_DIVIDEND_YIELD,
-    max_dividend_yield: float = DEFAULT_MAX_DIVIDEND_YIELD,
-    min_dividend_stability: float = DEFAULT_MIN_DIVIDEND_STABILITY,
-    min_roe_ttm: float = DEFAULT_MIN_ROE_TTM,
-    max_payout_ratio: float = DEFAULT_MAX_PAYOUT_RATIO,
-    max_suspension_days_63: int = DEFAULT_MAX_SUSPENSION_DAYS_63,
-    min_list_days: int = DEFAULT_MIN_LIST_DAYS,
     hold_buffer: int = DEFAULT_HOLD_BUFFER,
     hold_bonus: float = DEFAULT_HOLD_BONUS,
     risk_on_exposure: float = DEFAULT_RISK_ON_EXPOSURE,
@@ -341,20 +318,12 @@ def build_target_weights(
     soft_breadth_threshold: float = DEFAULT_SOFT_BREADTH_THRESHOLD,
     hard_breadth_threshold: float = DEFAULT_HARD_BREADTH_THRESHOLD,
 ) -> tuple[dict[str, float], pd.DataFrame, dict[str, object]]:
-    frame = _to_frame(factor_snapshot)
-    safe_haven = normalize_symbol(safe_haven)
+    frame = _to_frame(feature_snapshot)
+    safe_haven = normalize_symbol(SAFE_HAVEN)
     stock_exposure, regime, breadth_ratio = _resolve_stock_exposure(
         frame,
-        safe_haven=safe_haven,
         min_adv20_cny=float(min_adv20_cny),
         min_market_cap_cny=float(min_market_cap_cny),
-        min_dividend_yield=float(min_dividend_yield),
-        max_dividend_yield=float(max_dividend_yield),
-        min_dividend_stability=float(min_dividend_stability),
-        min_roe_ttm=float(min_roe_ttm),
-        max_payout_ratio=float(max_payout_ratio),
-        max_suspension_days_63=int(max_suspension_days_63),
-        min_list_days=int(min_list_days),
         risk_on_exposure=float(risk_on_exposure),
         soft_defense_exposure=float(soft_defense_exposure),
         hard_defense_exposure=float(hard_defense_exposure),
@@ -364,16 +333,8 @@ def build_target_weights(
     ranked = score_candidates(
         frame,
         current_holdings,
-        safe_haven=safe_haven,
         min_adv20_cny=float(min_adv20_cny),
         min_market_cap_cny=float(min_market_cap_cny),
-        min_dividend_yield=float(min_dividend_yield),
-        max_dividend_yield=float(max_dividend_yield),
-        min_dividend_stability=float(min_dividend_stability),
-        min_roe_ttm=float(min_roe_ttm),
-        max_payout_ratio=float(max_payout_ratio),
-        max_suspension_days_63=int(max_suspension_days_63),
-        min_list_days=int(min_list_days),
         hold_bonus=float(hold_bonus),
     )
     metadata: dict[str, object] = {
@@ -417,28 +378,27 @@ def build_target_weights(
     return weights, ranked, metadata
 
 
-def extract_managed_symbols(factor_snapshot: Any, *, safe_haven: str = SAFE_HAVEN, **_kwargs: Any) -> tuple[str, ...]:
-    frame = _to_frame(factor_snapshot)
-    safe_haven = normalize_symbol(safe_haven)
-    symbols = [symbol for symbol in frame["symbol"].tolist() if symbol != safe_haven]
+def extract_managed_symbols(feature_snapshot: Any, **kwargs: Any) -> tuple[str, ...]:
+    frame = _to_frame(feature_snapshot)
+    safe_haven = normalize_symbol(SAFE_HAVEN)
+    symbols = [s for s in frame["symbol"].tolist() if s != safe_haven]
     if safe_haven not in symbols:
         symbols.append(safe_haven)
     return tuple(dict.fromkeys(symbols))
 
 
-def compute_signals(factor_snapshot: Any, current_holdings: Any, *, safe_haven: str = SAFE_HAVEN, **kwargs: Any):
+def compute_signals(feature_snapshot: Any, current_holdings: Any, **kwargs: Any):
     kwargs.pop("translator", None)
     kwargs.pop("signal_text_fn", None)
     kwargs.pop("execution_cash_reserve_ratio", None)
     weights, ranked, metadata = build_target_weights(
-        factor_snapshot,
+        feature_snapshot,
         current_holdings,
-        safe_haven=safe_haven,
         **kwargs,
     )
     top_preview = ", ".join(f"{row.symbol}({row.score:.2f})" for row in ranked.head(5).itertuples(index=False))
     signal_desc = (
-        f"cn dividend quality regime={metadata['regime']} breadth={metadata['breadth_ratio']:.1%} "
+        f"csi500 multi-factor regime={metadata['regime']} breadth={metadata['breadth_ratio']:.1%} "
         f"target_stock={metadata['target_stock_weight']:.1%} selected={metadata['selected_count']} top={top_preview}"
     )
     status_desc = (
@@ -452,7 +412,7 @@ def compute_signals(factor_snapshot: Any, current_holdings: Any, *, safe_haven: 
         status_desc,
         {
             **metadata,
-            "managed_symbols": extract_managed_symbols(factor_snapshot, safe_haven=safe_haven),
+            "managed_symbols": extract_managed_symbols(feature_snapshot, **kwargs),
             "status_icon": STATUS_ICON,
             "signal_source": SIGNAL_SOURCE,
             "snapshot_contract_version": SNAPSHOT_CONTRACT_VERSION,

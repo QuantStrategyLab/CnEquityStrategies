@@ -59,11 +59,29 @@ def _load_index_inclusion_table(index_code: str) -> pd.DataFrame:
 def index_constituents_as_of(index_code: str, as_of: str) -> tuple[str, ...]:
     """Point-in-time filter using published inclusion dates (current members only).
 
-    Removed historical members are not recovered. Inclusion dates reflect the
-    latest index entry event in ``index_stock_cons``; use history-based
-    grandfathering in ``filter_offensive_for_pit`` when rebalance-time prices
-    extend well before that date.
+    Tries the accumulated membership timeline from CnEquitySnapshotPipelines
+    first. Falls back to inclusion-date PIT filtering when the timeline does
+    not cover the requested date.
+
+    Removed historical members are not recovered via the inclusion-date
+    fallback. Inclusion dates reflect the latest index entry event in
+    ``index_stock_cons``; use history-based grandfathering in
+    ``filter_offensive_for_pit`` when rebalance-time prices extend well
+    before that date.
     """
+    # Try membership timeline first
+    try:
+        from cn_equity_snapshot_pipelines.index_membership import (
+            constituents_as_of as _membership_as_of,
+        )
+
+        members = _membership_as_of(str(index_code), as_of, fallback_to_inclusion_table=False)
+        if members:
+            return members
+    except (ImportError, RuntimeError):
+        pass
+
+    # Fallback: inclusion-date table from akshare
     as_of_ts = pd.Timestamp(as_of).normalize()
     table = _load_index_inclusion_table(str(index_code))
     selected = table.loc[table["inclusion_date"] <= as_of_ts, "symbol"]
