@@ -55,6 +55,7 @@ DEFAULT_MAX_GROSS_EXPOSURE = 1.0
 DEFAULT_MIN_HISTORY_DAYS = 220
 DEFAULT_MAX_PAIR_CORRELATION = 0.85
 DEFAULT_EXECUTION_CASH_RESERVE_RATIO = 0.02
+DEFAULT_MAX_SINGLE_NAME_WEIGHT: float | None = None
 
 REQUIRED_MARKET_HISTORY_COLUMNS = frozenset({"date", "symbol", "close"})
 OPTIONAL_MARKET_HISTORY_COLUMNS = frozenset({"open", "high", "low", "volume"})
@@ -231,6 +232,19 @@ def apply_portfolio_volatility_target(
     return {symbol: float(value) * scale for symbol, value in weights.items()}, realized_volatility
 
 
+def apply_max_single_name_weight_cap(
+    weights: Mapping[str, float],
+    *,
+    max_single_name_weight: float | None,
+) -> dict[str, float]:
+    if max_single_name_weight is None or not weights:
+        return dict(weights)
+    cap = float(max_single_name_weight)
+    if cap <= 0.0:
+        raise ValueError("max_single_name_weight must be positive when set")
+    return {symbol: min(float(value), cap) for symbol, value in weights.items()}
+
+
 def _filter_ranked_by_correlation(
     ranked: list[dict[str, object]],
     returns: pd.DataFrame,
@@ -273,6 +287,7 @@ def _build_weights_from_ranked_rows(
     volatility_window_days: int,
     target_annual_volatility: float | None,
     max_gross_exposure: float,
+    max_single_name_weight: float | None = DEFAULT_MAX_SINGLE_NAME_WEIGHT,
 ) -> tuple[dict[str, float], float]:
     weights: dict[str, float] = {}
     normalized_weighting_mode = str(weighting_mode or "").strip().lower().replace("-", "_")
@@ -288,6 +303,10 @@ def _build_weights_from_ranked_rows(
             weights = {str(row["symbol"]): 1.0 / len(ranked) for row in ranked}
         else:
             raise ValueError("weighting_mode must be 'inverse_volatility' or 'equal'")
+        weights = apply_max_single_name_weight_cap(
+            weights,
+            max_single_name_weight=max_single_name_weight,
+        )
 
     if not weights:
         return {}, 0.0
@@ -317,6 +336,7 @@ def compute_latest_signal(
     max_gross_exposure: float = DEFAULT_MAX_GROSS_EXPOSURE,
     min_history_days: int = DEFAULT_MIN_HISTORY_DAYS,
     max_pair_correlation: float = DEFAULT_MAX_PAIR_CORRELATION,
+    max_single_name_weight: float | None = DEFAULT_MAX_SINGLE_NAME_WEIGHT,
 ) -> dict[str, object]:
     if momentum_window_days <= 1:
         raise ValueError("momentum_window_days must be greater than 1")
@@ -334,6 +354,8 @@ def compute_latest_signal(
         raise ValueError("target_annual_volatility must be positive when set")
     if float(max_gross_exposure) <= 0.0:
         raise ValueError("max_gross_exposure must be positive")
+    if max_single_name_weight is not None and float(max_single_name_weight) <= 0.0:
+        raise ValueError("max_single_name_weight must be positive when set")
 
     offensive_symbols = normalize_universe_symbols(universe_symbols)
     if defensive_symbols is None:
@@ -419,6 +441,7 @@ def compute_latest_signal(
         volatility_window_days=int(volatility_window_days),
         target_annual_volatility=target_annual_volatility,
         max_gross_exposure=float(max_gross_exposure),
+        max_single_name_weight=max_single_name_weight,
     )
 
     cash_weight = max(0.0, 1.0 - sum(weights.values()))
@@ -451,6 +474,9 @@ def compute_latest_signal(
         ),
         "max_gross_exposure": float(max_gross_exposure),
         "max_pair_correlation": float(max_pair_correlation),
+        "max_single_name_weight": (
+            None if max_single_name_weight is None else float(max_single_name_weight)
+        ),
         "realized_portfolio_volatility": float(realized_portfolio_volatility),
         "weights": weights,
     }

@@ -26,6 +26,7 @@ from cn_equity_strategies.research.momentum_stock_history import (  # noqa: E402
     download_symbol_histories,
 )
 from cn_equity_strategies.research.momentum_stock_universe import (  # noqa: E402
+    CSI500_INDEX_CODE,
     resolve_momentum_stock_universe,
 )
 from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
@@ -60,6 +61,8 @@ def _materialize_preset(
         for key, value in preset.items()
         if key not in {"universe_mode", "liquid_top_n"}
     }
+    if str(preset.get("universe_mode") or "") == "csi500_pit":
+        runtime["pit_index_code"] = CSI500_INDEX_CODE
     runtime["universe_symbols"] = tuple(dict.fromkeys([*stock_universe, *_extra_symbols_for_preset(preset)]))
     return runtime
 

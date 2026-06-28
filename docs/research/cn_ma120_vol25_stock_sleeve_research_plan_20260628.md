@@ -91,16 +91,18 @@ STOCK_MOMENTUM_RETURN_FOCUSED_GATE = {
 
 return blend proxy；对比纯 aggressive live 与纯 vol25。
 
-### P2.4 PIT 成分（依赖 CnEquitySnapshotPipelines）
+### P2.4 PIT 成分（纳入日期过滤）
 
-- 新增 `csi500_constituents_pit` feature（或复用 index membership snapshot）
-- `_load_universe_bundle` 按 `as_of` 过滤 candidate
-- 重跑 vol25 MA120 full sample，记录与 non-PIT 差异
+- `universe_mode: csi500_pit` + `pit_index_code: 000905`
+- 使用 `ak.index_stock_cons` 的 **纳入日期** 过滤 as-of 不可交易的未来成分
+- 局限：已剔除的历史成员无法恢复（partial PIT）
 
 ### P2.5 单票 weight cap
 
-- `industry_etf_rotation_core` 增加 `max_single_name_weight`（默认 None；research preset 设 0.10）
-- 重跑 vol25，观察 MDD/OOS 变化
+- `etf_rotation_core.apply_max_single_name_weight_cap`
+- preset / research override: `max_single_name_weight: 0.10`（超额权重变为 implicit cash）
+
+**脚本：** `research_cn_ma120_phase3_pit_and_cap.py`
 
 ---
 
@@ -127,6 +129,11 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src \
 PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
   python3 scripts/research_cn_ma120_phase2_tri_track_blend.py \
   --json-output docs/research/cn_ma120_phase2_tri_track_blend_20260628.json
+
+# Phase 3 PIT + weight cap
+PYTHONPATH=src:scripts:../QuantPlatformKit/src \
+  python3 scripts/research_cn_ma120_phase3_pit_and_cap.py \
+  --json-output docs/research/cn_ma120_phase3_pit_and_cap_20260628.json
 ```
 
 ---
@@ -185,5 +192,5 @@ vol18 仍 fail（OOS lift +9% < 10% 门槛）。
 
 ### 7.4 下一步（Phase 3）
 
-1. PIT CSI500 成分重跑 vol25  
-2. 单票 weight cap 8–10% 后复验 gate
+1. ~~PIT CSI500 纳入日期过滤 + 单票 cap~~ → 见 Phase 3 JSON  
+2. CnEquitySnapshotPipelines 完整 historical membership snapshot（消除 partial PIT 局限）

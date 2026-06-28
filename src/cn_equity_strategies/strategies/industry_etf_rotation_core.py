@@ -5,6 +5,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
+from cn_equity_strategies.research.momentum_stock_universe import filter_offensive_for_pit
 from cn_equity_strategies.strategies import etf_rotation_core as base
 
 CN_EQUITY_DOMAIN = base.CN_EQUITY_DOMAIN
@@ -165,6 +166,8 @@ def compute_latest_signal(
     max_gross_exposure: float = DEFAULT_MAX_GROSS_EXPOSURE,
     min_history_days: int = DEFAULT_MIN_HISTORY_DAYS,
     max_pair_correlation: float = DEFAULT_MAX_PAIR_CORRELATION,
+    max_single_name_weight: float | None = base.DEFAULT_MAX_SINGLE_NAME_WEIGHT,
+    pit_index_code: str | None = None,
     sentiment_mode: SentimentMode = DEFAULT_SENTIMENT_MODE,
     sentiment_weight: float = DEFAULT_SENTIMENT_WEIGHT,
     crowding_zscore_threshold: float = DEFAULT_CROWDING_ZSCORE_THRESHOLD,
@@ -180,6 +183,16 @@ def compute_latest_signal(
     benchmark = normalize_symbol(benchmark_symbol) if benchmark_symbol else None
     if not enable_benchmark_risk_off:
         benchmark = None
+
+    frame = _history_to_frame(market_history)
+    as_of = pd.Timestamp(frame["date"].max()).date().isoformat()
+    offensive = filter_offensive_for_pit(
+        offensive,
+        pit_index_code=pit_index_code,
+        as_of=as_of,
+        market_history=frame,
+        min_history_days=int(min_history_days),
+    )
 
     signal = base.compute_latest_signal(
         market_history,
@@ -197,7 +210,9 @@ def compute_latest_signal(
         max_gross_exposure=float(max_gross_exposure),
         min_history_days=int(min_history_days),
         max_pair_correlation=float(max_pair_correlation),
+        max_single_name_weight=max_single_name_weight,
     )
+    signal["pit_index_code"] = pit_index_code
     if sentiment_mode == "off":
         signal["sentiment_mode"] = sentiment_mode
         return signal
@@ -253,6 +268,7 @@ def compute_latest_signal(
         volatility_window_days=int(volatility_window_days),
         target_annual_volatility=target_annual_volatility,
         max_gross_exposure=float(max_gross_exposure),
+        max_single_name_weight=max_single_name_weight,
     )
     cash_weight = max(0.0, 1.0 - sum(weights.values()))
     signal.update(
