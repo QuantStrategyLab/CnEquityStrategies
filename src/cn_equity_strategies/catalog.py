@@ -28,7 +28,10 @@ CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 
 CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
 CN_SNAPSHOT_BACKED_PROFILES = frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
-CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES = frozenset({"cn_small_cap_quality_snapshot"})
+# Scaffold profiles are planned but not yet implemented — calling
+# get_strategy_definition() on them will raise ValueError. Use
+# get_external_snapshot_scaffold_profiles() for forward-compat iteration only.
+CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES: frozenset[str] = frozenset({"cn_small_cap_quality_snapshot"})
 CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset(
     {
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
