@@ -286,7 +286,10 @@ def run_proxy_backtest(
             pending_metadata = {}
 
         if day_ts in rebalance_dates and day_ts >= index[settings.min_history_days - 1]:
-            history = _history_slice(market_history, day_ts)
+            # Use data up to the day BEFORE the rebalance date to avoid
+            # lookahead bias. In live trading, the rebalance-day close is
+            # not yet available when the signal is computed.
+            history = _history_slice(market_history, day_ts - pd.Timedelta(days=1))
             weights, metadata = strategy_signal_fn(history, **kwargs)
             pending_targets = {normalize_symbol(symbol): float(value) for symbol, value in weights.items()}
             pending_signal_day = day_ts
