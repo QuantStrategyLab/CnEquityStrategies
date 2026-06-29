@@ -57,7 +57,7 @@ jobs:
       - name: Run Ruff
         run: |
           set -euo pipefail
-          ruff check .
+          ruff check --exclude external .
 
       - name: Run unit tests
         run: |
