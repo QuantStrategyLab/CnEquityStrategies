@@ -208,6 +208,7 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: StrategyMetadata(
         canonical_profile=CN_INDUSTRY_ETF_ROTATION_PROFILE,
         display_name="CN Industry ETF Rotation",
+        localized_display_names={"zh": "A股ETF轮动"},
         description=(
             "Conservative v1 (runtime default): monthly pure-momentum rotation across 14 A-share "
             "industry/style ETFs — top5, vol target 20%, sentiment off, benchmark risk-off off."
@@ -222,6 +223,7 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: StrategyMetadata(
         canonical_profile=CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
         display_name="CN Industry ETF Rotation Aggressive",
+        localized_display_names={"zh": "A股ETF轮动"},
         description=(
             "Aggressive v1 preset: full 14-ETF pool with vol target 25% and pure momentum; "
             "passed OOS promotion gate vs conservative v1. Optional QMT target "
@@ -237,6 +239,7 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: StrategyMetadata(
         canonical_profile=CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
         display_name="CN Index ETF Tactical Rotation",
+        localized_display_names={"zh": "A股指数ETF轮动"},
         description=(
             "Legacy volatility-targeted rotation across broad index, sector, and cross-market ETFs "
             "with CSI300 benchmark risk-off defensive switching; retained for research/backtest only."
@@ -251,6 +254,7 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: StrategyMetadata(
         canonical_profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         display_name="CN Dividend Quality Snapshot",
+        localized_display_names={"zh": "A股红利质量"},
         description=(
             "Runtime-enabled snapshot-backed A-share selector emphasizing dividend yield and "
             "quality factors with breadth-based defensive exposure control."
