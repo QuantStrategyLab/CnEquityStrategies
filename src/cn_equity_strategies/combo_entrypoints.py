@@ -6,7 +6,7 @@ from cn_equity_strategies.combo_manifests import cn_equity_combo_manifest
 from cn_equity_strategies.strategies import cn_equity_combo
 
 def evaluate_cn_equity_combo(ctx: StrategyContext) -> StrategyDecision:
-    config = {**cn_equity_combo_manifest.default_config, **ctx.runtime_config or {}}
+    config = {**cn_equity_combo_manifest.default_config, **(ctx.runtime_config or {})}
     config.pop("execution_cash_reserve_ratio", None)
     config.pop("rebalance_frequency", None)
     weights, signal_desc, has_cash, status_desc, metadata = cn_equity_combo.compute_signals(
