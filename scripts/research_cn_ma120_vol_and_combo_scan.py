@@ -20,7 +20,6 @@ for candidate in (SRC, SCRIPTS, QPK_SRC):
     if candidate.exists() and candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from cn_equity_strategies.backtest.proxy_simulator import compute_backtest_metrics  # noqa: E402
 from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
     STOCK_MOMENTUM_MA120_VOL_TUNING_PRESETS,
 )

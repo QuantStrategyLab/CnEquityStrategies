@@ -42,11 +42,9 @@ from research_cn_dividend_quality_snapshot_proxy_backtest import (  # noqa: E402
     run_snapshot_proxy_backtest,
 )
 from research_cn_dual_track_combo_proxy_backtest import (  # noqa: E402
-    _combine_daily_returns,
     run_dual_track_combo,
 )
 from research_cn_us_long_horizon_comparison import (  # noqa: E402
-    CN_BENCHMARK,
     CN_UNIVERSE_FULL,
     _download_cn_history,
     _metrics_slice,
