@@ -20,11 +20,14 @@ from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as in
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
 
+from cn_equity_strategies.strategies import cn_equity_combo as cn_combo_strategy
+
 CN_EQUITY_DOMAIN = index_etf_strategy.CN_EQUITY_DOMAIN
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE = industry_etf_aggressive_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
+CN_EQUITY_COMBO_PROFILE = cn_combo_strategy.PROFILE_NAME
 
 CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
 CN_SNAPSHOT_BACKED_PROFILES = frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
@@ -47,6 +50,7 @@ STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"qmt"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
+    CN_EQUITY_COMBO_PROFILE: frozenset({"qmt"}),
 }
 
 STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
@@ -54,6 +58,7 @@ STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"market_history"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
+    CN_EQUITY_COMBO_PROFILE: frozenset({"market_history", "feature_snapshot"}),
 }
 
 STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
@@ -138,6 +143,13 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "execution_cash_reserve_ratio": dividend_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
         "rebalance_frequency": "monthly",
     },
+    CN_EQUITY_COMBO_PROFILE: {
+        "etf_weight": 0.30,
+        "stock_weight": 0.50,
+        "dividend_weight": 0.20,
+        "execution_cash_reserve_ratio": 0.02,
+        "rebalance_frequency": "monthly",
+    },
 }
 
 STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
@@ -145,6 +157,7 @@ STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "cn_industry_etf_rotation_aggressive_entrypoint",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "cn_index_etf_tactical_rotation_entrypoint",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "cn_dividend_quality_snapshot_entrypoint",
+    CN_EQUITY_COMBO_PROFILE: "cn_equity_combo_entrypoint",
 }
 
 STRATEGY_TARGET_MODES: dict[str, str] = {
@@ -152,6 +165,7 @@ STRATEGY_TARGET_MODES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "weight",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "weight",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "weight",
+    CN_EQUITY_COMBO_PROFILE: "weight",
 }
 
 
@@ -201,6 +215,11 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
         CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         component_name="signal_logic",
         module_path="cn_equity_strategies.strategies.cn_dividend_quality_snapshot",
+    ),
+    CN_EQUITY_COMBO_PROFILE: _build_strategy_definition(
+        CN_EQUITY_COMBO_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_equity_combo",
     ),
 }
 
@@ -264,6 +283,17 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         asset_scope="cn_single_name_snapshot_factor",
         benchmark="510300",
         role="cn_snapshot_dividend_quality",
+        status="runtime_enabled",
+    ),
+    CN_EQUITY_COMBO_PROFILE: StrategyMetadata(
+        canonical_profile=CN_EQUITY_COMBO_PROFILE,
+        display_name="CN Equity Combo",
+        description="CN equity combo: ETF rotation (30%) + stock momentum (50%) + dividend quality (20%)",
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_equity_combo",
+        benchmark="510300",
+        role="cn_equity_combo",
         status="runtime_enabled",
     ),
 }

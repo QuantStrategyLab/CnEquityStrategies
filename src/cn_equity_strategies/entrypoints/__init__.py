@@ -150,13 +150,33 @@ cn_dividend_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
 )
 
 
+# ---------------------------------------------------------------------------
+# CN Equity Combo entrypoint
+# ---------------------------------------------------------------------------
+
+
+def evaluate_cn_equity_combo(ctx: StrategyContext) -> StrategyDecision:
+    from cn_equity_strategies.combo_entrypoints import evaluate_cn_equity_combo as _eval
+    return _eval(ctx)
+
+
+from cn_equity_strategies.combo_manifests import cn_equity_combo_manifest  # noqa: E402
+
+cn_equity_combo_entrypoint = CallableStrategyEntrypoint(
+    manifest=cn_equity_combo_manifest,
+    _evaluate=evaluate_cn_equity_combo,
+)
+
+
 __all__ = [
     "evaluate_cn_dividend_quality_snapshot",
     "evaluate_cn_index_etf_tactical_rotation",
     "evaluate_cn_industry_etf_rotation",
     "evaluate_cn_industry_etf_rotation_aggressive",
+    "evaluate_cn_equity_combo",
     "cn_dividend_quality_snapshot_entrypoint",
     "cn_index_etf_tactical_rotation_entrypoint",
     "cn_industry_etf_rotation_aggressive_entrypoint",
     "cn_industry_etf_rotation_entrypoint",
+    "cn_equity_combo_entrypoint",
 ]
