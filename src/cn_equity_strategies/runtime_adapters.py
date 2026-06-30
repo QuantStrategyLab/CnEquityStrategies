@@ -9,6 +9,7 @@ from quant_platform_kit.strategy_contracts import (
 
 from cn_equity_strategies.catalog import (
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_EQUITY_COMBO_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
@@ -18,6 +19,7 @@ from cn_equity_strategies.catalog import (
     resolve_canonical_profile,
 )
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
+from cn_equity_strategies.strategies import cn_equity_combo as cn_combo_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
@@ -49,6 +51,10 @@ BASE_RUNTIME_ADAPTERS: dict[str, StrategyRuntimeAdapter] = {
         require_snapshot_manifest=dividend_quality_strategy.REQUIRE_SNAPSHOT_MANIFEST,
         snapshot_contract_version=dividend_quality_strategy.SNAPSHOT_CONTRACT_VERSION,
         managed_symbols_extractor=dividend_quality_strategy.extract_managed_symbols,
+    ),
+    CN_EQUITY_COMBO_PROFILE: StrategyRuntimeAdapter(
+        status_icon=cn_combo_strategy.STATUS_ICON,
+        managed_symbols_extractor=cn_combo_strategy.extract_managed_symbols,
     ),
 }
 

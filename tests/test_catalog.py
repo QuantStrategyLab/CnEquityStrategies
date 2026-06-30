@@ -4,6 +4,7 @@ from quant_platform_kit.common.strategies import get_strategy_component_map
 
 from cn_equity_strategies.catalog import (
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_EQUITY_COMBO_PROFILE,
     CN_EQUITY_DOMAIN,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
@@ -25,6 +26,7 @@ from cn_equity_strategies.catalog import (
 def test_catalog_declares_runtime_enabled_cn_strategies():
     catalog = get_strategy_definitions()
     assert set(catalog) == {
+        CN_EQUITY_COMBO_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
@@ -78,6 +80,7 @@ def test_profile_groups_keep_runtime_and_scaffolds_separate():
     )
     assert get_runtime_enabled_profiles() == frozenset(
         {
+            CN_EQUITY_COMBO_PROFILE,
             CN_INDUSTRY_ETF_ROTATION_PROFILE,
             CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         }
