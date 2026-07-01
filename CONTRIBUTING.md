@@ -13,9 +13,11 @@ Thanks for contributing to `CnEquityStrategies`.
 
 ```bash
 python -m pip install -e '.[test]'
+python -m pip check
 ruff check .
 PYTHONPATH=src python -m pytest -q tests
 python scripts/smoke_cn_index_etf_tactical_rotation_dry_run.py --json
+python -m build
 ```
 
 ## Branching and Pull Requests
