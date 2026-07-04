@@ -63,7 +63,6 @@ STOCK_DEFAULT_CONFIG: dict[str, Any] = {
     "top_n": 5,
     "target_annual_volatility": 0.25,
     "sentiment_mode": "off",
-    "pit_index_code": "000905",
 }
 
 # Dividend leg defaults (current conservative)
