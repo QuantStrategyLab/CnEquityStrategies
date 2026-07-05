@@ -7,6 +7,7 @@ from quant_platform_kit.strategy_contracts import StrategyContext
 
 from cn_equity_strategies import get_strategy_entrypoint
 from cn_equity_strategies.catalog import (
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
@@ -79,6 +80,26 @@ def _industry_etf_rotation_history() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _chinext_tactical_history() -> pd.DataFrame:
+    dates = pd.bdate_range("2024-01-02", periods=320)
+    rates = {
+        "159915": 1.0009,
+        "159949": 1.0007,
+        "510300": 1.0002,
+        "511880": 1.00001,
+        "511260": 1.00002,
+    }
+    rows = []
+    for symbol, rate in rates.items():
+        price = 20.0
+        for idx, date in enumerate(dates):
+            price *= rate
+            close = price * (1.0 + 0.04 * ((idx % 5) - 2) / 5)
+            row = {"date": date, "symbol": symbol, "close": close, "volume": 1_000_000.0}
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def test_industry_etf_rotation_entrypoint_returns_volatility_targeted_weight_targets():
     entrypoint = get_strategy_entrypoint(CN_INDUSTRY_ETF_ROTATION_PROFILE)
 
@@ -140,3 +161,19 @@ def test_dividend_quality_entrypoint_consumes_feature_snapshot():
     assert SAFE_HAVEN not in weights or len(weights) > 1
     assert decision.diagnostics["signal_source"] == "factor_snapshot"
     assert decision.diagnostics["snapshot_contract_version"] == "cn_dividend_quality_snapshot.factor_snapshot.v1"
+
+
+def test_chinext_tactical_rotation_entrypoint_returns_weights():
+    entrypoint = get_strategy_entrypoint(CN_CHINEXT_TACTICAL_ROTATION_PROFILE)
+
+    decision = entrypoint.evaluate(
+        StrategyContext(
+            as_of="2026-02-25",
+            market_data={"market_history": _chinext_tactical_history()},
+            runtime_config={"min_history_days": 220},
+        )
+    )
+
+    weights = {position.symbol: position.target_weight for position in decision.positions}
+    assert weights
+    assert decision.diagnostics["signal_source"] == "daily_market_history"

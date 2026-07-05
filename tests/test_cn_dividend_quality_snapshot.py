@@ -95,6 +95,23 @@ def test_dividend_quality_scores_candidates():
     assert ranked.iloc[0]["symbol"] in {"601088", "600519", "000001"}
 
 
+def test_dividend_quality_scores_candidates_with_low_unit_adv20_snapshot():
+    from cn_equity_strategies.strategies.cn_dividend_quality_snapshot import build_target_weights, score_candidates
+
+    snapshot = sample_factor_snapshot().copy()
+    snapshot["adv20_cny"] = snapshot["adv20_cny"] / 10_000.0
+
+    ranked = score_candidates(snapshot)
+    assert not ranked.empty
+    assert ranked.iloc[0]["symbol"] in {"601088", "600519", "000001"}
+
+    weights, _ranked, metadata = build_target_weights(snapshot, holdings_count=3)
+    assert weights
+    assert set(weights) != {SAFE_HAVEN}
+    assert metadata["candidate_count"] == 3
+    assert metadata["selected_count"] == 3
+
+
 def test_dividend_quality_compute_signals_returns_weights():
     from cn_equity_strategies.strategies.cn_dividend_quality_snapshot import compute_signals
 

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from quant_platform_kit.common.strategies import get_strategy_component_map
 
 from cn_equity_strategies.catalog import (
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
     CN_EQUITY_COMBO_PROFILE,
     CN_EQUITY_DOMAIN,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
@@ -12,8 +15,11 @@ from cn_equity_strategies.catalog import (
     get_compatible_platforms,
     get_direct_market_history_profiles,
     get_external_snapshot_scaffold_profiles,
+    get_live_candidate_profiles,
     get_profile_aliases,
     get_research_backtest_only_profiles,
+    get_scaffold_profiles,
+    get_shadow_profiles,
     get_runtime_enabled_profiles,
     get_snapshot_backed_profiles,
     get_strategy_definition,
@@ -23,10 +29,11 @@ from cn_equity_strategies.catalog import (
 )
 
 
-def test_catalog_declares_runtime_enabled_cn_strategies():
+def test_catalog_declares_cn_strategy_status_layers():
     catalog = get_strategy_definitions()
     assert set(catalog) == {
         CN_EQUITY_COMBO_PROFILE,
+        CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
@@ -43,7 +50,7 @@ def test_catalog_declares_runtime_enabled_cn_strategies():
     assert aggressive_definition.domain == CN_EQUITY_DOMAIN
     assert aggressive_definition.required_inputs == frozenset({"market_history"})
     assert get_compatible_platforms(CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE) == frozenset({"qmt"})
-    assert get_strategy_metadata(CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE).status == "research_backtest_only"
+    assert get_strategy_metadata(CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE).status == "live_candidate"
     assert (
         get_strategy_definition(CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE).default_config[
             "target_annual_volatility"
@@ -57,10 +64,16 @@ def test_catalog_declares_runtime_enabled_cn_strategies():
     assert get_compatible_platforms(CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE) == frozenset({"qmt"})
     assert get_strategy_metadata(CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE).status == "research_backtest_only"
 
+    chinext_definition = catalog[CN_CHINEXT_TACTICAL_ROTATION_PROFILE]
+    assert chinext_definition.domain == CN_EQUITY_DOMAIN
+    assert chinext_definition.required_inputs == frozenset({"market_history"})
+    assert get_compatible_platforms(CN_CHINEXT_TACTICAL_ROTATION_PROFILE) == frozenset({"qmt"})
+    assert get_strategy_metadata(CN_CHINEXT_TACTICAL_ROTATION_PROFILE).status == "research_backtest_only"
+
     dividend_definition = catalog[CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE]
     assert dividend_definition.domain == CN_EQUITY_DOMAIN
     assert dividend_definition.required_inputs == frozenset({"feature_snapshot"})
-    assert get_strategy_metadata(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE).status == "runtime_enabled"
+    assert get_strategy_metadata(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE).status == "research_backtest_only"
 
     component_map = get_strategy_component_map(dividend_definition)
     assert component_map["signal_logic"].module_path == (
@@ -71,22 +84,28 @@ def test_catalog_declares_runtime_enabled_cn_strategies():
 def test_profile_groups_keep_runtime_and_scaffolds_separate():
     assert get_direct_market_history_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
     assert get_snapshot_backed_profiles() == frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
-    assert get_external_snapshot_scaffold_profiles() == frozenset({"cn_small_cap_quality_snapshot"})
+    assert get_external_snapshot_scaffold_profiles() == frozenset(
+        {
+            "cn_small_cap_quality_snapshot",
+            "cn_chinext_growth_momentum_quality_snapshot",
+        }
+    )
+    assert get_scaffold_profiles() == get_external_snapshot_scaffold_profiles()
+    assert get_shadow_profiles() == frozenset()
+    assert get_live_candidate_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE})
     assert get_research_backtest_only_profiles() == frozenset(
         {
             CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
-            CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
-        }
-    )
-    assert get_runtime_enabled_profiles() == frozenset(
-        {
-            CN_EQUITY_COMBO_PROFILE,
-            CN_INDUSTRY_ETF_ROTATION_PROFILE,
             CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+            CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
+            CN_EQUITY_COMBO_PROFILE,
         }
     )
+    assert get_runtime_enabled_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
     assert get_external_snapshot_scaffold_profiles().isdisjoint(get_runtime_enabled_profiles())
+    assert get_live_candidate_profiles().isdisjoint(get_runtime_enabled_profiles())
     assert get_research_backtest_only_profiles().isdisjoint(get_runtime_enabled_profiles())
+    assert get_scaffold_profiles().isdisjoint(get_runtime_enabled_profiles())
 
 
 def test_canonical_profiles_resolve_without_legacy_aliases():
@@ -105,3 +124,25 @@ def test_research_scaffold_profile_is_not_in_runtime_catalog():
 
     with pytest.raises(ValueError):
         get_strategy_definition("cn_small_cap_quality_snapshot")
+
+    with pytest.raises(ValueError):
+        get_strategy_definition("cn_chinext_growth_momentum_quality_snapshot")
+
+
+def test_package_root_exports_use_local_source_tree() -> None:
+    import cn_equity_strategies
+
+    package_file = Path(cn_equity_strategies.__file__).resolve()
+    assert package_file.name == "__init__.py"
+    assert "CnEquityStrategies/src/cn_equity_strategies" in str(package_file)
+
+    assert cn_equity_strategies.get_live_candidate_profiles() == frozenset(
+        {CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE}
+    )
+    assert cn_equity_strategies.get_scaffold_profiles() == frozenset(
+        {
+            "cn_small_cap_quality_snapshot",
+            "cn_chinext_growth_momentum_quality_snapshot",
+        }
+    )
+    assert cn_equity_strategies.get_external_snapshot_scaffold_profiles() == cn_equity_strategies.get_scaffold_profiles()

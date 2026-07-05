@@ -21,7 +21,7 @@ PYTHONPATH=src:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src \
 | Universe | AkShare staging 8 股 + `510300` safe haven |
 | Factor 面板 | 每月末 point-in-time 价格/财务/分红；fhps 用最新可用表 |
 | 模拟 | T+1、100 股、涨跌停、万三佣金、2% 现金预留、月频 |
-| 持仓 | top4（小 universe 适配） |
+| 持仓 | top20（脚本默认；小 universe 可显式传 `--holdings-count 4`） |
 
 ## 3. 初步结果（2021-01 ~ 2026-06）
 

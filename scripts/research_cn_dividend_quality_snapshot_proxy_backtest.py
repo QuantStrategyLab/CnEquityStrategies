@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
+import time
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
@@ -29,28 +31,50 @@ from cn_equity_strategies.backtest.proxy_simulator import (  # noqa: E402
 )
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_strategy  # noqa: E402
 from cn_equity_strategies.strategies.etf_rotation_core import normalize_symbol  # noqa: E402
-from cn_equity_snapshot_pipelines.akshare_enrichment import (  # noqa: E402
-    FACTOR_SNAPSHOT_COLUMNS,
-    compute_dividend_stability,
-    compute_financial_features,
-    compute_price_features,
-    extract_fhps_features,
-    merge_factor_row,
-    normalize_symbol as pipeline_normalize_symbol,
-    stamp_as_of,
-)
-from cn_equity_snapshot_pipelines.akshare_metadata import (  # noqa: E402
-    build_symbol_sector_map,
-    lookup_sector,
-)
-from cn_equity_snapshot_pipelines.akshare_staging import (  # noqa: E402
-    DEFAULT_STAGING_SYMBOLS,
-    resolve_universe_symbols,
-)
-from quant_platform_kit.common.cn_equity_calendar import (  # noqa: E402
-    add_cn_equity_trading_days,
-    is_cn_equity_trading_day,
-)
+
+try:  # pragma: no cover - optional research dependencies are absent in CI
+    from cn_equity_snapshot_pipelines.akshare_enrichment import (  # noqa: E402
+        FACTOR_SNAPSHOT_COLUMNS,
+        compute_dividend_stability,
+        compute_financial_features,
+        compute_price_features,
+        extract_fhps_features,
+        merge_factor_row,
+        normalize_symbol as pipeline_normalize_symbol,
+        stamp_as_of,
+    )
+    from cn_equity_snapshot_pipelines.akshare_metadata import (  # noqa: E402
+        build_symbol_sector_map,
+        lookup_sector,
+    )
+    from cn_equity_snapshot_pipelines.akshare_staging import (  # noqa: E402
+        DEFAULT_STAGING_SYMBOLS,
+        resolve_universe_symbols,
+    )
+    from quant_platform_kit.common.cn_equity_calendar import (  # noqa: E402
+        add_cn_equity_trading_days,
+        is_cn_equity_trading_day,
+    )
+except ModuleNotFoundError:  # pragma: no cover - fallback for unit-test-only environments
+    FACTOR_SNAPSHOT_COLUMNS = ()
+
+    def _missing_optional_dependency(*args: Any, **kwargs: Any) -> Any:
+        raise ModuleNotFoundError(
+            "cn_equity_snapshot_pipelines / quant_platform_kit is required to run the research script"
+        )
+
+    compute_dividend_stability = compute_financial_features = compute_price_features = _missing_optional_dependency
+    extract_fhps_features = merge_factor_row = stamp_as_of = _missing_optional_dependency
+    build_symbol_sector_map = lookup_sector = _missing_optional_dependency
+    DEFAULT_STAGING_SYMBOLS = ()
+    resolve_universe_symbols = _missing_optional_dependency
+    add_cn_equity_trading_days = _missing_optional_dependency
+
+    def is_cn_equity_trading_day(*args: Any, **kwargs: Any) -> bool:
+        return True
+
+    def pipeline_normalize_symbol(symbol: Any) -> str:
+        return normalize_symbol(symbol)
 
 from cn_equity_strategies.backtest.dividend_snapshot_proxy_helpers import (  # noqa: E402
     SAFE_HAVEN,
@@ -61,6 +85,14 @@ from cn_equity_strategies.backtest.dividend_snapshot_proxy_helpers import (  # n
 )
 
 _active_stock_symbols_as_of = partial(active_stock_symbols_as_of, normalize=pipeline_normalize_symbol)
+
+CACHE_DIR = ROOT / ".cache" / "cn_equity_strategies"
+CACHE_VERSION = "v1"
+
+
+def _cache_path(prefix: str, *, parts: tuple[str, ...]) -> Path:
+    digest = hashlib.sha1("|".join([CACHE_VERSION, prefix, *parts]).encode("utf-8")).hexdigest()[:16]
+    return CACHE_DIR / f"{prefix}_{digest}.pkl"
 
 
 def resolve_research_universe(
@@ -121,27 +153,83 @@ def _slice_dividends(dividends: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFra
 
 
 def _fetch_stock_history(ak: Any, symbol: str, *, start: str, end: str) -> pd.DataFrame:
-    return ak.stock_zh_a_hist(
-        symbol=pipeline_normalize_symbol(symbol),
-        period="daily",
-        start_date=start.replace("-", ""),
-        end_date=end.replace("-", ""),
-        adjust="qfq",
-    )
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            return ak.stock_zh_a_hist(
+                symbol=pipeline_normalize_symbol(symbol),
+                period="daily",
+                start_date=start.replace("-", ""),
+                end_date=end.replace("-", ""),
+                adjust="qfq",
+            )
+        except Exception as exc:  # pragma: no cover - network dependent
+            last_error = exc
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1))
+    market_prefix = "sh" if pipeline_normalize_symbol(symbol).startswith(("5", "6", "9")) else "sz"
+    for attempt in range(3):
+        try:
+            frame = ak.stock_zh_a_hist_tx(
+                symbol=f"{market_prefix}{pipeline_normalize_symbol(symbol)}",
+                start_date=start.replace("-", ""),
+                end_date=end.replace("-", ""),
+                adjust="qfq",
+            )
+            if frame is not None and not frame.empty:
+                output = frame.rename(columns={"date": "日期", "close": "收盘", "amount": "成交额"})
+                if "成交量" not in output.columns:
+                    output["成交量"] = output.get("成交额", 0.0)
+                return output.loc[:, ["日期", "收盘", "成交额", "成交量"]].copy()
+        except Exception as exc:  # pragma: no cover - network dependent
+            last_error = exc
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"failed to fetch stock history for {symbol}")
 
 
 def _fetch_etf_history(ak: Any, symbol: str, *, start: str, end: str) -> pd.DataFrame:
-    frame = ak.fund_etf_hist_em(
-        symbol=pipeline_normalize_symbol(symbol),
-        period="daily",
-        start_date=start.replace("-", ""),
-        end_date=end.replace("-", ""),
-        adjust="qfq",
-    )
-    if frame.empty:
-        return frame
-    output = frame.rename(columns={"日期": "日期", "收盘": "收盘", "成交额": "成交额", "成交量": "成交量"})
-    return output
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            frame = ak.fund_etf_hist_em(
+                symbol=pipeline_normalize_symbol(symbol),
+                period="daily",
+                start_date=start.replace("-", ""),
+                end_date=end.replace("-", ""),
+                adjust="qfq",
+            )
+            if frame.empty:
+                return frame
+            output = frame.rename(columns={"日期": "日期", "收盘": "收盘", "成交额": "成交额", "成交量": "成交量"})
+            return output
+        except Exception as exc:  # pragma: no cover - network dependent
+            last_error = exc
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1))
+    market_prefix = "sh" if pipeline_normalize_symbol(symbol).startswith(("5", "6", "9")) else "sz"
+    for attempt in range(3):
+        try:
+            frame = ak.stock_zh_a_hist_tx(
+                symbol=f"{market_prefix}{pipeline_normalize_symbol(symbol)}",
+                start_date=start.replace("-", ""),
+                end_date=end.replace("-", ""),
+                adjust="qfq",
+            )
+            if frame is not None and not frame.empty:
+                output = frame.rename(columns={"date": "日期", "close": "收盘", "amount": "成交额"})
+                if "成交量" not in output.columns:
+                    output["成交量"] = output.get("成交额", 0.0)
+                return output.loc[:, ["日期", "收盘", "成交额", "成交量"]].copy()
+        except Exception as exc:  # pragma: no cover - network dependent
+            last_error = exc
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"failed to fetch ETF history for {symbol}")
 
 
 def _fetch_fhps_table(ak: Any) -> pd.DataFrame:
@@ -237,6 +325,22 @@ def build_monthly_factor_panel(
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     import akshare as ak
 
+    cache_path = _cache_path(
+        "dividend_panel",
+        parts=(
+            start,
+            end,
+            universe_mode,
+            str(expanded_top_n),
+            ",".join(custom_symbols or ()),
+            str(refresh_sector_map),
+            ",".join(symbols or ()),
+        ),
+    )
+    if cache_path.exists():
+        cached = pd.read_pickle(cache_path)
+        return cached["panel"], cached["diagnostics"]
+
     fhps_table = _fetch_fhps_table(ak)
     if symbols is None:
         symbols = resolve_research_universe(
@@ -282,7 +386,9 @@ def build_monthly_factor_panel(
     month_ends = _month_end_rebalance_dates(trading_index)
     month_ends = [day for day in month_ends if pd.Timestamp(start) <= day <= pd.Timestamp(end)]
 
-    min_panel_history_rows = 20
+    # Research proxy: keep this permissive so short-lived fetch gaps do not
+    # wipe out the whole panel. Live/PIT path should use stricter universe rules.
+    min_panel_history_rows = 5
     active_counts: list[int] = []
     rows: list[dict[str, object]] = []
     for as_of in month_ends:
@@ -324,7 +430,11 @@ def build_monthly_factor_panel(
         rows.extend(stamped.to_dict(orient="records"))
 
     if not rows:
-        raise ValueError("factor panel is empty; check AkShare downloads and date range")
+        diagnostics["reason"] = "factor_panel_empty"
+        diagnostics["active_counts_sample"] = active_counts[:10]
+        diagnostics["error_count"] = len(diagnostics["errors"])
+        diagnostics["month_error_count"] = len(diagnostics.get("month_errors", {}))
+        raise ValueError(f"factor panel is empty; diagnostics={diagnostics}")
 
     panel = pd.DataFrame(rows)
     panel["as_of"] = pd.to_datetime(panel["as_of"], errors="coerce").dt.normalize()
@@ -334,6 +444,8 @@ def build_monthly_factor_panel(
         float(sum(active_counts) / len(active_counts)) if active_counts else 0.0
     )
     diagnostics["min_active_symbols_per_month"] = int(min(active_counts)) if active_counts else 0
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    pd.to_pickle({"panel": panel, "diagnostics": diagnostics}, cache_path)
     return panel, diagnostics
 
 
@@ -344,6 +456,10 @@ def build_market_history_from_downloads(
     end: str,
 ) -> pd.DataFrame:
     import akshare as ak
+
+    cache_path = _cache_path("dividend_market_history", parts=(start, end, ",".join(symbols)))
+    if cache_path.exists():
+        return pd.read_pickle(cache_path)
 
     rows: list[dict[str, object]] = []
     for symbol in symbols:
@@ -364,7 +480,10 @@ def build_market_history_from_downloads(
             )
     output = pd.DataFrame(rows)
     output["date"] = pd.to_datetime(output["date"], utc=False).dt.tz_localize(None).dt.normalize()
-    return output.sort_values(["date", "symbol"]).reset_index(drop=True)
+    output = output.sort_values(["date", "symbol"]).reset_index(drop=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    output.to_pickle(cache_path)
+    return output
 
 
 def run_snapshot_proxy_backtest(
@@ -561,7 +680,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="P3.5 proxy backtest for cn_dividend_quality_snapshot.")
     parser.add_argument("--start", default="2021-01-01")
     parser.add_argument("--end", default="2026-06-27")
-    parser.add_argument("--holdings-count", type=int, default=4)
+    parser.add_argument("--holdings-count", type=int, default=dividend_strategy.DEFAULT_HOLDINGS_COUNT)
     parser.add_argument(
         "--universe-mode",
         choices=("staging", "expanded", "custom"),

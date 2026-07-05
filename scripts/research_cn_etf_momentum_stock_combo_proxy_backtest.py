@@ -49,6 +49,30 @@ DEFAULT_ETF_WEIGHT = 0.70
 DEFAULT_STOCK_WEIGHT = 0.30
 
 
+def _normalize_history(history: pd.DataFrame) -> pd.DataFrame:
+    frame = history.copy()
+    frame["date"] = pd.to_datetime(frame["date"], utc=False).dt.tz_localize(None).dt.normalize()
+    frame["symbol"] = frame["symbol"].astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(6)
+    return frame.sort_values(["date", "symbol"]).reset_index(drop=True)
+
+
+def _history_for_symbols(history: pd.DataFrame, symbols: tuple[str, ...]) -> pd.DataFrame:
+    return history.loc[history["symbol"].isin(symbols)].copy()
+
+
+def _union_symbols(*groups: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(symbol for group in groups for symbol in group))
+
+
+def _build_runtime_symbols(preset: dict[str, Any]) -> tuple[str, ...]:
+    extras = []
+    benchmark = preset.get("benchmark_symbol")
+    if benchmark:
+        extras.append(str(benchmark))
+    extras.extend(str(item) for item in preset.get("defensive_symbols") or ())
+    return tuple(dict.fromkeys([*tuple(str(item) for item in preset["universe_symbols"]), *extras]))
+
+
 def _periods_for_end(end: str) -> dict[str, tuple[str, str]]:
     return {
         "full": ("2021-01-01", end),
@@ -104,6 +128,7 @@ def run_etf_momentum_stock_combo(
     stock_weight: float = DEFAULT_STOCK_WEIGHT,
     industry_profile: str = "conservative",
     stock_preset_key: str = CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY,
+    simulation_mode: str = "blend",
 ) -> dict[str, Any]:
     if stock_preset_key not in STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS:
         raise ValueError(f"unknown stock preset: {stock_preset_key}")
@@ -145,12 +170,123 @@ def run_etf_momentum_stock_combo(
 
     etf_slice = industry_result.daily_returns.loc[pd.Timestamp(start) : pd.Timestamp(end)]
     stock_slice = stock_returns.loc[pd.Timestamp(start) : pd.Timestamp(end)]
-    combo_slice = _combine_daily_returns(
+    blend_slice = _combine_daily_returns(
         etf_slice,
         stock_slice,
         industry_weight=etf_weight,
         dividend_weight=stock_weight,
     )
+
+    unified_payload: dict[str, Any] | None = None
+    if simulation_mode == "unified":
+        etf_runtime = {
+            "universe_symbols": tuple(industry_rotation.DEFAULT_UNIVERSE_SYMBOLS),
+            "defensive_symbols": tuple(industry_rotation.DEFAULT_DEFENSIVE_SYMBOLS),
+            "benchmark_symbol": industry_rotation.DEFAULT_BENCHMARK_SYMBOL,
+            "enable_benchmark_risk_off": False,
+            "momentum_window_days": industry_rotation.DEFAULT_MOMENTUM_WINDOW_DAYS,
+            "trend_window_days": industry_rotation.DEFAULT_TREND_WINDOW_DAYS,
+            "benchmark_trend_window_days": industry_rotation.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+            "volatility_window_days": industry_rotation.DEFAULT_VOLATILITY_WINDOW_DAYS,
+            "top_n": industry_rotation.DEFAULT_TOP_N,
+            "min_momentum": industry_rotation.DEFAULT_MIN_MOMENTUM,
+            "rebalance_frequency": industry_rotation.DEFAULT_REBALANCE_FREQUENCY,
+            "weighting_mode": industry_rotation.DEFAULT_WEIGHTING_MODE,
+            "target_annual_volatility": target_vol,
+            "max_gross_exposure": industry_rotation.DEFAULT_MAX_GROSS_EXPOSURE,
+            "min_history_days": industry_rotation.DEFAULT_MIN_HISTORY_DAYS,
+            "max_pair_correlation": industry_rotation.DEFAULT_MAX_PAIR_CORRELATION,
+            "sentiment_mode": "off",
+        }
+        stock_runtime = _materialize_preset(stock_preset, stock_universe=active)
+        etf_symbols = _build_runtime_symbols(etf_runtime)
+        stock_symbols = _build_runtime_symbols(stock_runtime)
+        universe_symbols = _union_symbols(etf_symbols, stock_symbols)
+        combined_history = _normalize_history(
+            pd.concat([industry_history, stock_history], ignore_index=True, sort=False)
+        )
+
+        def _signal_fn(history: Any, **_kwargs: Any):
+            history_frame = history if isinstance(history, pd.DataFrame) else pd.DataFrame(history)
+            etf_history_slice = _history_for_symbols(history_frame, etf_symbols)
+            stock_history_slice = _history_for_symbols(history_frame, stock_symbols)
+            etf_weights, etf_meta = industry_rotation.build_target_weights(etf_history_slice, **etf_runtime)
+            stock_weights, stock_meta = industry_rotation.build_target_weights(stock_history_slice, **stock_runtime)
+            combined_weights: dict[str, float] = {}
+            for symbol in set(etf_weights) | set(stock_weights):
+                combined_weights[symbol] = (
+                    float(etf_weight) * float(etf_weights.get(symbol, 0.0))
+                    + float(stock_weight) * float(stock_weights.get(symbol, 0.0))
+                )
+            return combined_weights, {
+                "mode": "unified",
+                "etf": etf_meta,
+                "stock": stock_meta,
+                "weights": {
+                    "industry_etf": float(etf_weight),
+                    "momentum_stock": float(stock_weight),
+                },
+            }
+
+        unified_result = run_proxy_backtest(
+            combined_history,
+            _signal_fn,
+            config=ProxyBacktestConfig(min_history_days=industry_rotation.DEFAULT_MIN_HISTORY_DAYS),
+            universe_symbols=universe_symbols,
+        )
+        unified_payload = {
+            "weights": {
+                "industry_etf": etf_weight,
+                "momentum_stock": stock_weight,
+            },
+            "full_sample": {
+                "combo": unified_result.metrics,
+                "combo_unified": unified_result.metrics,
+                "combo_blend": _metrics_from_returns(blend_slice),
+                "industry_etf": _metrics_from_returns(etf_slice),
+                "momentum_stock": _metrics_from_returns(stock_slice),
+                "510300": _metrics_from_returns(
+                    industry_bench.daily_returns.loc[pd.Timestamp(start) : pd.Timestamp(end)]
+                ),
+            },
+            "periods": {
+                "full": {
+                    "combo": _metrics_slice(unified_result.daily_returns, start, end),
+                    "combo_unified": _metrics_slice(unified_result.daily_returns, start, end),
+                    "combo_blend": _metrics_slice(blend_slice, start, end),
+                    "industry_etf": _metrics_slice(etf_slice, start, end),
+                    "momentum_stock": _metrics_slice(stock_slice, start, end),
+                },
+                "bear_2021_2022": {
+                    "combo": _metrics_slice(unified_result.daily_returns, "2021-01-01", "2022-12-31"),
+                    "combo_unified": _metrics_slice(unified_result.daily_returns, "2021-01-01", "2022-12-31"),
+                    "combo_blend": _metrics_slice(blend_slice, "2021-01-01", "2022-12-31"),
+                    "industry_etf": _metrics_slice(etf_slice, "2021-01-01", "2022-12-31"),
+                    "momentum_stock": _metrics_slice(stock_slice, "2021-01-01", "2022-12-31"),
+                },
+                "oos_2024_2026": {
+                    "combo": _metrics_slice(unified_result.daily_returns, "2024-01-01", end),
+                    "combo_unified": _metrics_slice(unified_result.daily_returns, "2024-01-01", end),
+                    "combo_blend": _metrics_slice(blend_slice, "2024-01-01", end),
+                    "industry_etf": _metrics_slice(etf_slice, "2024-01-01", end),
+                    "momentum_stock": _metrics_slice(stock_slice, "2024-01-01", end),
+                },
+                "2023_2026": {
+                    "combo": _metrics_slice(unified_result.daily_returns, "2023-01-01", end),
+                    "combo_unified": _metrics_slice(unified_result.daily_returns, "2023-01-01", end),
+                    "combo_blend": _metrics_slice(blend_slice, "2023-01-01", end),
+                    "industry_etf": _metrics_slice(etf_slice, "2023-01-01", end),
+                    "momentum_stock": _metrics_slice(stock_slice, "2023-01-01", end),
+                },
+            },
+            "simulation_mode": "unified",
+            "limitations": [
+                "unified portfolio simulation uses a shared rebalance calendar and transaction model",
+                "stock leg still uses latest csindex constituent base, so it is not fully PIT",
+                f"ETF leg profile={industry_profile} vol_target={target_vol:.0%}",
+                f"stock leg preset={stock_preset_key}",
+            ],
+        }
 
     return {
         "start": start,
@@ -168,8 +304,9 @@ def run_etf_momentum_stock_combo(
             "active_count": len(active),
             "sample_active": list(active[:12]),
         },
+        "simulation_mode": simulation_mode,
         "full_sample": {
-            "combo": _metrics_from_returns(combo_slice),
+            "combo": _metrics_from_returns(blend_slice),
             "industry_etf": _metrics_from_returns(etf_slice),
             "momentum_stock": _metrics_from_returns(stock_slice),
             "510300": _metrics_from_returns(
@@ -190,6 +327,7 @@ def run_etf_momentum_stock_combo(
             f"stock leg preset={stock_preset_key}",
             "CSI500 constituents from latest csindex table — not fully PIT",
         ],
+        **(unified_payload or {}),
     }
 
 
@@ -250,6 +388,7 @@ def main() -> None:
         default=CSI500_RISKOFF_MDD_OPTIMIZED_PRESET_KEY,
         help="Key from STOCK_MOMENTUM_CSI500_RISKOFF_PRESETS",
     )
+    parser.add_argument("--simulation-mode", choices=("blend", "unified"), default="blend")
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
 
@@ -260,6 +399,7 @@ def main() -> None:
         stock_weight=args.stock_weight,
         industry_profile=args.industry_profile,
         stock_preset_key=args.stock_preset,
+        simulation_mode=args.simulation_mode,
     )
     _print_report(payload)
     if args.json_output:

@@ -19,7 +19,7 @@ def test_conservative_v1_matches_runtime_defaults():
     assert CONSERVATIVE_V1_PRESET["universe_symbols"] == profile.DEFAULT_UNIVERSE_SYMBOLS
 
 
-def test_aggressive_presets_are_marked_research_only():
+def test_aggressive_presets_are_marked_research_backtest_only():
     for preset in AGGRESSIVE_RESEARCH_PRESETS.values():
         assert preset["profile_variant"] == "aggressive_research"
 
@@ -46,4 +46,3 @@ def test_dual_track_combo_presets_declare_weights():
     preset = DUAL_TRACK_COMBO_PRESETS["conservative_expanded_70_30"]
     assert preset["industry_weight"] == 0.70
     assert preset["dividend_weight"] == 0.30
-

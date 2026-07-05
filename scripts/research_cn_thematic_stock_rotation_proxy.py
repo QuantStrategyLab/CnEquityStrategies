@@ -179,7 +179,7 @@ def run_stock_thematic_matrix(*, start: str, end: str, suite: str = "stock") -> 
         "start": start,
         "end": end,
         "suite": suite,
-        "status": "research_only",
+        "status": "research_backtest_only",
         "active_symbols": list(active),
         "candidate_symbols": list(OPTICAL_COMPUTE_STOCK_SYMBOLS),
         "conservative_etf_baseline": conservative,

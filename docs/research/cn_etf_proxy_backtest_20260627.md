@@ -54,7 +54,7 @@ PYTHONPATH=src python3 scripts/research_cn_strategy_validation.py --json-output 
 
 | 社区热门方案 | 本次结论 |
 | --- | --- |
-| 小市值 + ETF 双核 | 未测；注册制后尾部风险高，维持 research scaffold |
+| 小市值 + ETF 双核 | 未测；注册制后尾部风险高，维持 research-only，不进 runtime |
 | 纯等权 ETF 进攻 | 收益高但 MDD -39%，不适合作为唯一主力 |
 | 裸动量轮动 | 全样本亏损，否决 |
 | 纯 510300 持有 | 可作为 benchmark，但回撤与夏普均劣于当前策略 |

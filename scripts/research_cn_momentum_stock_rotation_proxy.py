@@ -172,7 +172,7 @@ def run_momentum_stock_matrix(
         "start": start,
         "end": end,
         "track": "cross_section_momentum_riskoff" if suite == "csi500_riskoff" else "cross_section_momentum",
-        "status": "research_only",
+        "status": "research_backtest_only",
         "default_universe_mode": suite or universe_mode or "all_presets",
         "conservative_etf_baseline": conservative,
         "variants": results,

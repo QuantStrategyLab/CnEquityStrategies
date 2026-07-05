@@ -27,7 +27,9 @@ from cn_equity_strategies.backtest.proxy_simulator import (  # noqa: E402
     run_proxy_backtest,
 )
 from cn_equity_strategies.catalog import (  # noqa: E402
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_EQUITY_COMBO_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
@@ -37,6 +39,7 @@ from cn_equity_strategies.catalog import (  # noqa: E402
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_aggressive  # noqa: E402
 from research_cn_dividend_quality_snapshot_proxy_backtest import (  # noqa: E402
     SAFE_HAVEN,
+    SnapshotProxyBacktestConfig,
     build_market_history_from_downloads,
     build_monthly_factor_panel,
     run_snapshot_proxy_backtest,
@@ -54,7 +57,8 @@ from research_cn_us_long_horizon_comparison import (  # noqa: E402
 
 DEFAULT_START = "2021-01-01"
 DEFAULT_END = "2026-06-27"
-MDD_BUDGETS = (-0.30, -0.35)
+# 用户当前可接受的 live 最大回撤口径：30%。
+MDD_BUDGETS = (-0.30,)
 
 
 def _etf_leg_metrics(
@@ -106,13 +110,18 @@ def _dividend_leg_metrics(
     )
     universe = tuple(panel_diag["symbols"])
     history = build_market_history_from_downloads(symbols=universe, start=start, end=end)
-    result = run_snapshot_proxy_backtest(panel, history, strategy_kwargs={"holdings_count": 4})
+    result = run_snapshot_proxy_backtest(
+        panel,
+        history,
+        config=SnapshotProxyBacktestConfig(min_history_days=60),
+        strategy_kwargs={"holdings_count": 4},
+    )
     returns = result.daily_returns.loc[pd.Timestamp(start) : pd.Timestamp(end)]
     overall = compute_backtest_metrics(returns.dropna())
     bench = run_proxy_backtest(
         history,
         lambda _h, **_k: ({SAFE_HAVEN: 1.0}, {}),
-        config=ProxyBacktestConfig(min_history_days=252),
+        config=ProxyBacktestConfig(min_history_days=60),
         universe_symbols=(SAFE_HAVEN,),
     )
     bench_returns = bench.daily_returns.loc[pd.Timestamp(start) : pd.Timestamp(end)]
@@ -175,6 +184,7 @@ def run_live_candidate_evaluation(*, start: str, end: str) -> dict[str, Any]:
         dividend_weight=0.30,
         industry_profile="conservative",
         dividend_universe_mode="expanded",
+        weight_policy="scan",
     )
     combo_aggressive_expanded = run_dual_track_combo(
         start=start,
@@ -183,7 +193,13 @@ def run_live_candidate_evaluation(*, start: str, end: str) -> dict[str, Any]:
         dividend_weight=0.30,
         industry_profile="aggressive",
         dividend_universe_mode="expanded",
+        weight_policy="scan",
     )
+
+    conservative_combo = combo_conservative_expanded["full_sample"]["combo"]
+    conservative_industry = combo_conservative_expanded["full_sample"]["industry_rotation"]
+    conservative_recent = combo_conservative_expanded["periods"]["2023_2026"]
+    conservative_selection = combo_conservative_expanded.get("combo_weight_selection") or {}
 
     candidates: list[dict[str, Any]] = [
         {
@@ -207,43 +223,45 @@ def run_live_candidate_evaluation(*, start: str, end: str) -> dict[str, Any]:
             "notes": "research_backtest_only; passed ETF promotion gate; +~1pp ann vs conservative.",
         },
         {
-            "candidate_id": "live_snapshot_dividend_staging",
+            "candidate_id": "research_snapshot_dividend_staging",
             "kind": "single_leg",
-            "live_ready": True,
-            "qmt_target": "qmt/dividend_quality_dry_run",
+            "live_ready": False,
+            "qmt_target": "research/dividend_quality_dry_run",
             "runtime_profile": CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
             "overall": dividend_staging["overall"],
             "periods": dividend_staging["periods"],
-            "notes": "runtime_enabled; fixture e2e; staging universe smaller.",
+            "notes": "research_backtest_only; snapshot leg is not live until data quality and evidence improve.",
         },
         {
-            "candidate_id": "live_snapshot_dividend_expanded",
+            "candidate_id": "research_snapshot_dividend_expanded",
             "kind": "single_leg",
-            "live_ready": "pipeline_ready",
-            "qmt_target": "qmt/dividend_quality_dry_run + expanded snapshot path",
+            "live_ready": False,
+            "qmt_target": "research/dividend_quality_dry_run + expanded snapshot path",
             "runtime_profile": CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
             "overall": dividend_expanded["overall"],
             "periods": dividend_expanded["periods"],
             "universe_mode": "expanded",
-            "notes": "Same profile; expanded universe via CnEquitySnapshotPipelines metadata.",
+            "notes": "Same profile; expanded universe via CnEquitySnapshotPipelines metadata; still research-only.",
         },
         {
-            "candidate_id": "combo_70_30_conservative_expanded",
+            "candidate_id": "combo_best_weight_conservative_expanded",
             "kind": "return_blend",
             "live_ready": False,
             "runtime_profile": f"{CN_INDUSTRY_ETF_ROTATION_PROFILE}+{CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE}",
-            "overall": combo_conservative_expanded["full_sample"]["combo"],
+            "overall": conservative_combo,
             "periods": combo_conservative_expanded["periods"],
-            "notes": "Not unified portfolio sim; best ann among combos in prior research.",
+            "weights": conservative_selection,
+            "notes": "research_backtest_only; combo depends on the dividend leg and stays out of live.",
         },
         {
-            "candidate_id": "combo_70_30_aggressive_expanded",
+            "candidate_id": "combo_best_weight_aggressive_expanded",
             "kind": "return_blend",
             "live_ready": False,
             "runtime_profile": f"{CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE}+{CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE}",
             "overall": combo_aggressive_expanded["full_sample"]["combo"],
             "periods": combo_aggressive_expanded["periods"],
-            "notes": "Higher industry vol; long-sample ann lower than conservative combo in 2017+ run.",
+            "weights": combo_aggressive_expanded.get("combo_weight_selection") or {},
+            "notes": "research_backtest_only; aggressive combo stays out of live until the legs are revalidated.",
         },
     ]
 
@@ -274,17 +292,20 @@ def run_live_candidate_evaluation(*, start: str, end: str) -> dict[str, Any]:
         "mdd_budgets": list(MDD_BUDGETS),
         "runtime_enabled_profiles": runtime_profiles,
         "runtime_metadata": runtime_meta,
-        "research_only_profiles": [
+        "research_backtest_only_profiles": [
             CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
             CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+            CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+            CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
+            CN_EQUITY_COMBO_PROFILE,
         ],
         "candidates": candidates,
         "recommendations": recommendations,
         "live_deployment_summary": {
             "primary_qmt_target": "qmt/industry_etf_dry_run",
-            "secondary_qmt_target": "qmt/dividend_quality_dry_run",
+            "secondary_qmt_target": "research/dividend_quality_dry_run",
             "proposed_optional_target": "qmt/industry_etf_aggressive_dry_run",
-            "dual_track_live": "not yet — return blend only in research",
+            "dual_track_live": "not yet — combo must beat industry baseline first",
         },
     }
 

@@ -18,7 +18,8 @@ These profiles use platform-provided `market_history` and do not require a separ
 
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
-| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | A-share ETF tactical rotation with CSI300 benchmark risk-off and correlation filtering. |
+| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | A-share ETF main live track. |
+| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | Research/backtest only; legacy ETF tactical rotation. |
 
 ### Snapshot-backed runtime strategy
 
@@ -27,12 +28,21 @@ These profiles use platform-provided `market_history` and do not require a separ
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
 | `cn_dividend_quality_snapshot` | CN Dividend Quality Snapshot | `feature_snapshot` + manifest | `510300` | Dividend + quality composite selector for defensive allocation. |
+| `cn_equity_combo` | CN Equity Combo | `market_history` + `feature_snapshot` | `510300` | Research-only composite track combining ETF, stock, and dividend sleeves. |
 
-### Planned research scaffold
+### Live candidate
+
+| Profile | Name | Input | Benchmark | Current role |
+| --- | --- | --- | --- | --- |
+| `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | Optional QMT live candidate; not the default runtime profile. |
+
+### Planned external snapshot scaffolds
 
 | Profile | Name | Notes |
 | --- | --- | --- |
-| `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | Community-popular but higher tail risk; not runtime-enabled yet. |
+| `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | External snapshot scaffold; not registered in the runtime catalog yet. |
+| `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | External snapshot scaffold for a ChiNext growth-momentum-quality sleeve; not registered in the runtime catalog yet. |
+| `cn_chinext_tactical_rotation` | CN ChiNext Tactical Rotation | Research-only ChiNext tactical rotation line. |
 
 ## Performance and evidence boundary
 
