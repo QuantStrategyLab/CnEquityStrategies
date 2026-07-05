@@ -17,12 +17,14 @@ from quant_platform_kit.common.strategies import (
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import (
-    cn_chinext_growth_momentum_quality_snapshot as chinext_growth_momentum_quality_strategy,
+    cn_chinext_growth_momentum_quality as chinext_growth_momentum_quality_strategy,
+    cn_chinext_growth_momentum_quality_snapshot as chinext_growth_momentum_quality_snapshot_strategy,
 )
 from cn_equity_strategies.strategies import cn_chinext_tactical_rotation as chinext_tactical_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
+from cn_equity_strategies.strategies import cn_star_growth_momentum_quality as star_growth_momentum_quality_strategy
 
 from cn_equity_strategies.strategies import cn_equity_combo as cn_combo_strategy
 
@@ -32,14 +34,18 @@ CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE = industry_etf_aggressive_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
 CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE = (
+    chinext_growth_momentum_quality_snapshot_strategy.PROFILE_NAME
+)
+CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE = (
     chinext_growth_momentum_quality_strategy.PROFILE_NAME
 )
+CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE = star_growth_momentum_quality_strategy.PROFILE_NAME
 CN_CHINEXT_TACTICAL_ROTATION_PROFILE = chinext_tactical_strategy.PROFILE_NAME
 CN_EQUITY_COMBO_PROFILE = cn_combo_strategy.PROFILE_NAME
 
 STRATEGY_STATUS_RUNTIME_ENABLED = "runtime_enabled"
 STRATEGY_STATUS_LIVE_CANDIDATE = "live_candidate"
-STRATEGY_STATUS_SHADOW = "shadow"
+STRATEGY_STATUS_SHADOW = "shadow_candidate"
 STRATEGY_STATUS_RESEARCH_BACKTEST_ONLY = "research_backtest_only"
 STRATEGY_STATUS_SCAFFOLD = "scaffold"
 
@@ -62,10 +68,12 @@ CN_LIVE_CANDIDATE_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROF
 CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset(
     {
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+        CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
         CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
         CN_EQUITY_COMBO_PROFILE,
         CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
+        CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
     }
 )
 CN_SHADOW_PROFILES = frozenset()
@@ -78,9 +86,11 @@ STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"qmt"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: frozenset({"qmt"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
     CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: frozenset({"qmt"}),
     CN_EQUITY_COMBO_PROFILE: frozenset({"qmt"}),
 }
 
@@ -88,9 +98,11 @@ STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"market_history"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: frozenset({"market_history"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
     CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: frozenset({"market_history"}),
     CN_EQUITY_COMBO_PROFILE: frozenset({"market_history", "feature_snapshot"}),
 }
 
@@ -152,6 +164,25 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "min_history_days": index_etf_strategy.DEFAULT_MIN_HISTORY_DAYS,
         "execution_cash_reserve_ratio": index_etf_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
     },
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: {
+        "universe_symbols": chinext_growth_momentum_quality_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": chinext_growth_momentum_quality_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": chinext_growth_momentum_quality_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "momentum_window_days": chinext_growth_momentum_quality_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": chinext_growth_momentum_quality_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": chinext_growth_momentum_quality_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": chinext_growth_momentum_quality_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": chinext_growth_momentum_quality_strategy.DEFAULT_TOP_N,
+        "min_momentum": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": chinext_growth_momentum_quality_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": chinext_growth_momentum_quality_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": chinext_growth_momentum_quality_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "max_pair_correlation": chinext_growth_momentum_quality_strategy.DEFAULT_MAX_PAIR_CORRELATION,
+        "sentiment_mode": chinext_growth_momentum_quality_strategy.DEFAULT_SENTIMENT_MODE,
+        "execution_cash_reserve_ratio": chinext_growth_momentum_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+    },
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE: {
         "universe_symbols": chinext_tactical_strategy.DEFAULT_UNIVERSE_SYMBOLS,
         "defensive_symbols": chinext_tactical_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
@@ -168,6 +199,25 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "max_gross_exposure": chinext_tactical_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
         "min_history_days": chinext_tactical_strategy.DEFAULT_MIN_HISTORY_DAYS,
         "max_pair_correlation": chinext_tactical_strategy.DEFAULT_MAX_PAIR_CORRELATION,
+    },
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: {
+        "universe_symbols": star_growth_momentum_quality_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": star_growth_momentum_quality_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": star_growth_momentum_quality_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "momentum_window_days": star_growth_momentum_quality_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": star_growth_momentum_quality_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": star_growth_momentum_quality_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": star_growth_momentum_quality_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": star_growth_momentum_quality_strategy.DEFAULT_TOP_N,
+        "min_momentum": star_growth_momentum_quality_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": star_growth_momentum_quality_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": star_growth_momentum_quality_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": star_growth_momentum_quality_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": star_growth_momentum_quality_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": star_growth_momentum_quality_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "max_pair_correlation": star_growth_momentum_quality_strategy.DEFAULT_MAX_PAIR_CORRELATION,
+        "sentiment_mode": star_growth_momentum_quality_strategy.DEFAULT_SENTIMENT_MODE,
+        "execution_cash_reserve_ratio": star_growth_momentum_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
     },
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: {
         "safe_haven": dividend_quality_strategy.SAFE_HAVEN,
@@ -194,29 +244,30 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "rebalance_frequency": "monthly",
     },
     CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE: {
-        "safe_haven": chinext_growth_momentum_quality_strategy.SAFE_HAVEN,
-        "holdings_count": chinext_growth_momentum_quality_strategy.DEFAULT_HOLDINGS_COUNT,
-        "single_name_cap": chinext_growth_momentum_quality_strategy.DEFAULT_SINGLE_NAME_CAP,
-        "sector_cap": chinext_growth_momentum_quality_strategy.DEFAULT_SECTOR_CAP,
-        "min_adv20_cny": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_ADV20_CNY,
-        "min_market_cap_cny": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_MARKET_CAP_CNY,
-        "min_revenue_yoy": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_REVENUE_YOY,
-        "min_profit_yoy": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_PROFIT_YOY,
-        "min_momentum": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_MOMENTUM,
-        "min_list_days": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_LIST_DAYS,
-        "hold_buffer": chinext_growth_momentum_quality_strategy.DEFAULT_HOLD_BUFFER,
-        "hold_bonus": chinext_growth_momentum_quality_strategy.DEFAULT_HOLD_BONUS,
-        "risk_on_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_RISK_ON_EXPOSURE,
-        "soft_defense_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_SOFT_DEFENSE_EXPOSURE,
-        "hard_defense_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_HARD_DEFENSE_EXPOSURE,
-        "soft_breadth_threshold": chinext_growth_momentum_quality_strategy.DEFAULT_SOFT_BREADTH_THRESHOLD,
-        "hard_breadth_threshold": chinext_growth_momentum_quality_strategy.DEFAULT_HARD_BREADTH_THRESHOLD,
-        "execution_cash_reserve_ratio": chinext_growth_momentum_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+        "safe_haven": chinext_growth_momentum_quality_snapshot_strategy.SAFE_HAVEN,
+        "holdings_count": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_HOLDINGS_COUNT,
+        "single_name_cap": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_SINGLE_NAME_CAP,
+        "sector_cap": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_SECTOR_CAP,
+        "min_adv20_cny": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_MIN_ADV20_CNY,
+        "min_market_cap_cny": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_MIN_MARKET_CAP_CNY,
+        "min_revenue_yoy": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_MIN_REVENUE_YOY,
+        "min_profit_yoy": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_MIN_PROFIT_YOY,
+        "min_momentum": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_MIN_MOMENTUM,
+        "min_list_days": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_MIN_LIST_DAYS,
+        "hold_buffer": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_HOLD_BUFFER,
+        "hold_bonus": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_HOLD_BONUS,
+        "risk_on_exposure": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_RISK_ON_EXPOSURE,
+        "soft_defense_exposure": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_SOFT_DEFENSE_EXPOSURE,
+        "hard_defense_exposure": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_HARD_DEFENSE_EXPOSURE,
+        "soft_breadth_threshold": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_SOFT_BREADTH_THRESHOLD,
+        "hard_breadth_threshold": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_HARD_BREADTH_THRESHOLD,
+        "execution_cash_reserve_ratio": chinext_growth_momentum_quality_snapshot_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
         "rebalance_frequency": "monthly",
     },
     CN_EQUITY_COMBO_PROFILE: {
         "etf_weight": 0.30,
         "stock_weight": 0.50,
+        "growth_weight": 0.50,
         "dividend_weight": 0.20,
         "execution_cash_reserve_ratio": 0.02,
         "rebalance_frequency": "monthly",
@@ -227,11 +278,13 @@ STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: "cn_industry_etf_rotation_entrypoint",
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "cn_industry_etf_rotation_aggressive_entrypoint",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "cn_index_etf_tactical_rotation_entrypoint",
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: "cn_chinext_growth_momentum_quality_entrypoint",
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE: "cn_chinext_tactical_rotation_entrypoint",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "cn_dividend_quality_snapshot_entrypoint",
     CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE: (
         "cn_chinext_growth_momentum_quality_snapshot_entrypoint"
     ),
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: "cn_star_growth_momentum_quality_entrypoint",
     CN_EQUITY_COMBO_PROFILE: "cn_equity_combo_entrypoint",
 }
 
@@ -239,9 +292,11 @@ STRATEGY_TARGET_MODES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: "weight",
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "weight",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "weight",
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: "weight",
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE: "weight",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "weight",
     CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE: "weight",
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: "weight",
     CN_EQUITY_COMBO_PROFILE: "weight",
 }
 
@@ -288,6 +343,11 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
         component_name="signal_logic",
         module_path="cn_equity_strategies.strategies.cn_index_etf_tactical_rotation",
     ),
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: _build_strategy_definition(
+        CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_chinext_growth_momentum_quality",
+    ),
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE: _build_strategy_definition(
         CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
         component_name="signal_logic",
@@ -302,6 +362,11 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
         CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
         component_name="signal_logic",
         module_path="cn_equity_strategies.strategies.cn_chinext_growth_momentum_quality_snapshot",
+    ),
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: _build_strategy_definition(
+        CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_star_growth_momentum_quality",
     ),
     CN_EQUITY_COMBO_PROFILE: _build_strategy_definition(
         CN_EQUITY_COMBO_PROFILE,
@@ -372,6 +437,20 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         role="cn_non_snapshot_chinext_etf_rotation",
         status="research_backtest_only",
     ),
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE: StrategyMetadata(
+        canonical_profile=CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
+        display_name="CN ChiNext Growth Momentum Quality",
+        localized_display_names={"zh": "创业板成长动量质量"},
+        description=(
+            "Research-only ChiNext growth sleeve using momentum, trend, and benchmark risk-off switching."
+        ),
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_listed_chinext_etfs",
+        benchmark="510300",
+        role="cn_non_snapshot_chinext_growth_momentum_quality",
+        status="research_backtest_only",
+    ),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: StrategyMetadata(
         canonical_profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         display_name="CN Dividend Quality Snapshot",
@@ -402,11 +481,25 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         role="cn_snapshot_chinext_growth_momentum_quality",
         status="research_backtest_only",
     ),
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE: StrategyMetadata(
+        canonical_profile=CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
+        display_name="CN Star Growth Momentum Quality",
+        localized_display_names={"zh": "科创板成长动量质量"},
+        description=(
+            "Research-only STAR sleeve using momentum, trend, and benchmark risk-off switching."
+        ),
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_listed_star_etfs",
+        benchmark="510300",
+        role="cn_non_snapshot_star_growth_momentum_quality",
+        status="research_backtest_only",
+    ),
     CN_EQUITY_COMBO_PROFILE: StrategyMetadata(
         canonical_profile=CN_EQUITY_COMBO_PROFILE,
         display_name="CN Equity Combo",
         description=(
-            "Research-only CN equity combo: ETF rotation (30%) + stock momentum (50%) + "
+            "Research-only CN equity combo orchestrator: ETF rotation (30%) + growth sleeves (50%) + "
             "dividend quality (20%)."
         ),
         aliases=(),

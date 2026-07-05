@@ -7,13 +7,23 @@ from quant_platform_kit.strategy_contracts import StrategyContext
 
 from cn_equity_strategies import get_strategy_entrypoint
 from cn_equity_strategies.catalog import (
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
 )
 from cn_equity_strategies.strategies.cn_dividend_quality_snapshot import SAFE_HAVEN
+from cn_equity_strategies.strategies.cn_chinext_growth_momentum_quality import (
+    CHINEXT_ETF_SYMBOL as GROWTH_CHINEXT_ETF_SYMBOL,
+    CSI1000_ETF_SYMBOL,
+)
 from test_cn_dividend_quality_snapshot import sample_factor_snapshot
+from cn_equity_strategies.strategies.cn_star_growth_momentum_quality import (
+    CHINEXT_ETF_SYMBOL as STAR_CHINEXT_ETF_SYMBOL,
+    STAR50_ETF_SYMBOL,
+)
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
     DEFAULT_UNIVERSE_SYMBOLS,
     NASDAQ_ETF_SYMBOL,
@@ -100,6 +110,18 @@ def _chinext_tactical_history() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _growth_history(rates: dict[str, float]) -> pd.DataFrame:
+    dates = pd.bdate_range("2024-01-02", periods=320)
+    rows = []
+    for symbol, rate in rates.items():
+        price = 20.0
+        for idx, date in enumerate(dates):
+            price *= rate
+            close = price * (1.0 + 0.03 * ((idx % 5) - 2) / 5)
+            rows.append({"date": date, "symbol": symbol, "close": close, "volume": 1_000_000.0})
+    return pd.DataFrame(rows)
+
+
 def test_industry_etf_rotation_entrypoint_returns_volatility_targeted_weight_targets():
     entrypoint = get_strategy_entrypoint(CN_INDUSTRY_ETF_ROTATION_PROFILE)
 
@@ -177,3 +199,57 @@ def test_chinext_tactical_rotation_entrypoint_returns_weights():
     weights = {position.symbol: position.target_weight for position in decision.positions}
     assert weights
     assert decision.diagnostics["signal_source"] == "daily_market_history"
+
+
+def test_chinext_growth_momentum_quality_entrypoint_returns_weights():
+    entrypoint = get_strategy_entrypoint(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE)
+
+    decision = entrypoint.evaluate(
+        StrategyContext(
+            as_of="2026-02-25",
+            market_data={
+                "market_history": _growth_history(
+                    {
+                        GROWTH_CHINEXT_ETF_SYMBOL: 1.0009,
+                        CSI1000_ETF_SYMBOL: 1.0007,
+                        "510300": 1.0002,
+                        "511880": 1.00001,
+                        "511260": 1.00002,
+                    }
+                )
+            },
+            runtime_config={"min_history_days": 220},
+        )
+    )
+
+    weights = {position.symbol: position.target_weight for position in decision.positions}
+    assert weights
+    assert decision.diagnostics["signal_source"] == "daily_market_history"
+    assert decision.diagnostics["actionable"] is True
+
+
+def test_star_growth_momentum_quality_entrypoint_returns_weights():
+    entrypoint = get_strategy_entrypoint(CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE)
+
+    decision = entrypoint.evaluate(
+        StrategyContext(
+            as_of="2026-02-25",
+            market_data={
+                "market_history": _growth_history(
+                    {
+                        STAR50_ETF_SYMBOL: 1.0009,
+                        STAR_CHINEXT_ETF_SYMBOL: 1.0007,
+                        "510300": 1.0002,
+                        "511880": 1.00001,
+                        "511260": 1.00002,
+                    }
+                )
+            },
+            runtime_config={"min_history_days": 220},
+        )
+    )
+
+    weights = {position.symbol: position.target_weight for position in decision.positions}
+    assert weights
+    assert decision.diagnostics["signal_source"] == "daily_market_history"
+    assert decision.diagnostics["actionable"] is True

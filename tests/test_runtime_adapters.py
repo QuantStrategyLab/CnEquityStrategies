@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from cn_equity_strategies.catalog import (
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_EQUITY_COMBO_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
     get_qmt_optional_runtime_profiles,
     get_qmt_rollout_allowlist,
 )
@@ -50,6 +52,15 @@ def test_combo_runtime_adapter_is_not_available_for_qmt():
 
     with pytest.raises(ValueError):
         get_platform_runtime_adapter(CN_EQUITY_COMBO_PROFILE, platform_id="qmt")
+
+
+def test_growth_sleeves_are_not_available_for_qmt_runtime():
+    import pytest
+
+    with pytest.raises(ValueError):
+        get_platform_runtime_adapter(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE, platform_id="qmt")
+    with pytest.raises(ValueError):
+        get_platform_runtime_adapter(CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE, platform_id="qmt")
 
 
 def test_dividend_quality_runtime_requirements_are_snapshot_backed():

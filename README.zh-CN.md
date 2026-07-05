@@ -34,6 +34,13 @@
 | --- | --- | --- | --- | --- |
 | `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | `feature_snapshot` + manifest | `399006` | **研究轨**：创业板成长动量质量选择。 |
 
+### 研究侧成长 sleeve
+
+| Profile | 名称 | 输入 | 基准 | 当前角色 |
+| --- | --- | --- | --- | --- |
+| `cn_chinext_growth_momentum_quality` | CN ChiNext Growth Momentum Quality | `market_history` | `510300` | **研究轨**：创业板成长 sleeve，板块级成长 + 动量 + 质量。 |
+| `cn_star_growth_momentum_quality` | CN Star Growth Momentum Quality | `market_history` | `510300` | **研究轨**：科创板成长 sleeve，流动性和集中度更严格。 |
+
 ### 计划中的 snapshot-backed 策略
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
@@ -94,6 +101,9 @@ python scripts/smoke_cn_index_etf_tactical_rotation_dry_run.py --json
 
 - [`docs/platform_integration.md`](docs/platform_integration.md)
 - [`docs/research/cn_index_etf_tactical_rotation.md`](docs/research/cn_index_etf_tactical_rotation.md)
+- [`docs/research/cn_growth_sleeve_redesign_20260705.md`](docs/research/cn_growth_sleeve_redesign_20260705.md)
+- [`docs/research/cn_growth_sleeve_structure_20260705.md`](docs/research/cn_growth_sleeve_structure_20260705.md)
+- [`docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md`](docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md)
 
 ## 安全和贡献说明
 

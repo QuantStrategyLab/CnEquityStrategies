@@ -18,8 +18,10 @@
 | --- | --- | --- | --- |
 | `cn_index_etf_tactical_rotation` | `market_history` | `qmt` | `weight` |
 | `cn_dividend_quality_snapshot` | `feature_snapshot` + manifest | `qmt` | `weight` |
+| `cn_chinext_growth_momentum_quality` | `market_history` | `qmt` | `weight` |
 | `cn_chinext_growth_momentum_quality_snapshot` | `feature_snapshot` + manifest | `qmt` | `weight` |
 | `cn_chinext_tactical_rotation` | `market_history` | `qmt` | `weight` |
+| `cn_star_growth_momentum_quality` | `market_history` | `qmt` | `weight` |
 | `cn_equity_combo` | `market_history` + `feature_snapshot` | `qmt` | `weight` |
 
 ## Environment variables (planned for QmtPlatform)

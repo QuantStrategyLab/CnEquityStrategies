@@ -3,21 +3,25 @@ from __future__ import annotations
 from quant_platform_kit.strategy_contracts import CallableStrategyEntrypoint, StrategyContext, StrategyDecision
 
 from cn_equity_strategies.manifests import (
+    cn_chinext_growth_momentum_quality_manifest,
     cn_chinext_growth_momentum_quality_snapshot_manifest,
     cn_chinext_tactical_rotation_manifest,
     cn_dividend_quality_snapshot_manifest,
     cn_index_etf_tactical_rotation_manifest,
     cn_industry_etf_rotation_aggressive_manifest,
     cn_industry_etf_rotation_manifest,
+    cn_star_growth_momentum_quality_manifest,
 )
 from cn_equity_strategies.strategies import (
-    cn_chinext_growth_momentum_quality_snapshot as chinext_growth_momentum_quality_strategy,
+    cn_chinext_growth_momentum_quality as chinext_growth_momentum_quality_strategy,
+    cn_chinext_growth_momentum_quality_snapshot as chinext_growth_momentum_quality_snapshot_strategy,
 )
 from cn_equity_strategies.strategies import cn_chinext_tactical_rotation as chinext_tactical_strategy
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
+from cn_equity_strategies.strategies import cn_star_growth_momentum_quality as star_growth_momentum_quality_strategy
 
 from ._common import get_current_holdings, merge_runtime_config, require_market_data, weights_to_positions
 
@@ -158,14 +162,14 @@ cn_chinext_tactical_rotation_entrypoint = CallableStrategyEntrypoint(
 )
 
 
-def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -> StrategyDecision:
-    config = merge_runtime_config(cn_chinext_growth_momentum_quality_snapshot_manifest.default_config, ctx)
+def evaluate_cn_chinext_growth_momentum_quality(ctx: StrategyContext) -> StrategyDecision:
+    config = merge_runtime_config(cn_chinext_growth_momentum_quality_manifest.default_config, ctx)
     config.pop("execution_cash_reserve_ratio", None)
     config.pop("rebalance_frequency", None)
     config.pop("run_as_of", None)
     weights, signal_desc, has_cash_residual, status_desc, metadata = (
         chinext_growth_momentum_quality_strategy.compute_signals(
-            require_market_data(ctx, "feature_snapshot"),
+            require_market_data(ctx, "market_history"),
             get_current_holdings(ctx),
             **config,
         )
@@ -175,6 +179,43 @@ def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -
         "signal_description": signal_desc,
         "status_description": status_desc,
         "signal_source": chinext_growth_momentum_quality_strategy.SIGNAL_SOURCE,
+        "actionable": True,
+    }
+    risk_flags: tuple[str, ...] = ()
+    if has_cash_residual:
+        risk_flags += ("cash_residual",)
+    if metadata.get("benchmark_risk_off"):
+        risk_flags += ("benchmark_risk_off",)
+    return StrategyDecision(
+        positions=weights_to_positions(weights),
+        risk_flags=risk_flags,
+        diagnostics=diagnostics,
+    )
+
+
+cn_chinext_growth_momentum_quality_entrypoint = CallableStrategyEntrypoint(
+    manifest=cn_chinext_growth_momentum_quality_manifest,
+    _evaluate=evaluate_cn_chinext_growth_momentum_quality,
+)
+
+
+def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -> StrategyDecision:
+    config = merge_runtime_config(cn_chinext_growth_momentum_quality_snapshot_manifest.default_config, ctx)
+    config.pop("execution_cash_reserve_ratio", None)
+    config.pop("rebalance_frequency", None)
+    config.pop("run_as_of", None)
+    weights, signal_desc, has_cash_residual, status_desc, metadata = (
+        chinext_growth_momentum_quality_snapshot_strategy.compute_signals(
+            require_market_data(ctx, "feature_snapshot"),
+            get_current_holdings(ctx),
+            **config,
+        )
+    )
+    diagnostics = {
+        **metadata,
+        "signal_description": signal_desc,
+        "status_description": status_desc,
+        "signal_source": chinext_growth_momentum_quality_snapshot_strategy.SIGNAL_SOURCE,
         "actionable": True,
     }
     risk_flags: tuple[str, ...] = ()
@@ -190,6 +231,43 @@ def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -
 cn_chinext_growth_momentum_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
     manifest=cn_chinext_growth_momentum_quality_snapshot_manifest,
     _evaluate=evaluate_cn_chinext_growth_momentum_quality_snapshot,
+)
+
+
+def evaluate_cn_star_growth_momentum_quality(ctx: StrategyContext) -> StrategyDecision:
+    config = merge_runtime_config(cn_star_growth_momentum_quality_manifest.default_config, ctx)
+    config.pop("execution_cash_reserve_ratio", None)
+    config.pop("rebalance_frequency", None)
+    config.pop("run_as_of", None)
+    weights, signal_desc, has_cash_residual, status_desc, metadata = (
+        star_growth_momentum_quality_strategy.compute_signals(
+            require_market_data(ctx, "market_history"),
+            get_current_holdings(ctx),
+            **config,
+        )
+    )
+    diagnostics = {
+        **metadata,
+        "signal_description": signal_desc,
+        "status_description": status_desc,
+        "signal_source": star_growth_momentum_quality_strategy.SIGNAL_SOURCE,
+        "actionable": True,
+    }
+    risk_flags: tuple[str, ...] = ()
+    if has_cash_residual:
+        risk_flags += ("cash_residual",)
+    if metadata.get("benchmark_risk_off"):
+        risk_flags += ("benchmark_risk_off",)
+    return StrategyDecision(
+        positions=weights_to_positions(weights),
+        risk_flags=risk_flags,
+        diagnostics=diagnostics,
+    )
+
+
+cn_star_growth_momentum_quality_entrypoint = CallableStrategyEntrypoint(
+    manifest=cn_star_growth_momentum_quality_manifest,
+    _evaluate=evaluate_cn_star_growth_momentum_quality,
 )
 
 
@@ -245,18 +323,22 @@ cn_equity_combo_entrypoint = CallableStrategyEntrypoint(
 
 
 __all__ = [
+    "evaluate_cn_chinext_growth_momentum_quality",
     "evaluate_cn_chinext_growth_momentum_quality_snapshot",
     "evaluate_cn_dividend_quality_snapshot",
     "evaluate_cn_chinext_tactical_rotation",
     "evaluate_cn_index_etf_tactical_rotation",
     "evaluate_cn_industry_etf_rotation",
     "evaluate_cn_industry_etf_rotation_aggressive",
+    "evaluate_cn_star_growth_momentum_quality",
     "evaluate_cn_equity_combo",
+    "cn_chinext_growth_momentum_quality_entrypoint",
     "cn_chinext_growth_momentum_quality_snapshot_entrypoint",
     "cn_chinext_tactical_rotation_entrypoint",
     "cn_dividend_quality_snapshot_entrypoint",
     "cn_index_etf_tactical_rotation_entrypoint",
     "cn_industry_etf_rotation_aggressive_entrypoint",
     "cn_industry_etf_rotation_entrypoint",
+    "cn_star_growth_momentum_quality_entrypoint",
     "cn_equity_combo_entrypoint",
 ]

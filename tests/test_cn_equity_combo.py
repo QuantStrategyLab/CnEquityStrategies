@@ -27,4 +27,4 @@ def test_cn_equity_combo_default_stock_leg_builds_weights() -> None:
 
     assert weights
     assert metadata["legs"]["stock"]["weights"]
-    assert "pit_index_code" not in cn_equity_combo.STOCK_DEFAULT_CONFIG
+    assert "pit_index_code" not in cn_equity_combo.GROWTH_DEFAULT_CONFIG.get("chinext", {})

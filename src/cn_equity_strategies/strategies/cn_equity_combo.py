@@ -1,20 +1,21 @@
-"""CN equity combo strategy — ETF rotation + stock momentum + dividend quality.
+"""CN equity combo strategy — ETF rotation + growth sleeves + dividend quality.
 
-Combines three A-share sub-strategies into a single weight-allocated portfolio.
+Combines board-level ETF rotation, board-level growth sleeves, and dividend
+quality into a single weight-allocated portfolio.
 All sub-strategies imported from the pip-installable ``cn_equity_strategies``
 package.
 
 Static mode
 -----------
-Fixed weights per leg (default: 30/50/20 ETF/stock/dividend).
+Fixed weights per leg (default: 30/50/20 ETF/growth/dividend).
 
 Dynamic mode
 ------------
 Regime-based adjustment driven by the dividend leg's breadth regime:
-- risk_on: full static weights (30/50/20 ETF/stock/dividend).
-- soft_defense: stock reduced to 85% of its weight; freed allocation
+- risk_on: full static weights (30/50/20 ETF/growth/dividend).
+- soft_defense: growth reduced to 85% of its weight; freed allocation
   shifts to the safe-haven ETF (510300).
-- hard_defense: stock reduced to 50% of its weight; ETF reduced to 85%
+- hard_defense: growth reduced to 50% of its weight; ETF reduced to 85%
   of its weight; freed allocation stays in the safe-haven ETF.
 
 Usage
@@ -30,11 +31,12 @@ from typing import Any
 
 from quant_platform_kit.common.strategies import compute_portfolio_drift
 
+from cn_equity_strategies.strategies import cn_chinext_growth_momentum_quality as chinext_growth_strategy
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_strategy
 
 logger = logging.getLogger(__name__)
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as etf_strategy
-from cn_equity_strategies.strategies import industry_etf_rotation_core as stock_strategy
+from cn_equity_strategies.strategies import cn_star_growth_momentum_quality as star_growth_strategy
 
 SIGNAL_SOURCE = "combo"
 STATUS_ICON = "\U0001f500"
@@ -54,15 +56,20 @@ ETF_DEFAULT_CONFIG: dict[str, Any] = {
     "enable_benchmark_risk_off": False,
 }
 
-# Stock momentum leg defaults (CSI500 vol25 MA120 risk-off)
-STOCK_DEFAULT_CONFIG: dict[str, Any] = {
-    "defensive_symbols": ("510300",),
-    "benchmark_symbol": "510300",
-    "enable_benchmark_risk_off": True,
-    "benchmark_trend_window_days": 120,
-    "top_n": 5,
-    "target_annual_volatility": 0.25,
-    "sentiment_mode": "off",
+# Growth sleeve defaults (ChiNext + STAR)
+GROWTH_DEFAULT_CONFIG: dict[str, Any] = {
+    "chinext": {
+        "benchmark_symbol": "510300",
+        "top_n": 1,
+        "target_annual_volatility": 0.20,
+        "sentiment_mode": "off",
+    },
+    "star": {
+        "benchmark_symbol": "510300",
+        "top_n": 1,
+        "target_annual_volatility": 0.18,
+        "sentiment_mode": "off",
+    },
 }
 
 # Dividend leg defaults (current conservative)
@@ -72,7 +79,7 @@ DIVIDEND_DEFAULT_CONFIG: dict[str, Any] = {}
 def _clean_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
     """Remove combo-level keys before passing to sub-strategies."""
     ignored = {
-        "etf_weight", "stock_weight", "dividend_weight",
+        "etf_weight", "stock_weight", "growth_weight", "dividend_weight",
         "dynamic_mode", "translator", "signal_text_fn",
         "execution_cash_reserve_ratio", "rebalance_frequency",
         "run_as_of",
@@ -87,6 +94,7 @@ def build_target_weights(
     feature_snapshot: Any = None,
     etf_weight: float = DEFAULT_ETF_WEIGHT,
     stock_weight: float = DEFAULT_STOCK_WEIGHT,
+    growth_weight: float | None = None,
     dividend_weight: float = DEFAULT_DIVIDEND_WEIGHT,
     dynamic_mode: bool = True,
     etf_config: dict[str, Any] | None = None,
@@ -104,7 +112,7 @@ def build_target_weights(
         Currently held symbol set for hold-bonus logic.
     feature_snapshot : pd.DataFrame or None
         Required for dividend quality leg.
-    etf_weight, stock_weight, dividend_weight : float
+    etf_weight, stock_weight/growth_weight, dividend_weight : float
         Allocation weights for each leg.  Should sum to 1.0.
     dynamic_mode : bool
         If True, reduce offensive allocation when dividend leg signals
@@ -117,15 +125,19 @@ def build_target_weights(
     resolved_etf = dict(ETF_DEFAULT_CONFIG)
     resolved_etf.update(etf_config or {})
 
-    resolved_stock = dict(STOCK_DEFAULT_CONFIG)
-    resolved_stock.update(stock_config or {})
+    resolved_growth = dict(GROWTH_DEFAULT_CONFIG)
+    resolved_growth.update(stock_config or {})
 
     resolved_dividend = dict(DIVIDEND_DEFAULT_CONFIG)
     resolved_dividend.update(dividend_config or {})
 
+    resolved_growth_weight = growth_weight if growth_weight is not None else stock_weight
+
     # Compute each leg
     etf_weights: dict[str, float] = {}
-    stock_raw_weights: dict[str, float] = {}
+    growth_weights: dict[str, float] = {}
+    chinext_weights: dict[str, float] = {}
+    star_weights: dict[str, float] = {}
     dividend_weights: dict[str, float] = {}
     dividend_metadata: dict[str, object] = {}
 
@@ -138,11 +150,14 @@ def build_target_weights(
             logger.error("ETF sub-strategy failed: %s", exc, exc_info=True)
 
         try:
-            stock_raw_weights, _ = stock_strategy.build_target_weights(
-                market_history, **resolved_stock,
+            chinext_weights, _ = chinext_growth_strategy.build_target_weights(
+                market_history, **resolved_growth.get("chinext", {}),
+            )
+            star_weights, _ = star_growth_strategy.build_target_weights(
+                market_history, **resolved_growth.get("star", {}),
             )
         except Exception as exc:
-            logger.error("Stock sub-strategy failed: %s", exc, exc_info=True)
+            logger.error("Growth sub-strategy failed: %s", exc, exc_info=True)
 
     if feature_snapshot is not None:
         try:
@@ -157,28 +172,33 @@ def build_target_weights(
     # Determine effective weights (dynamic adjustment)
     regime = str(dividend_metadata.get("regime", "risk_on"))
     if dynamic_mode and regime == "soft_defense":
-        # Soft defense: reduce stock to 85%, shift proceeds to ETF
-        effective_stock = stock_weight * 0.85
-        effective_etf = etf_weight + (stock_weight - effective_stock)
+        # Soft defense: reduce growth to 85%, shift proceeds to ETF
+        effective_growth = resolved_growth_weight * 0.85
+        effective_etf = etf_weight + (resolved_growth_weight - effective_growth)
         effective_dividend = dividend_weight
     elif dynamic_mode and regime == "hard_defense":
-        # Hard defense: stock at 50%, ETF boosted to 85% allocation
-        effective_stock = stock_weight * 0.50
+        # Hard defense: growth at 50%, ETF boosted to 85% allocation
+        effective_growth = resolved_growth_weight * 0.50
         effective_etf = etf_weight * 0.85
         effective_dividend = dividend_weight
     else:
         effective_etf = etf_weight
-        effective_stock = stock_weight
+        effective_growth = resolved_growth_weight
         effective_dividend = dividend_weight
 
     # Combine weights
-    all_symbols = set(etf_weights) | set(stock_raw_weights) | set(dividend_weights)
+    growth_weights = {
+        symbol: (chinext_weights.get(symbol, 0.0) + star_weights.get(symbol, 0.0)) / 2.0
+        for symbol in set(chinext_weights) | set(star_weights)
+    }
+
+    all_symbols = set(etf_weights) | set(growth_weights) | set(dividend_weights)
     combined: dict[str, float] = {}
     for symbol in all_symbols:
         ew = etf_weights.get(symbol, 0.0)
-        sw = stock_raw_weights.get(symbol, 0.0)
+        sw = growth_weights.get(symbol, 0.0)
         dw = dividend_weights.get(symbol, 0.0)
-        combined[symbol] = ew * effective_etf + sw * effective_stock + dw * effective_dividend
+        combined[symbol] = ew * effective_etf + sw * effective_growth + dw * effective_dividend
 
     # Normalize to ensure sum <= 1.0
     total = sum(combined.values())
@@ -191,12 +211,20 @@ def build_target_weights(
     metadata: dict[str, object] = {
         "combo": {
             "etf_weight": effective_etf,
-            "stock_weight": effective_stock,
+            "stock_weight": effective_growth,
+            "growth_weight": effective_growth,
             "dividend_weight": effective_dividend,
         },
         "legs": {
             "etf": {"weights": etf_weights, "configured_weight": etf_weight},
-            "stock": {"weights": stock_raw_weights, "configured_weight": stock_weight},
+            "stock": {
+                "weights": growth_weights,
+                "configured_weight": resolved_growth_weight,
+                "sub_legs": {
+                    "chinext": chinext_weights,
+                    "star": star_weights,
+                },
+            },
             "dividend": {
                 "weights": dividend_weights,
                 "configured_weight": dividend_weight,
@@ -250,13 +278,13 @@ def compute_signals(
         f"combo regime={regime} selected={selected} "
         f"gross={metadata['gross_exposure']:.0%} "
         f"etf={combo_meta.get('etf_weight', 0):.0%} "
-        f"stock={combo_meta.get('stock_weight', 0):.0%} "
+        f"growth={combo_meta.get('growth_weight', combo_meta.get('stock_weight', 0)):.0%} "
         f"div={combo_meta.get('dividend_weight', 0):.0%}"
     )
     status_desc = (
         f"regime={regime} | "
         f"etf={combo_meta.get('etf_weight', 0):.0%} "
-        f"stock={combo_meta.get('stock_weight', 0):.0%} "
+        f"growth={combo_meta.get('growth_weight', combo_meta.get('stock_weight', 0)):.0%} "
         f"div={combo_meta.get('dividend_weight', 0):.0%}"
     )
     has_cash_residual = metadata["gross_exposure"] < 0.999
