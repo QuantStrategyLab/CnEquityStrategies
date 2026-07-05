@@ -5,6 +5,7 @@ from pathlib import Path
 from quant_platform_kit.common.strategies import get_strategy_component_map
 
 from cn_equity_strategies.catalog import (
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
     CN_EQUITY_COMBO_PROFILE,
@@ -33,6 +34,7 @@ def test_catalog_declares_cn_strategy_status_layers():
     catalog = get_strategy_definitions()
     assert set(catalog) == {
         CN_EQUITY_COMBO_PROFILE,
+        CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
         CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
@@ -70,6 +72,15 @@ def test_catalog_declares_cn_strategy_status_layers():
     assert get_compatible_platforms(CN_CHINEXT_TACTICAL_ROTATION_PROFILE) == frozenset({"qmt"})
     assert get_strategy_metadata(CN_CHINEXT_TACTICAL_ROTATION_PROFILE).status == "research_backtest_only"
 
+    chinext_growth_definition = catalog[CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE]
+    assert chinext_growth_definition.domain == CN_EQUITY_DOMAIN
+    assert chinext_growth_definition.required_inputs == frozenset({"feature_snapshot"})
+    assert get_compatible_platforms(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE) == frozenset({"qmt"})
+    assert (
+        get_strategy_metadata(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE).status
+        == "research_backtest_only"
+    )
+
     dividend_definition = catalog[CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE]
     assert dividend_definition.domain == CN_EQUITY_DOMAIN
     assert dividend_definition.required_inputs == frozenset({"feature_snapshot"})
@@ -83,12 +94,14 @@ def test_catalog_declares_cn_strategy_status_layers():
 
 def test_profile_groups_keep_runtime_and_scaffolds_separate():
     assert get_direct_market_history_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
-    assert get_snapshot_backed_profiles() == frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
-    assert get_external_snapshot_scaffold_profiles() == frozenset(
+    assert get_snapshot_backed_profiles() == frozenset(
         {
-            "cn_small_cap_quality_snapshot",
-            "cn_chinext_growth_momentum_quality_snapshot",
+            CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+            CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
         }
+    )
+    assert get_external_snapshot_scaffold_profiles() == frozenset(
+        {"cn_small_cap_quality_snapshot"}
     )
     assert get_scaffold_profiles() == get_external_snapshot_scaffold_profiles()
     assert get_shadow_profiles() == frozenset()
@@ -97,6 +110,7 @@ def test_profile_groups_keep_runtime_and_scaffolds_separate():
         {
             CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
             CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+            CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
             CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
             CN_EQUITY_COMBO_PROFILE,
         }
@@ -125,8 +139,9 @@ def test_research_scaffold_profile_is_not_in_runtime_catalog():
     with pytest.raises(ValueError):
         get_strategy_definition("cn_small_cap_quality_snapshot")
 
-    with pytest.raises(ValueError):
-        get_strategy_definition("cn_chinext_growth_momentum_quality_snapshot")
+    assert get_strategy_definition(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE).profile == (
+        CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE
+    )
 
 
 def test_package_root_exports_use_local_source_tree() -> None:
@@ -140,9 +155,6 @@ def test_package_root_exports_use_local_source_tree() -> None:
         {CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE}
     )
     assert cn_equity_strategies.get_scaffold_profiles() == frozenset(
-        {
-            "cn_small_cap_quality_snapshot",
-            "cn_chinext_growth_momentum_quality_snapshot",
-        }
+        {"cn_small_cap_quality_snapshot"}
     )
     assert cn_equity_strategies.get_external_snapshot_scaffold_profiles() == cn_equity_strategies.get_scaffold_profiles()

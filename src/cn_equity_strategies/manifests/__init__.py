@@ -3,6 +3,9 @@ from __future__ import annotations
 from quant_platform_kit.strategy_contracts import StrategyManifest
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
+from cn_equity_strategies.strategies import (
+    cn_chinext_growth_momentum_quality_snapshot as chinext_growth_momentum_quality_strategy,
+)
 from cn_equity_strategies.strategies import cn_chinext_tactical_rotation as chinext_tactical_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
@@ -10,6 +13,9 @@ from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive 
 
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
 CN_CHINEXT_TACTICAL_ROTATION_PROFILE = chinext_tactical_strategy.PROFILE_NAME
+CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE = (
+    chinext_growth_momentum_quality_strategy.PROFILE_NAME
+)
 CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE = industry_etf_aggressive_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
@@ -158,6 +164,39 @@ cn_chinext_tactical_rotation_manifest = _manifest(
     },
 )
 
+cn_chinext_growth_momentum_quality_snapshot_manifest = _manifest(
+    profile=CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
+    domain=chinext_growth_momentum_quality_strategy.CN_EQUITY_DOMAIN,
+    display_name="CN ChiNext Growth Momentum Quality Snapshot",
+    description=(
+        "Research-only snapshot-backed ChiNext selector emphasizing growth, momentum, "
+        "quality, and liquidity with defensive exposure control."
+    ),
+    aliases=(),
+    required_inputs=frozenset({"feature_snapshot"}),
+    default_config={
+        "safe_haven": chinext_growth_momentum_quality_strategy.SAFE_HAVEN,
+        "holdings_count": chinext_growth_momentum_quality_strategy.DEFAULT_HOLDINGS_COUNT,
+        "single_name_cap": chinext_growth_momentum_quality_strategy.DEFAULT_SINGLE_NAME_CAP,
+        "sector_cap": chinext_growth_momentum_quality_strategy.DEFAULT_SECTOR_CAP,
+        "min_adv20_cny": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_ADV20_CNY,
+        "min_market_cap_cny": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_MARKET_CAP_CNY,
+        "min_revenue_yoy": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_REVENUE_YOY,
+        "min_profit_yoy": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_PROFIT_YOY,
+        "min_momentum": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_MOMENTUM,
+        "min_list_days": chinext_growth_momentum_quality_strategy.DEFAULT_MIN_LIST_DAYS,
+        "hold_buffer": chinext_growth_momentum_quality_strategy.DEFAULT_HOLD_BUFFER,
+        "hold_bonus": chinext_growth_momentum_quality_strategy.DEFAULT_HOLD_BONUS,
+        "risk_on_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_RISK_ON_EXPOSURE,
+        "soft_defense_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_SOFT_DEFENSE_EXPOSURE,
+        "hard_defense_exposure": chinext_growth_momentum_quality_strategy.DEFAULT_HARD_DEFENSE_EXPOSURE,
+        "soft_breadth_threshold": chinext_growth_momentum_quality_strategy.DEFAULT_SOFT_BREADTH_THRESHOLD,
+        "hard_breadth_threshold": chinext_growth_momentum_quality_strategy.DEFAULT_HARD_BREADTH_THRESHOLD,
+        "execution_cash_reserve_ratio": chinext_growth_momentum_quality_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
+        "rebalance_frequency": "monthly",
+    },
+)
+
 cn_dividend_quality_snapshot_manifest = _manifest(
     profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     domain=dividend_quality_strategy.CN_EQUITY_DOMAIN,
@@ -217,11 +256,13 @@ def get_strategy_manifest(profile: str) -> StrategyManifest:
 __all__ = [
     "CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE",
     "CN_CHINEXT_TACTICAL_ROTATION_PROFILE",
+    "CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE",
     "CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE",
     "CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE",
     "CN_INDUSTRY_ETF_ROTATION_PROFILE",
     "MANIFESTS",
     "get_strategy_manifest",
+    "cn_chinext_growth_momentum_quality_snapshot_manifest",
     "cn_chinext_tactical_rotation_manifest",
     "cn_dividend_quality_snapshot_manifest",
     "cn_index_etf_tactical_rotation_manifest",
