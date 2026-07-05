@@ -18,6 +18,7 @@
 | --- | --- | --- | --- |
 | `cn_index_etf_tactical_rotation` | `market_history` | `qmt` | `weight` |
 | `cn_dividend_quality_snapshot` | `feature_snapshot` + manifest | `qmt` | `weight` |
+| `cn_chinext_growth_momentum_quality_snapshot` | `feature_snapshot` + manifest | `qmt` | `weight` |
 | `cn_chinext_tactical_rotation` | `market_history` | `qmt` | `weight` |
 | `cn_equity_combo` | `market_history` + `feature_snapshot` | `qmt` | `weight` |
 
@@ -44,7 +45,7 @@ The strategy also requires defensive ETF history for benchmark risk-off switchin
 
 ## Planned snapshot scaffolds
 
-`cn_small_cap_quality_snapshot` and `cn_chinext_growth_momentum_quality_snapshot` are tracked as external snapshot scaffolds only. They are not registered in the runtime catalog until `CnEquitySnapshotPipelines` publishes a contract and promotion evidence.
+`cn_small_cap_quality_snapshot` remains an external snapshot scaffold. `cn_chinext_growth_momentum_quality_snapshot` is now registered as a research-only snapshot-backed profile after `CnEquitySnapshotPipelines` published its contract, but it still needs promotion evidence before any runtime enablement.
 
 ## Current lane policy
 

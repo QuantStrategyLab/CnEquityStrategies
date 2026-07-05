@@ -36,12 +36,17 @@ These profiles use platform-provided `market_history` and do not require a separ
 | --- | --- | --- | --- | --- |
 | `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | Optional QMT live candidate; not the default runtime profile. |
 
+### Research-only snapshot profiles
+
+| Profile | Name | Input | Benchmark | Current role |
+| --- | --- | --- | --- | --- |
+| `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | `feature_snapshot` + manifest | `399006` | Research-only ChiNext growth-momentum-quality selector. |
+
 ### Planned external snapshot scaffolds
 
 | Profile | Name | Notes |
 | --- | --- | --- |
 | `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | External snapshot scaffold; not registered in the runtime catalog yet. |
-| `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | External snapshot scaffold for a ChiNext growth-momentum-quality sleeve; not registered in the runtime catalog yet. |
 | `cn_chinext_tactical_rotation` | CN ChiNext Tactical Rotation | Research-only ChiNext tactical rotation line. |
 
 ## Performance and evidence boundary
