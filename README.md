@@ -28,7 +28,7 @@ These profiles use platform-provided `market_history` and do not require a separ
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
 | `cn_dividend_quality_snapshot` | CN Dividend Quality Snapshot | `feature_snapshot` + manifest | `510300` | Dividend + quality composite selector for defensive allocation. |
-| `cn_equity_combo` | CN Equity Combo | `market_history` + `feature_snapshot` | `510300` | Research-only composite track combining ETF, stock, and dividend sleeves. |
+| `cn_equity_combo` | CN Equity Combo | `market_history` + `feature_snapshot` | `510300` | Research-only orchestrator combining ETF, growth sleeves, and dividend sleeves. |
 
 ### Live candidate
 
@@ -41,6 +41,13 @@ These profiles use platform-provided `market_history` and do not require a separ
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
 | `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | `feature_snapshot` + manifest | `399006` | Research-only ChiNext growth-momentum-quality selector. |
+
+### Research-only growth sleeves
+
+| Profile | Name | Input | Benchmark | Current role |
+| --- | --- | --- | --- | --- |
+| `cn_chinext_growth_momentum_quality` | CN ChiNext Growth Momentum Quality | `market_history` | `510300` | Research-only ChiNext growth sleeve; board-specific growth + momentum + quality. |
+| `cn_star_growth_momentum_quality` | CN Star Growth Momentum Quality | `market_history` | `510300` | Research-only STAR growth sleeve; stricter liquidity and concentration controls. |
 
 ### Planned external snapshot scaffolds
 
@@ -101,6 +108,9 @@ The intended A-share runtime platform is:
 
 - [`docs/platform_integration.md`](docs/platform_integration.md)
 - [`docs/research/cn_index_etf_tactical_rotation.md`](docs/research/cn_index_etf_tactical_rotation.md)
+- [`docs/research/cn_growth_sleeve_redesign_20260705.md`](docs/research/cn_growth_sleeve_redesign_20260705.md)
+- [`docs/research/cn_growth_sleeve_structure_20260705.md`](docs/research/cn_growth_sleeve_structure_20260705.md)
+- [`docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md`](docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md)
 
 ## Safety and contribution notes
 

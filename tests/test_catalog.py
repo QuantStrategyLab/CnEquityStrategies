@@ -5,6 +5,7 @@ from pathlib import Path
 from quant_platform_kit.common.strategies import get_strategy_component_map
 
 from cn_equity_strategies.catalog import (
+    CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
     CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
@@ -13,6 +14,7 @@ from cn_equity_strategies.catalog import (
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
+    CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
     get_compatible_platforms,
     get_direct_market_history_profiles,
     get_external_snapshot_scaffold_profiles,
@@ -34,12 +36,14 @@ def test_catalog_declares_cn_strategy_status_layers():
     catalog = get_strategy_definitions()
     assert set(catalog) == {
         CN_EQUITY_COMBO_PROFILE,
+        CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
         CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
         CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_PROFILE,
         CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
         CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+        CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
     }
 
     industry_definition = catalog[CN_INDUSTRY_ETF_ROTATION_PROFILE]
@@ -72,6 +76,12 @@ def test_catalog_declares_cn_strategy_status_layers():
     assert get_compatible_platforms(CN_CHINEXT_TACTICAL_ROTATION_PROFILE) == frozenset({"qmt"})
     assert get_strategy_metadata(CN_CHINEXT_TACTICAL_ROTATION_PROFILE).status == "research_backtest_only"
 
+    chinext_growth_definition = catalog[CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE]
+    assert chinext_growth_definition.domain == CN_EQUITY_DOMAIN
+    assert chinext_growth_definition.required_inputs == frozenset({"market_history"})
+    assert get_compatible_platforms(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE) == frozenset({"qmt"})
+    assert get_strategy_metadata(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE).status == "research_backtest_only"
+
     chinext_growth_definition = catalog[CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE]
     assert chinext_growth_definition.domain == CN_EQUITY_DOMAIN
     assert chinext_growth_definition.required_inputs == frozenset({"feature_snapshot"})
@@ -85,6 +95,12 @@ def test_catalog_declares_cn_strategy_status_layers():
     assert dividend_definition.domain == CN_EQUITY_DOMAIN
     assert dividend_definition.required_inputs == frozenset({"feature_snapshot"})
     assert get_strategy_metadata(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE).status == "research_backtest_only"
+
+    star_growth_definition = catalog[CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE]
+    assert star_growth_definition.domain == CN_EQUITY_DOMAIN
+    assert star_growth_definition.required_inputs == frozenset({"market_history"})
+    assert get_compatible_platforms(CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE) == frozenset({"qmt"})
+    assert get_strategy_metadata(CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE).status == "research_backtest_only"
 
     component_map = get_strategy_component_map(dividend_definition)
     assert component_map["signal_logic"].module_path == (
@@ -109,10 +125,12 @@ def test_profile_groups_keep_runtime_and_scaffolds_separate():
     assert get_research_backtest_only_profiles() == frozenset(
         {
             CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+            CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE,
             CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
             CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_SNAPSHOT_PROFILE,
             CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
             CN_EQUITY_COMBO_PROFILE,
+            CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
         }
     )
     assert get_runtime_enabled_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
