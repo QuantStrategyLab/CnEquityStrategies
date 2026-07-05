@@ -50,13 +50,13 @@ QuantRuntimeSettings（切换控制台）
 - 不同市场/平台（A 股 ETF、A 股 snapshot、美股）可以有各自的 gate 和实现细节。
 - 只要 **PIT / 统一组合 / dry-run** 任一没过，就先放 `research_backtest_only` 或 `scaffold`，不要进 live 配置。
 - `runtime_enabled`：已通过当前市场/平台的正式 gate，可进入正常 runtime。
-- `live_candidate` / `shadow`：允许小流量或影子观察，只做受控验证，不作为默认 live。
+- `live_candidate` / `shadow_candidate`：允许小流量或影子观察，只做受控验证，不作为默认 live。
 - `research_backtest_only`：仅用于回测和研究，不进入 runtime。
 - `scaffold`：仅保留策略骨架或后续候选，尚未形成可执行 runtime contract。
 - `cn_dividend_quality_snapshot` 和 `cn_equity_combo` 当前都应按 `research_backtest_only` 处理；底层 legs 和统一组合证据重新过关后，再单独提审。
 - 同一条市场线只保留一个“冠军候选”；其余变体不长期保留为 live 候选，避免同时养多个弱版本。
 - 默认 live gate 以 **绝对最大回撤 30%** 为主；35% 仅保留给研究扫描，不直接放进 live。
-- live 只接受 **可靠验证过** 的版本；证据不够时，先停在 `live_candidate` / `shadow` 或 research 层。
+- live 只接受 **可靠验证过** 的版本；证据不够时，先停在 `live_candidate` / `shadow_candidate` 或 research 层。
 
 ## 1. Aggressive vol25% → Live 候选评审
 
