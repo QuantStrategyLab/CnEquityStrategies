@@ -16,9 +16,19 @@
 1. **`cn_index_etf_tactical_rotation`**（direct，进攻/轮动）— 改进版 ETF 动量轮动
 2. **`cn_dividend_quality_snapshot`**（snapshot，防守/底仓）— 红利+质量选股，低波仅作辅助约束
 
-**暂不纳入 runtime（仅 research scaffold）**：
+**暂不纳入 runtime（仅 scaffold / research_backtest_only）**：
 
 - **`cn_small_cap_quality_snapshot`** — 社区极热（聚宽/JoinQuant「小市值+ETF 双核」），但注册制后尾部风险与容量问题显著，需独立 evidence gate
+
+## 1.1 现在的选型规则
+
+当前按你的要求，改成 **每条线只保留一个最强版本**：
+
+1. 行业 ETF：只留当前最强的那个，其他变体只做 research 对照。
+2. 创业板：只留创业板线里回测最强的那个。
+3. 科创板：只留科创板线里回测最强的那个。
+4. snapshot 个股：只留 snapshot 线里最强的那个。
+5. 如果最强版本仍明显跑不赢当前 live 主轨，或者回撤还是不够看，就不硬上 live，直接重做这条线。
 
 ## 2. 论坛与社区主流策略（2025–2026）
 
@@ -28,7 +38,7 @@
 - 逻辑：小市值负责 A 股弹性，ETF 轮动负责板块趋势与 1 月/4 月避险
 - 优点：回测进攻性强，社区验证多
 - 风险：2020 年后纯小市值多次大回撤；微盘波动率可达 40%；需严格基本面与流动性过滤
-- **组织决策**：列为 research scaffold，不首批 runtime
+- **组织决策**：列为 scaffold，不首批 runtime
 
 ### 2.2 ETF 动量轮动（个人量化最主流入口）
 
@@ -73,12 +83,53 @@
 
 | Profile | 类型 | 状态 | 角色 |
 | --- | --- | --- | --- |
-| `cn_index_etf_tactical_rotation` | direct | runtime_enabled | 进攻/轮动 |
-| `cn_dividend_quality_snapshot` | snapshot | runtime_enabled | 防守/底仓 |
-| `cn_small_cap_quality_snapshot` | snapshot | research_scaffold | 社区高热，待 evidence |
+| `cn_industry_etf_rotation` | direct | runtime_enabled | 进攻主轨 |
+| `cn_dividend_quality_snapshot` | snapshot | research_backtest_only | 防守/底仓研究 |
+| `cn_equity_combo` | hybrid | research_backtest_only | 组合研究 |
+| `cn_industry_etf_rotation_aggressive` | direct | live_candidate | 受控增强腿 |
+| `cn_index_etf_tactical_rotation` | direct | research_backtest_only | 研究/回测 |
+| `cn_chinext_tactical_rotation` | direct | research_backtest_only | 创业板研究 |
+| `cn_small_cap_quality_snapshot` | snapshot | scaffold | 社区高热，待 evidence |
 
 ## 5. 证据与下一步
 
 1. 用 `CnEquitySnapshotPipelines` 产出 `cn_dividend_quality_snapshot` factor snapshot + manifest
 2. 对两条 runtime 策略分别跑 proxy backtest（含 A 股费用、T+1、涨跌停约束）
 3. `cn_small_cap_quality_snapshot` 需单独 long/short window evidence 后再考虑 promotion
+4. 新增的创业板 / 科创板 / snapshot 个股候选，都先按“每条线只留冠军”做筛选；冠军都不够强就直接重构，不保留一堆弱备选
+5. `cn_dividend_quality_snapshot` 现在应视为 research，不进入 live；如果后面数据链路和证据修好了，再单独评审
+6. `cn_equity_combo` 也先按 research 处理；底层 dividend leg 不过关时，不应继续按 live 走
+
+## 6. 当前更像“冠军”的候选
+
+> 下面只记目前看起来最强的代表，不代表都已满足 live。
+
+| 线 | 当前最强候选 | 说明 |
+| --- | --- | --- |
+| 行业 ETF | `cn_industry_etf_rotation_aggressive` | 比 conservative 只高一点年化，但 MDD 基本一样，是现在线里更强的版本 |
+| 创业板 | `cn_chinext_tactical_rotation` | 2021–2026 年化约 13.47%，MDD 约 -14.82%；最近 2024+ 样本更强 |
+| 科创板 | 暂无独立冠军 | 目前仓库里还没有一个能单独证明优于主轨的科创板专用版本 |
+| snapshot 个股 | `cn_dividend_quality_snapshot` | 先降到 research；现在 2%+ 年化配近 30% 回撤，不该直接算 live |
+| 组合轨 | `cn_equity_combo` | 先降到 research；底层 dividend leg 先不过关，不适合继续按 live 走 |
+
+## 7. 为什么创业板 / 科创板这两条线容易做差
+
+这两个板块不是普通宽基，天然就更难做稳：
+
+- **波动更大**：科创板和创业板单日涨跌幅都是 20%，新股前 5 个交易日还没有涨跌幅限制，波动更尖。
+- **流动性更弱**：官方风险提示和指数规则都在强调，科创板/创业板的流动性通常弱于主板。
+- **退市和异常波动风险更高**：这会直接放大单票策略的尾部风险。
+- **市场拥挤更快**：一旦主线成型，容易阶段性一起涨一起跌，纯“选最强”会很吃择时。
+
+这意味着：
+
+1. **创业板 / 科创板不适合只做“单票最强”思路**，至少要把流动性、涨跌停、退市风险和板块 breadth 一起纳进来。
+2. **更像主流的做法是指数增强/多因子增强**，而不是在很小的候选集里挑一个赢家。
+3. 如果我们现有版本还打不过行业 ETF 主轨，问题大概率不在“参数少调了一点”，而在**策略形态本身不对**。
+
+## 8. 下一版更合理的重设计方向
+
+- **创业板**：做成“创业板指数/ETF + 多因子增强 + 板块趋势过滤”的增强线，因子至少要有成长、质量、动量、流动性和风险惩罚。
+- **科创板**：先做“科创板综合/科创50 + 多因子增强”，不要一开始就做窄池单票冠军。
+- **单票 snapshot**：如果要继续做，先把它限定成防守/底仓，不要直接和行业 ETF 主轨抢位置。
+- **统一门槛**：能 live 的版本必须在同周期里明显打赢当前主轨；打不赢就留 research，别为了有版本而上线。

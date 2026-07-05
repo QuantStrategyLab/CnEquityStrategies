@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from cn_equity_strategies.catalog import (
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+    CN_EQUITY_COMBO_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
     get_qmt_optional_runtime_profiles,
@@ -38,22 +39,24 @@ def test_aggressive_industry_etf_rotation_optional_qmt_runtime_adapter():
 
 
 def test_dividend_quality_runtime_adapter_requires_feature_snapshot_manifest():
-    adapter = get_platform_runtime_adapter(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE, platform_id="qmt")
+    import pytest
 
-    assert adapter.available_inputs == frozenset({"feature_snapshot"})
-    assert adapter.require_snapshot_manifest is True
-    assert adapter.snapshot_contract_version == "cn_dividend_quality_snapshot.factor_snapshot.v1"
-    assert "roe_ttm" in adapter.required_feature_columns
-    assert "is_st" in adapter.required_feature_columns
+    with pytest.raises(ValueError):
+        get_platform_runtime_adapter(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE, platform_id="qmt")
+
+
+def test_combo_runtime_adapter_is_not_available_for_qmt():
+    import pytest
+
+    with pytest.raises(ValueError):
+        get_platform_runtime_adapter(CN_EQUITY_COMBO_PROFILE, platform_id="qmt")
 
 
 def test_dividend_quality_runtime_requirements_are_snapshot_backed():
-    requirements = describe_platform_runtime_requirements(
-        CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
-        platform_id="qmt",
-    )
+    import pytest
 
-    assert requirements["profile_group"] == "snapshot_backed"
-    assert requirements["input_mode"] == "feature_snapshot"
-    assert requirements["requires_snapshot_artifacts"] is True
-    assert requirements["requires_snapshot_manifest_path"] is True
+    with pytest.raises(ValueError):
+        describe_platform_runtime_requirements(
+            CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+            platform_id="qmt",
+        )

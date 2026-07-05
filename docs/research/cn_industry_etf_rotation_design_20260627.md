@@ -293,7 +293,7 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_industry_etf_rotation_aggress
 
 1. 跑 aggressive matrix，记录哪些 variant 过 gate — **见 §12 初跑结果**
 2. Phase 2 因子（北向/涨停广度/融资余额）仅进 research preset
-3. 过 gate 后另开 `cn_industry_etf_rotation_aggressive` profile（**不替换** conservative v1 默认）— **已完成**（`research_backtest_only`）
+3. 过 gate 后另开 `cn_industry_etf_rotation_aggressive` profile（**不替换** conservative v1 默认）— **已完成**（`live_candidate`）
 4. 双轨：industry aggressive + expanded dividend — **见 §13**
 
 ---
@@ -337,7 +337,7 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 | 路线 | 能否量化上线 | 说明 |
 |---|---|---|
 | conservative v1 | ✅ 默认生产 | 证据最稳 |
-| full_pool vol25% | 🟡 aggressive profile 已注册 | 唯一过 ETF promotion gate；catalog status=`research_backtest_only` |
+| full_pool vol25% | 🟡 aggressive profile 已注册 | 唯一过 ETF promotion gate；catalog status=`live_candidate` |
 | tech sleeve 双周 top2 | ❌ 研究继续 | 收益高、回撤过大 |
 | sentiment/flow 默认参数 | ❌ | 轻调 weight 仍不过 gate |
 | 个股光模块/算力 | ❌ 独立高风险轨 | 收益极高、MDD 不可接受 |
@@ -346,7 +346,7 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 
 ## 13. Aggressive profile 注册与双轨回测（2017–2026）
 
-**Profile：** `cn_industry_etf_rotation_aggressive` — full 14-ETF 池、vol target **25%**、纯动量；`catalog.status = research_backtest_only`（不进 Qmt 默认）。
+**Profile：** `cn_industry_etf_rotation_aggressive` — full 14-ETF 池、vol target **25%**、纯动量；`catalog.status = live_candidate`（QMT 可受控启用，非默认主轨）。
 
 **运行命令**
 
@@ -387,7 +387,7 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src 
 
 详见 **[cn_strategy_promotion_roadmap_20260628.md](./cn_strategy_promotion_roadmap_20260628.md)**，要点：
 
-1. **Aggressive vol25% live 评审** — `AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST`；推荐先加 optional QMT target，不替换 conservative 默认。
+1. **Aggressive vol25% live 评审** — `AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST`；推荐先作为 `live_candidate`，不替换 conservative 默认。
 2. **双轨 combo runtime 设计** — `DUAL_TRACK_COMBO_PRESETS` + `cn_dual_track_combo` 目标形态；阻塞项为 PIT 红利 + 统一组合模拟。
 3. **个股 cross-section 动量轨** — `STOCK_MOMENTUM_CROSS_SECTION_PRESETS` + `research_cn_momentum_stock_rotation_proxy.py`（**默认 CSI500 宽池 + 动量 top-N**，不限定行业）。
 

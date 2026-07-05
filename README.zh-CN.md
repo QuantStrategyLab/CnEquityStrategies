@@ -18,15 +18,24 @@
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
 | --- | --- | --- | --- | --- |
-| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | **主轨**：纯 A 股行业 ETF 动量轮动（top5 / vol20% / 纯动量）。 |
+| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | **主轨**：A 股行业 ETF 动量轮动。 |
 | `cn_dividend_quality_snapshot` | CN Dividend Quality Snapshot | `feature_snapshot` + manifest | `510300` | **防守轨**：红利+质量选股，广度控制防御敞口。 |
-| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | Legacy 全球扩池轮动；**research_backtest_only**。 |
+| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | Legacy ETF tactical rotation；**research_backtest_only**。 |
+
+### live candidate
+
+| Profile | 名称 | 输入 | 基准 | 当前角色 |
+| --- | --- | --- | --- | --- |
+| `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | **Optional QMT live candidate**，不是默认 runtime。 |
 
 ### 计划中的 snapshot-backed 策略
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
 | --- | --- | --- | --- | --- |
 | `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | `feature_snapshot` + manifest | `510300` | Research scaffold，尚未 promotion。 |
+| `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | `feature_snapshot` + manifest | `399006` | Research scaffold，创业板成长动量质量增强腿。 |
+| `cn_equity_combo` | CN Equity Combo | `market_history` + `feature_snapshot` | `510300` | Research-only 组合轨；底层 legs 需重新过关。 |
+| `cn_chinext_tactical_rotation` | CN ChiNext Tactical Rotation | `market_history` | `510300` | Research-only 创业板 tactical 轮动线。 |
 
 ## 表现和证据边界
 

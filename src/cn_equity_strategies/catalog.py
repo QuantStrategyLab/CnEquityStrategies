@@ -16,6 +16,7 @@ from quant_platform_kit.common.strategies import (
 )
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
+from cn_equity_strategies.strategies import cn_chinext_tactical_rotation as chinext_tactical_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
@@ -27,29 +28,47 @@ CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE = industry_etf_aggressive_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
+CN_CHINEXT_TACTICAL_ROTATION_PROFILE = chinext_tactical_strategy.PROFILE_NAME
 CN_EQUITY_COMBO_PROFILE = cn_combo_strategy.PROFILE_NAME
+
+STRATEGY_STATUS_RUNTIME_ENABLED = "runtime_enabled"
+STRATEGY_STATUS_LIVE_CANDIDATE = "live_candidate"
+STRATEGY_STATUS_SHADOW = "shadow"
+STRATEGY_STATUS_RESEARCH_BACKTEST_ONLY = "research_backtest_only"
+STRATEGY_STATUS_SCAFFOLD = "scaffold"
 
 CN_DIRECT_MARKET_HISTORY_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
 CN_SNAPSHOT_BACKED_PROFILES = frozenset({CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE})
 # Scaffold profiles are planned but not yet implemented — calling
 # get_strategy_definition() on them will raise ValueError. Use
 # get_external_snapshot_scaffold_profiles() for forward-compat iteration only.
-CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES: frozenset[str] = frozenset({"cn_small_cap_quality_snapshot"})
+CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES: frozenset[str] = frozenset(
+    {
+        "cn_small_cap_quality_snapshot",
+        "cn_chinext_growth_momentum_quality_snapshot",
+    }
+)
+CN_LIVE_CANDIDATE_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE})
 CN_RESEARCH_BACKTEST_ONLY_PROFILES = frozenset(
     {
         CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
-        CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
+        CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
+        CN_EQUITY_COMBO_PROFILE,
+        CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
     }
 )
+CN_SHADOW_PROFILES = frozenset()
+CN_SCAFFOLD_PROFILES = CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES
 
-# Optional QMT rollout (second target); catalog status stays research_backtest_only.
-CN_QMT_OPTIONAL_RUNTIME_PROFILES = frozenset({CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE})
+# Optional QMT rollout (second target); catalog status is live_candidate.
+CN_QMT_OPTIONAL_RUNTIME_PROFILES = frozenset(CN_LIVE_CANDIDATE_PROFILES)
 
 STRATEGY_PLATFORM_COMPATIBILITY: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"qmt"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"qmt"}),
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: frozenset({"qmt"}),
     CN_EQUITY_COMBO_PROFILE: frozenset({"qmt"}),
 }
 
@@ -58,6 +77,7 @@ STRATEGY_REQUIRED_INPUTS: dict[str, frozenset[str]] = {
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: frozenset({"market_history"}),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: frozenset({"feature_snapshot"}),
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: frozenset({"market_history"}),
     CN_EQUITY_COMBO_PROFILE: frozenset({"market_history", "feature_snapshot"}),
 }
 
@@ -119,6 +139,23 @@ STRATEGY_DEFAULT_CONFIG: dict[str, dict[str, object]] = {
         "min_history_days": index_etf_strategy.DEFAULT_MIN_HISTORY_DAYS,
         "execution_cash_reserve_ratio": index_etf_strategy.DEFAULT_EXECUTION_CASH_RESERVE_RATIO,
     },
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: {
+        "universe_symbols": chinext_tactical_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": chinext_tactical_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": chinext_tactical_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "momentum_window_days": chinext_tactical_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": chinext_tactical_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": chinext_tactical_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": chinext_tactical_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": chinext_tactical_strategy.DEFAULT_TOP_N,
+        "min_momentum": chinext_tactical_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": chinext_tactical_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": chinext_tactical_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": chinext_tactical_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": chinext_tactical_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": chinext_tactical_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "max_pair_correlation": chinext_tactical_strategy.DEFAULT_MAX_PAIR_CORRELATION,
+    },
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: {
         "safe_haven": dividend_quality_strategy.SAFE_HAVEN,
         "holdings_count": dividend_quality_strategy.DEFAULT_HOLDINGS_COUNT,
@@ -156,6 +193,7 @@ STRATEGY_ENTRYPOINT_ATTRIBUTES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: "cn_industry_etf_rotation_entrypoint",
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "cn_industry_etf_rotation_aggressive_entrypoint",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "cn_index_etf_tactical_rotation_entrypoint",
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: "cn_chinext_tactical_rotation_entrypoint",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "cn_dividend_quality_snapshot_entrypoint",
     CN_EQUITY_COMBO_PROFILE: "cn_equity_combo_entrypoint",
 }
@@ -164,6 +202,7 @@ STRATEGY_TARGET_MODES: dict[str, str] = {
     CN_INDUSTRY_ETF_ROTATION_PROFILE: "weight",
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE: "weight",
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: "weight",
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: "weight",
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: "weight",
     CN_EQUITY_COMBO_PROFILE: "weight",
 }
@@ -211,6 +250,11 @@ STRATEGY_DEFINITIONS: dict[str, StrategyDefinition] = {
         component_name="signal_logic",
         module_path="cn_equity_strategies.strategies.cn_index_etf_tactical_rotation",
     ),
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: _build_strategy_definition(
+        CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
+        component_name="signal_logic",
+        module_path="cn_equity_strategies.strategies.cn_chinext_tactical_rotation",
+    ),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: _build_strategy_definition(
         CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         component_name="signal_logic",
@@ -253,7 +297,7 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         asset_scope="cn_listed_industry_etfs",
         benchmark="510300",
         role="cn_non_snapshot_industry_etf_rotation_aggressive",
-        status="research_backtest_only",
+        status="live_candidate",
     ),
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE: StrategyMetadata(
         canonical_profile=CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
@@ -270,12 +314,27 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         role="cn_non_snapshot_index_etf_rotation",
         status="research_backtest_only",
     ),
+    CN_CHINEXT_TACTICAL_ROTATION_PROFILE: StrategyMetadata(
+        canonical_profile=CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
+        display_name="CN ChiNext Tactical Rotation",
+        localized_display_names={"zh": "创业板战术轮动"},
+        description=(
+            "Research-only ChiNext tactical rotation built as a focused two-ETF risk-off sleeve "
+            "for创业板 line evaluation."
+        ),
+        aliases=(),
+        cadence="monthly review",
+        asset_scope="cn_listed_chinext_etfs",
+        benchmark="510300",
+        role="cn_non_snapshot_chinext_etf_rotation",
+        status="research_backtest_only",
+    ),
     CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE: StrategyMetadata(
         canonical_profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
         display_name="CN Dividend Quality Snapshot",
         localized_display_names={"zh": "A股红利质量"},
         description=(
-            "Runtime-enabled snapshot-backed A-share selector emphasizing dividend yield and "
+            "Research-only snapshot-backed A-share selector emphasizing dividend yield and "
             "quality factors with breadth-based defensive exposure control."
         ),
         aliases=(),
@@ -283,18 +342,21 @@ STRATEGY_METADATA: dict[str, StrategyMetadata] = {
         asset_scope="cn_single_name_snapshot_factor",
         benchmark="510300",
         role="cn_snapshot_dividend_quality",
-        status="runtime_enabled",
+        status="research_backtest_only",
     ),
     CN_EQUITY_COMBO_PROFILE: StrategyMetadata(
         canonical_profile=CN_EQUITY_COMBO_PROFILE,
         display_name="CN Equity Combo",
-        description="CN equity combo: ETF rotation (30%) + stock momentum (50%) + dividend quality (20%)",
+        description=(
+            "Research-only CN equity combo: ETF rotation (30%) + stock momentum (50%) + "
+            "dividend quality (20%)."
+        ),
         aliases=(),
         cadence="monthly review",
         asset_scope="cn_equity_combo",
         benchmark="510300",
         role="cn_equity_combo",
-        status="runtime_enabled",
+        status="research_backtest_only",
     ),
 }
 
@@ -362,12 +424,28 @@ def get_runtime_enabled_profiles() -> frozenset[str]:
     return frozenset(
         profile
         for profile, metadata in STRATEGY_METADATA.items()
-        if str(metadata.status or "").strip().lower() == "runtime_enabled"
+        if str(metadata.status or "").strip().lower() == STRATEGY_STATUS_RUNTIME_ENABLED
+    )
+
+
+def get_live_candidate_profiles() -> frozenset[str]:
+    return frozenset(
+        profile
+        for profile, metadata in STRATEGY_METADATA.items()
+        if str(metadata.status or "").strip().lower() == STRATEGY_STATUS_LIVE_CANDIDATE
+    )
+
+
+def get_shadow_profiles() -> frozenset[str]:
+    return frozenset(
+        profile
+        for profile, metadata in STRATEGY_METADATA.items()
+        if str(metadata.status or "").strip().lower() == STRATEGY_STATUS_SHADOW
     )
 
 
 def get_qmt_optional_runtime_profiles() -> frozenset[str]:
-    return frozenset(CN_QMT_OPTIONAL_RUNTIME_PROFILES)
+    return get_live_candidate_profiles() | get_shadow_profiles()
 
 
 def get_qmt_rollout_allowlist() -> frozenset[str]:
@@ -383,11 +461,19 @@ def get_snapshot_backed_profiles() -> frozenset[str]:
 
 
 def get_external_snapshot_scaffold_profiles() -> frozenset[str]:
-    return CN_EXTERNAL_SNAPSHOT_SCAFFOLD_PROFILES
+    return get_scaffold_profiles()
+
+
+def get_scaffold_profiles() -> frozenset[str]:
+    return frozenset(CN_SCAFFOLD_PROFILES)
 
 
 def get_research_backtest_only_profiles() -> frozenset[str]:
-    return CN_RESEARCH_BACKTEST_ONLY_PROFILES
+    return frozenset(
+        profile
+        for profile, metadata in STRATEGY_METADATA.items()
+        if str(metadata.status or "").strip().lower() == STRATEGY_STATUS_RESEARCH_BACKTEST_ONLY
+    )
 
 
 def get_strategy_metadata(profile: str) -> StrategyMetadata:

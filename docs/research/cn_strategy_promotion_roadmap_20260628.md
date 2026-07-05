@@ -17,12 +17,13 @@ QuantRuntimeSettings（切换控制台）
     └── CnEquityStrategies
         ├── market_history 直驱（「普通 A 股」runtime）
         │   └── cn_industry_etf_rotation ← 生产默认，14 行业 ETF 动量
-        ├── feature_snapshot 快照（「A 股 Snapshot」runtime）
+        ├── feature_snapshot 快照（当前仅 research / 待提审）
         │   └── cn_dividend_quality_snapshot ← Pipeline 因子 CSV + manifest
         └── research_backtest_only（回测/研究，不进切换页默认）
             ├── cn_industry_etf_rotation_aggressive（ETF vol25%）
             ├── cn_index_etf_tactical_rotation（legacy）
             ├── cross-section 个股动量 proxy（CSI500 宽池）
+            ├── CSI500 snapshot scaffold（future PIT snapshot candidate）
             └── 固定 8 股主题 sleeve proxy
 ```
 
@@ -38,9 +39,24 @@ QuantRuntimeSettings（切换控制台）
 - **行业 ETF 轮动** = A 股 **market_history 直驱** 的生产主轨（类似「只喂行情就能跑」的普通策略）。
 - **红利 quality** = A 股 **snapshot 轨**，必须先跑 Pipeline 产出因子快照，再喂给策略。
 - **CSI500 个股动量** = 研究中的 **第三条线**，输入方式仍像 ETF（行情驱动），但 **尚未注册 runtime profile**；和 Snapshot 无关，也和美股无关。
+- **CSI500 snapshot scaffold** = 未来可迁移到 `feature_snapshot` 的候选，只要还没过 PIT / 统一组合 / live dry-run gate，就只放 research，不进 live 配置。
 - **双轨 70/30** = research 里把 **直驱 ETF 腿 + snapshot 红利腿** 收益加权；不是单一 profile。
 
 ---
+
+### 0.1 跨市场通用 policy
+
+- 统一的是 **状态语义** 和 **晋级流程**，不是所有 gate 数值。
+- 不同市场/平台（A 股 ETF、A 股 snapshot、美股）可以有各自的 gate 和实现细节。
+- 只要 **PIT / 统一组合 / dry-run** 任一没过，就先放 `research_backtest_only` 或 `scaffold`，不要进 live 配置。
+- `runtime_enabled`：已通过当前市场/平台的正式 gate，可进入正常 runtime。
+- `live_candidate` / `shadow`：允许小流量或影子观察，只做受控验证，不作为默认 live。
+- `research_backtest_only`：仅用于回测和研究，不进入 runtime。
+- `scaffold`：仅保留策略骨架或后续候选，尚未形成可执行 runtime contract。
+- `cn_dividend_quality_snapshot` 和 `cn_equity_combo` 当前都应按 `research_backtest_only` 处理；底层 legs 和统一组合证据重新过关后，再单独提审。
+- 同一条市场线只保留一个“冠军候选”；其余变体不长期保留为 live 候选，避免同时养多个弱版本。
+- 默认 live gate 以 **绝对最大回撤 30%** 为主；35% 仅保留给研究扫描，不直接放进 live。
+- live 只接受 **可靠验证过** 的版本；证据不够时，先停在 `live_candidate` / `shadow` 或 research 层。
 
 ## 1. Aggressive vol25% → Live 候选评审
 
@@ -70,7 +86,7 @@ QuantRuntimeSettings（切换控制台）
 
 1. **推荐：`optional_target`** — 在 QuantRuntimeSettings 增加第二个 QMT target（`STRATEGY_PROFILE=cn_industry_etf_rotation_aggressive`），**不替换**默认 conservative。
 2. `promote_default` — 直接把平台默认改为 aggressive（+1pp 年化，风险中等，需你明确批准）。
-3. `stay_research` — 维持 `research_backtest_only`，等双轨 combo runtime 验证后再议。
+3. `stay_research` — 维持 `research_backtest_only`，等底层 legs 和统一组合重新验证后再议。
 
 ### 1.4 落地步骤（optional_target — **已完成 2026-06-28**）
 
@@ -93,8 +109,19 @@ QuantRuntimeSettings（切换控制台）
 ### 2.1 当前 research 形态
 
 - 脚本：`research_cn_dual_track_combo_proxy_backtest.py`
-- **return-level blend**（70% 行业 + 30% 红利），非统一多资产账户模拟
+- **return-level blend**，默认会先扫一组行业/红利权重，再做静态/动态对照；非统一多资产账户模拟
 - expanded 红利腿依赖 Pipeline `--universe-mode expanded`
+- CSI500 宽基动量选股目前也仍在 research 轨；要进 live，必须先补齐 PIT / 统一组合 / 稳定 dry-run 证据。
+
+### 2.1.1 降级规则
+
+满足以下任一条件，就先放 research_backtest_only / scaffold：
+
+1. 只在 return-level blend 上看起来不错，但没有统一组合模拟。
+2. 成分或财务不是 PIT。
+3. 不能稳定跑通 live dry-run / e2e。
+4. live 配置需要依赖“相信会好”，而不是“证据已经够了”。
+5. 双轨组合没有在**同周期**里打赢当前行业主轨。
 
 ### 2.2 候选 preset
 
@@ -314,7 +341,7 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 
 | 优先级 | 动作 | 预期收益 | 风险 |
 |---|---|---|---|
-| P0 | Aggressive **optional QMT target** | +1pp 年化（ETF） | 低 |
+| P0 | Aggressive **live_candidate** | +1pp 年化（ETF） | 低 |
 | P1 | 跑 **stock_risk** 矩阵，找 MDD/bear 改善最大的 preset | 可能保留 15–20% 年化同时 MDD → -28% | 中 |
 | P2 | 双轨 combo Phase 1→2（PIT + unified sim） | 组合年化 ~16% | 中 |
 | P2b | **70/30 ETF + vol15 stock** 已验证 proxy；可对比 50/50、40/60 权重扫描 | MDD ~-14% | 低 |

@@ -4,10 +4,14 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import hashlib
+import time
 from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
 
 from cn_equity_strategies.backtest.proxy_simulator import (
     ProxyBacktestConfig,
@@ -54,6 +58,9 @@ LONG_PERIODS: dict[str, tuple[str | None, str | None, tuple[str, ...] | None]] =
     "recent_2021_2026": ("2021-01-01", "2026-06-27", CN_UNIVERSE_FULL),
 }
 
+CACHE_DIR = ROOT / ".cache" / "cn_equity_strategies"
+CACHE_VERSION = "v1"
+
 
 def _metrics_slice(daily_returns: pd.Series, start: str | None, end: str | None) -> dict[str, float | int]:
     series = daily_returns
@@ -88,6 +95,11 @@ def _cn_universe_for_period(start: str, end: str) -> tuple[str, ...]:
     return CN_UNIVERSE_2017
 
 
+def _history_cache_path(*, prefix: str, start: str, end: str, symbols: tuple[str, ...]) -> Path:
+    digest = hashlib.sha1("|".join([CACHE_VERSION, prefix, start, end, *symbols]).encode("utf-8")).hexdigest()[:16]
+    return CACHE_DIR / f"{prefix}_{digest}.pkl"
+
+
 def _download_cn_history(*, start: str, end: str) -> pd.DataFrame:
     import akshare as ak
 
@@ -100,15 +112,51 @@ def _download_cn_history(*, start: str, end: str) -> pd.DataFrame:
             ]
         )
     )
+    cache_path = _history_cache_path(prefix="cn_history", start=start, end=end, symbols=symbols)
+    if cache_path.exists():
+        return pd.read_pickle(cache_path)
+
     rows: list[dict[str, object]] = []
+
+    def _fetch_history(symbol: str) -> pd.DataFrame:
+        last_error: Exception | None = None
+        for attempt in range(3):
+            try:
+                frame = ak.fund_etf_hist_em(
+                    symbol=symbol,
+                    period="daily",
+                    start_date=start.replace("-", ""),
+                    end_date=end.replace("-", ""),
+                    adjust="qfq",
+                )
+                if frame is not None and not frame.empty:
+                    return frame
+            except Exception as exc:  # pragma: no cover - network dependent
+                last_error = exc
+                if attempt < 2:
+                    time.sleep(1.5 * (attempt + 1))
+        market_prefix = "sh" if symbol.startswith(("5", "6", "9")) else "sz"
+        for attempt in range(3):
+            try:
+                frame = ak.stock_zh_a_hist_tx(
+                    symbol=f"{market_prefix}{symbol}",
+                    start_date=start.replace("-", ""),
+                    end_date=end.replace("-", ""),
+                    adjust="qfq",
+                )
+                if frame is not None and not frame.empty:
+                    output = frame.rename(columns={"date": "日期", "close": "收盘", "amount": "成交额"})
+                    return output.loc[:, ["日期", "收盘", "成交额"]].copy()
+            except Exception as exc:  # pragma: no cover - network dependent
+                last_error = exc
+                if attempt < 2:
+                    time.sleep(1.5 * (attempt + 1))
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError(f"failed to fetch history for {symbol}")
+
     for symbol in symbols:
-        frame = ak.fund_etf_hist_em(
-            symbol=symbol,
-            period="daily",
-            start_date=start.replace("-", ""),
-            end_date=end.replace("-", ""),
-            adjust="qfq",
-        )
+        frame = _fetch_history(symbol)
         if frame.empty:
             continue
         for item in frame.itertuples(index=False):
@@ -122,7 +170,10 @@ def _download_cn_history(*, start: str, end: str) -> pd.DataFrame:
             )
     output = pd.DataFrame(rows)
     output["date"] = pd.to_datetime(output["date"], utc=False).dt.tz_localize(None).dt.normalize()
-    return output.sort_values(["date", "symbol"]).reset_index(drop=True)
+    output = output.sort_values(["date", "symbol"]).reset_index(drop=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    output.to_pickle(cache_path)
+    return output
 
 
 def _download_us_history(*, start: str, end: str) -> pd.DataFrame:

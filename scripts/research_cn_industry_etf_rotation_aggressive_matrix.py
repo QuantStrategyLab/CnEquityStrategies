@@ -97,7 +97,7 @@ def run_matrix(*, start: str, end: str, suite: str = "etf") -> dict[str, Any]:
         "start": start,
         "end": end,
         "suite": suite,
-        "status": "research_only",
+        "status": "research_backtest_only",
         "conservative_baseline": "conservative_v1",
         "variants": results,
         "promotion_review": promotion,

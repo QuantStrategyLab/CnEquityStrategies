@@ -1,6 +1,6 @@
 # CSI500 MA120 vol25 个股 sleeve — Research 回测与设计计划
 
-**状态：** research_only（未进 QMT live rollout）  
+**状态：** research_backtest_only（未进 QMT live rollout）
 **日期：** 2026-06-28  
 **关联 preset：** `momentum_csi500_top5_vol25_ma120_riskoff`（`CSI500_MA120_RETURN_OPTIMIZED_PRESET_KEY`）
 
@@ -132,6 +132,6 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src \
 1. PIT 池重跑后，vol25 MA120 年化 ≥ 22%、MDD ≥ -28%、OOS lift ≥ +10pp vs ETF aggressive  
 2. 单票 cap + 流动性过滤上线  
 3. 与 live ETF 腿做 **50/50 paper 组合** 6 个月，MDD 不劣于 -25%  
-4. 用户明确批准将 catalog 从 `research_backtest_only` 改为 optional QMT target（类似 aggressive ETF 路径）
+4. 用户明确批准将 catalog 从 `research_backtest_only` 升为 `live_candidate`（受控 QMT target，类似 aggressive ETF 路径）
 
-**当前建议：** 保持 research_only；live 主 alpha 用 **aggressive ETF optional target**，个股 sleeve 继续 Phase 2 回测。
+**当前建议：** 保持 `research_backtest_only`；live 主 alpha 用 **aggressive ETF optional target**，个股 sleeve 继续 Phase 2 回测。

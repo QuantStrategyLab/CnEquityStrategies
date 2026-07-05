@@ -3,11 +3,13 @@ from __future__ import annotations
 from quant_platform_kit.strategy_contracts import StrategyManifest
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
+from cn_equity_strategies.strategies import cn_chinext_tactical_rotation as chinext_tactical_strategy
 from cn_equity_strategies.strategies import cn_index_etf_tactical_rotation as index_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_etf_strategy
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
 
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
+CN_CHINEXT_TACTICAL_ROTATION_PROFILE = chinext_tactical_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_PROFILE = industry_etf_strategy.PROFILE_NAME
 CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE = industry_etf_aggressive_strategy.PROFILE_NAME
 CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE = dividend_quality_strategy.PROFILE_NAME
@@ -127,6 +129,35 @@ cn_index_etf_tactical_rotation_manifest = _manifest(
     },
 )
 
+cn_chinext_tactical_rotation_manifest = _manifest(
+    profile=CN_CHINEXT_TACTICAL_ROTATION_PROFILE,
+    domain=chinext_tactical_strategy.CN_EQUITY_DOMAIN,
+    display_name="CN ChiNext Tactical Rotation",
+    description=(
+        "Research-only ChiNext tactical rotation using a focused two-ETF sleeve with CSI300 "
+        "benchmark risk-off switching."
+    ),
+    aliases=(),
+    required_inputs=frozenset({"market_history"}),
+    default_config={
+        "universe_symbols": chinext_tactical_strategy.DEFAULT_UNIVERSE_SYMBOLS,
+        "defensive_symbols": chinext_tactical_strategy.DEFAULT_DEFENSIVE_SYMBOLS,
+        "benchmark_symbol": chinext_tactical_strategy.DEFAULT_BENCHMARK_SYMBOL,
+        "momentum_window_days": chinext_tactical_strategy.DEFAULT_MOMENTUM_WINDOW_DAYS,
+        "trend_window_days": chinext_tactical_strategy.DEFAULT_TREND_WINDOW_DAYS,
+        "benchmark_trend_window_days": chinext_tactical_strategy.DEFAULT_BENCHMARK_TREND_WINDOW_DAYS,
+        "volatility_window_days": chinext_tactical_strategy.DEFAULT_VOLATILITY_WINDOW_DAYS,
+        "top_n": chinext_tactical_strategy.DEFAULT_TOP_N,
+        "min_momentum": chinext_tactical_strategy.DEFAULT_MIN_MOMENTUM,
+        "rebalance_frequency": chinext_tactical_strategy.DEFAULT_REBALANCE_FREQUENCY,
+        "weighting_mode": chinext_tactical_strategy.DEFAULT_WEIGHTING_MODE,
+        "target_annual_volatility": chinext_tactical_strategy.DEFAULT_TARGET_ANNUAL_VOLATILITY,
+        "max_gross_exposure": chinext_tactical_strategy.DEFAULT_MAX_GROSS_EXPOSURE,
+        "min_history_days": chinext_tactical_strategy.DEFAULT_MIN_HISTORY_DAYS,
+        "max_pair_correlation": chinext_tactical_strategy.DEFAULT_MAX_PAIR_CORRELATION,
+    },
+)
+
 cn_dividend_quality_snapshot_manifest = _manifest(
     profile=CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE,
     domain=dividend_quality_strategy.CN_EQUITY_DOMAIN,
@@ -167,6 +198,7 @@ MANIFESTS = {
     cn_industry_etf_rotation_manifest.profile: cn_industry_etf_rotation_manifest,
     cn_industry_etf_rotation_aggressive_manifest.profile: cn_industry_etf_rotation_aggressive_manifest,
     cn_index_etf_tactical_rotation_manifest.profile: cn_index_etf_tactical_rotation_manifest,
+    cn_chinext_tactical_rotation_manifest.profile: cn_chinext_tactical_rotation_manifest,
     cn_dividend_quality_snapshot_manifest.profile: cn_dividend_quality_snapshot_manifest,
 }
 
@@ -184,11 +216,13 @@ def get_strategy_manifest(profile: str) -> StrategyManifest:
 
 __all__ = [
     "CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE",
+    "CN_CHINEXT_TACTICAL_ROTATION_PROFILE",
     "CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE",
     "CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE",
     "CN_INDUSTRY_ETF_ROTATION_PROFILE",
     "MANIFESTS",
     "get_strategy_manifest",
+    "cn_chinext_tactical_rotation_manifest",
     "cn_dividend_quality_snapshot_manifest",
     "cn_index_etf_tactical_rotation_manifest",
     "cn_industry_etf_rotation_aggressive_manifest",
