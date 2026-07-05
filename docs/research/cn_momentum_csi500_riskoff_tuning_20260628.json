@@ -307,7 +307,7 @@
       "promoted": []
     },
     "start": "2021-01-01",
-    "status": "research_only",
+    "status": "research_backtest_only",
     "track": "cross_section_momentum_riskoff",
     "universe_diagnostics": {
       "momentum_csi500_top5_vol15_gross75_riskoff": {
