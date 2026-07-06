@@ -1,5 +1,14 @@
 # CnEquityStrategies
 
+
+## QSL architecture role
+
+- **Layer**: `strategy-library`.
+- **Responsibility**: A-share strategy implementation package.
+- **Owns**: runtime-enabled strategy code, manifests, catalog metadata.
+- **Consumes**: QuantPlatformKit and validated snapshot artifacts.
+- **Must not**: connect to brokers or deploy live services.
+
 [Chinese README](README.zh-CN.md)
 
 > Investing involves risk. This project does not provide investment advice and is for education, research, and engineering review only.
