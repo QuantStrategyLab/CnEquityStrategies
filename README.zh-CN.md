@@ -1,5 +1,14 @@
 # CnEquityStrategies
 
+
+## QSL 架构角色
+
+- **层级**：`策略库`。
+- **职责**：A 股策略实现包。
+- **事实源/归属**：runtime-enabled 策略代码、manifests、catalog metadata。
+- **消费对象**：QuantPlatformKit 和已验证快照 artifacts。
+- **禁止事项**：连接券商或部署 live 服务。
+
 [English README](README.md)
 
 > 投资有风险。本项目不构成投资建议，仅用于学习、研究和工程审阅。
