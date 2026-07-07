@@ -23,7 +23,7 @@ from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
 from cn_equity_strategies.strategies import cn_star_growth_momentum_quality as star_growth_momentum_quality_strategy
 
-from ._common import get_current_holdings, merge_runtime_config, require_market_data, weights_to_positions
+from ._common import apply_risk_gate, get_current_holdings, merge_runtime_config, require_market_data, weights_to_positions
 
 
 def evaluate_cn_industry_etf_rotation(ctx: StrategyContext) -> StrategyDecision:
@@ -46,11 +46,12 @@ def evaluate_cn_industry_etf_rotation(ctx: StrategyContext) -> StrategyDecision:
     risk_flags: tuple[str, ...] = ()
     if has_cash_residual:
         risk_flags += ("cash_residual",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_industry_etf_rotation_entrypoint = CallableStrategyEntrypoint(
