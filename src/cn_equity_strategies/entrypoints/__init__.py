@@ -319,7 +319,7 @@ cn_dividend_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
 
 def evaluate_cn_equity_combo(ctx: StrategyContext) -> StrategyDecision:
     from cn_equity_strategies.combo_entrypoints import evaluate_cn_equity_combo as _eval
-    return _eval(ctx)
+    return apply_risk_gate(_eval(ctx))
 
 
 from cn_equity_strategies.combo_manifests import cn_equity_combo_manifest  # noqa: E402
