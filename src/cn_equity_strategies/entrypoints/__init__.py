@@ -58,7 +58,7 @@ def evaluate_cn_industry_etf_rotation(ctx: StrategyContext) -> StrategyDecision:
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -99,7 +99,7 @@ def evaluate_cn_industry_etf_rotation_aggressive(ctx: StrategyContext) -> Strate
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -142,7 +142,7 @@ def evaluate_cn_index_etf_tactical_rotation(ctx: StrategyContext) -> StrategyDec
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -185,7 +185,7 @@ def evaluate_cn_chinext_tactical_rotation(ctx: StrategyContext) -> StrategyDecis
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -230,7 +230,7 @@ def evaluate_cn_chinext_growth_momentum_quality(ctx: StrategyContext) -> Strateg
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -273,7 +273,7 @@ def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -318,7 +318,7 @@ def evaluate_cn_star_growth_momentum_quality(ctx: StrategyContext) -> StrategyDe
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -359,7 +359,7 @@ def evaluate_cn_dividend_quality_snapshot(ctx: StrategyContext) -> StrategyDecis
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    decision = apply_risk_gate(decision)
+    decision = apply_risk_gate(decision, ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
@@ -382,7 +382,7 @@ cn_dividend_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
 
 def evaluate_cn_equity_combo(ctx: StrategyContext) -> StrategyDecision:
     from cn_equity_strategies.combo_entrypoints import evaluate_cn_equity_combo as _eval
-    decision = apply_risk_gate(_eval(ctx))
+    decision = apply_risk_gate(_eval(ctx), ctx=ctx)
     record_strategy_decision(
         ctx,
         decision,
