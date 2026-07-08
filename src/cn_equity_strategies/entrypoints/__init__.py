@@ -80,11 +80,12 @@ def evaluate_cn_industry_etf_rotation_aggressive(ctx: StrategyContext) -> Strate
     risk_flags: tuple[str, ...] = ()
     if has_cash_residual:
         risk_flags += ("cash_residual",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_industry_etf_rotation_aggressive_entrypoint = CallableStrategyEntrypoint(
@@ -115,11 +116,12 @@ def evaluate_cn_index_etf_tactical_rotation(ctx: StrategyContext) -> StrategyDec
         risk_flags += ("cash_residual",)
     if metadata.get("benchmark_risk_off"):
         risk_flags += ("benchmark_risk_off",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_index_etf_tactical_rotation_entrypoint = CallableStrategyEntrypoint(
@@ -150,11 +152,12 @@ def evaluate_cn_chinext_tactical_rotation(ctx: StrategyContext) -> StrategyDecis
         risk_flags += ("cash_residual",)
     if metadata.get("benchmark_risk_off"):
         risk_flags += ("benchmark_risk_off",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_chinext_tactical_rotation_entrypoint = CallableStrategyEntrypoint(
@@ -187,11 +190,12 @@ def evaluate_cn_chinext_growth_momentum_quality(ctx: StrategyContext) -> Strateg
         risk_flags += ("cash_residual",)
     if metadata.get("benchmark_risk_off"):
         risk_flags += ("benchmark_risk_off",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_chinext_growth_momentum_quality_entrypoint = CallableStrategyEntrypoint(
@@ -222,11 +226,12 @@ def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -
     risk_flags: tuple[str, ...] = ()
     if has_cash_residual:
         risk_flags += ("cash_residual",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_chinext_growth_momentum_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
@@ -259,11 +264,12 @@ def evaluate_cn_star_growth_momentum_quality(ctx: StrategyContext) -> StrategyDe
         risk_flags += ("cash_residual",)
     if metadata.get("benchmark_risk_off"):
         risk_flags += ("benchmark_risk_off",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_star_growth_momentum_quality_entrypoint = CallableStrategyEntrypoint(
@@ -292,11 +298,12 @@ def evaluate_cn_dividend_quality_snapshot(ctx: StrategyContext) -> StrategyDecis
     risk_flags: tuple[str, ...] = ()
     if has_cash_residual:
         risk_flags += ("cash_residual",)
-    return StrategyDecision(
+    decision = StrategyDecision(
         positions=weights_to_positions(weights),
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
+    return apply_risk_gate(decision)
 
 
 cn_dividend_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
