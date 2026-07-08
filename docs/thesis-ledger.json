@@ -1,0 +1,28 @@
+{
+  "strategies": {
+    "cn_industry_etf_rotation": {
+      "thesis": "A股行业ETF存在月度动量效应，排名靠前的行业在随后窗口有显著超额收益",
+      "falsification_conditions": [
+        "滚动12个月 IC < 0.02",
+        "沪深300上涨月份策略超额为负连续3个月"
+      ],
+      "created": "2025-08-01",
+      "last_verified": "2026-07-08",
+      "verdict": "active",
+      "hit_rate": null,
+      "status_note": "runtime_enabled"
+    },
+    "cn_industry_etf_rotation_aggressive": {
+      "thesis": "激进版行业动量在更高换手约束下仍能保留核心行业轮动 alpha",
+      "falsification_conditions": [
+        "OOS 12个月 Sharpe < 0.3",
+        "相对标准版滚动超额连续6个月为负"
+      ],
+      "created": "2026-01-01",
+      "last_verified": "2026-07-08",
+      "verdict": "active",
+      "hit_rate": null,
+      "status_note": "live_candidate"
+    }
+  }
+}
