@@ -23,7 +23,14 @@ from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry
 from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive as industry_etf_aggressive_strategy
 from cn_equity_strategies.strategies import cn_star_growth_momentum_quality as star_growth_momentum_quality_strategy
 
-from ._common import apply_risk_gate, get_current_holdings, merge_runtime_config, require_market_data, weights_to_positions
+from ._common import (
+    apply_risk_gate,
+    get_current_holdings,
+    merge_runtime_config,
+    record_strategy_decision,
+    require_market_data,
+    weights_to_positions,
+)
 
 
 def evaluate_cn_industry_etf_rotation(ctx: StrategyContext) -> StrategyDecision:
@@ -51,7 +58,14 @@ def evaluate_cn_industry_etf_rotation(ctx: StrategyContext) -> StrategyDecision:
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_industry_etf_rotation_manifest.profile,
+        domain=cn_industry_etf_rotation_manifest.domain,
+    )
+    return decision
 
 
 cn_industry_etf_rotation_entrypoint = CallableStrategyEntrypoint(
@@ -85,7 +99,14 @@ def evaluate_cn_industry_etf_rotation_aggressive(ctx: StrategyContext) -> Strate
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_industry_etf_rotation_aggressive_manifest.profile,
+        domain=cn_industry_etf_rotation_aggressive_manifest.domain,
+    )
+    return decision
 
 
 cn_industry_etf_rotation_aggressive_entrypoint = CallableStrategyEntrypoint(
@@ -121,7 +142,14 @@ def evaluate_cn_index_etf_tactical_rotation(ctx: StrategyContext) -> StrategyDec
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_index_etf_tactical_rotation_manifest.profile,
+        domain=cn_index_etf_tactical_rotation_manifest.domain,
+    )
+    return decision
 
 
 cn_index_etf_tactical_rotation_entrypoint = CallableStrategyEntrypoint(
@@ -157,7 +185,14 @@ def evaluate_cn_chinext_tactical_rotation(ctx: StrategyContext) -> StrategyDecis
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_chinext_tactical_rotation_manifest.profile,
+        domain=cn_chinext_tactical_rotation_manifest.domain,
+    )
+    return decision
 
 
 cn_chinext_tactical_rotation_entrypoint = CallableStrategyEntrypoint(
@@ -195,7 +230,14 @@ def evaluate_cn_chinext_growth_momentum_quality(ctx: StrategyContext) -> Strateg
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_chinext_growth_momentum_quality_manifest.profile,
+        domain=cn_chinext_growth_momentum_quality_manifest.domain,
+    )
+    return decision
 
 
 cn_chinext_growth_momentum_quality_entrypoint = CallableStrategyEntrypoint(
@@ -231,7 +273,14 @@ def evaluate_cn_chinext_growth_momentum_quality_snapshot(ctx: StrategyContext) -
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_chinext_growth_momentum_quality_snapshot_manifest.profile,
+        domain=cn_chinext_growth_momentum_quality_snapshot_manifest.domain,
+    )
+    return decision
 
 
 cn_chinext_growth_momentum_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
@@ -269,7 +318,14 @@ def evaluate_cn_star_growth_momentum_quality(ctx: StrategyContext) -> StrategyDe
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_star_growth_momentum_quality_manifest.profile,
+        domain=cn_star_growth_momentum_quality_manifest.domain,
+    )
+    return decision
 
 
 cn_star_growth_momentum_quality_entrypoint = CallableStrategyEntrypoint(
@@ -303,7 +359,14 @@ def evaluate_cn_dividend_quality_snapshot(ctx: StrategyContext) -> StrategyDecis
         risk_flags=risk_flags,
         diagnostics=diagnostics,
     )
-    return apply_risk_gate(decision)
+    decision = apply_risk_gate(decision)
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_dividend_quality_snapshot_manifest.profile,
+        domain=cn_dividend_quality_snapshot_manifest.domain,
+    )
+    return decision
 
 
 cn_dividend_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
@@ -319,7 +382,14 @@ cn_dividend_quality_snapshot_entrypoint = CallableStrategyEntrypoint(
 
 def evaluate_cn_equity_combo(ctx: StrategyContext) -> StrategyDecision:
     from cn_equity_strategies.combo_entrypoints import evaluate_cn_equity_combo as _eval
-    return apply_risk_gate(_eval(ctx))
+    decision = apply_risk_gate(_eval(ctx))
+    record_strategy_decision(
+        ctx,
+        decision,
+        profile_id=cn_equity_combo_manifest.profile,
+        domain=cn_equity_combo_manifest.domain,
+    )
+    return decision
 
 
 from cn_equity_strategies.combo_manifests import cn_equity_combo_manifest  # noqa: E402
