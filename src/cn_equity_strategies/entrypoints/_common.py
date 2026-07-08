@@ -4,12 +4,41 @@ import logging
 from typing import Any
 
 from quant_platform_kit.strategy_contracts import PositionTarget, StrategyContext, StrategyDecision
+from quant_platform_kit.strategy_lifecycle.performance_monitor import PerformanceMonitor
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # 风控硬门 — 每个 entrypoint 返回 StrategyDecision 前必须调用
 # ---------------------------------------------------------------------------
+
+_performance_monitor: PerformanceMonitor | None = None
+
+
+def record_strategy_decision(
+    ctx: StrategyContext,
+    decision: StrategyDecision,
+    *,
+    profile_id: str,
+    domain: str,
+) -> None:
+    """Record per-run decision for live monitoring (roadmap 5a).
+
+    entrypoints/evaluate only has `StrategyDecision`; execution_result is
+    expected to be recorded by platform runtime later.
+    """
+    global _performance_monitor
+    try:
+        if _performance_monitor is None:
+            _performance_monitor = PerformanceMonitor()
+        _performance_monitor.record(
+            profile_id,
+            decision,
+            execution_result={},
+            domain=domain,
+        )
+    except Exception as exc:  # pragma: no cover
+        logger.warning("PerformanceMonitor.record failed: %s", exc)
 
 
 def apply_risk_gate(
