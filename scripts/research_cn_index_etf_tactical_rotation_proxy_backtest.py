@@ -9,11 +9,12 @@ from typing import Any
 
 import pandas as pd
 
+from cn_equity_strategies.backtest.orchestrator_research import run_proxy_profile_backtest
 from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
     DEFAULT_MIN_HISTORY_DAYS,
+    PROFILE_NAME,
     build_target_weights,
-    extract_managed_symbols,
 )
 
 DEFAULT_ETF_SYMBOLS = (
@@ -78,22 +79,23 @@ def _download_market_history(config: ResearchConfig) -> pd.DataFrame:
     return output.sort_values(["date", "symbol"]).reset_index(drop=True)
 
 
-def _synthetic_market_history(*, days: int = 500) -> pd.DataFrame:
-    dates = pd.bdate_range("2023-06-01", periods=days)
-    rates = {symbol: 1.0002 + (idx * 0.00005) for idx, symbol in enumerate(extract_managed_symbols())}
-    rows: list[dict[str, object]] = []
-    for symbol in extract_managed_symbols():
-        price = 10.0 + (hash(symbol) % 7)
-        rate = rates.get(symbol, 1.0002)
-        for idx, day in enumerate(dates):
-            price *= rate
-            close = price * (1.0 + 0.03 * ((idx % 7) - 3) / 7)
-            rows.append({"date": day, "symbol": symbol, "close": close})
-    return pd.DataFrame(rows)
-
-
 def run(config: ResearchConfig, *, synthetic: bool) -> dict[str, Any]:
-    market_history = _synthetic_market_history() if synthetic else _download_market_history(config)
+    if synthetic:
+        payload = run_proxy_profile_backtest(
+            PROFILE_NAME,
+            synthetic_days=500,
+            params={"min_history_days": DEFAULT_MIN_HISTORY_DAYS},
+        )
+        return {
+            "config": asdict(config),
+            "synthetic": True,
+            "orchestrator": True,
+            "profile": PROFILE_NAME,
+            "metrics": payload["metrics"],
+            "source": payload["source"],
+        }
+
+    market_history = _download_market_history(config)
     backtest = run_proxy_backtest(
         market_history,
         _signal_fn,
