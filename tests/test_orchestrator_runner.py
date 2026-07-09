@@ -18,6 +18,9 @@ class CnProxyBacktestRunnerTests(unittest.TestCase):
     def test_supported_profile_includes_index_etf(self) -> None:
         self.assertIn(PROFILE_NAME, SUPPORTED_PROFILES)
 
+    def test_supported_profile_includes_chinext_tactical(self) -> None:
+        self.assertIn("cn_chinext_tactical_rotation", SUPPORTED_PROFILES)
+
     def test_run_returns_backtest_result(self) -> None:
         runner = CnProxyBacktestRunner(synthetic_days=400)
         result = runner.run(
