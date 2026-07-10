@@ -79,10 +79,16 @@ def _normalize_market_history(market_history: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"market history is missing columns: {', '.join(missing)}")
     frame = frame[["date", "symbol", "close"]].copy()
     frame["date"] = pd.to_datetime(frame["date"], errors="coerce").dt.tz_localize(None).dt.normalize()
-    frame["symbol"] = frame["symbol"].astype(str).str.strip().str.upper().str.replace(r"\.(SH|SZ)$", "", regex=True)
-    frame["symbol"] = frame["symbol"].str.zfill(6)
+    frame["symbol"] = frame["symbol"].map(_normalize_symbol)
     frame["close"] = pd.to_numeric(frame["close"], errors="coerce")
     return frame.dropna().drop_duplicates(["date", "symbol"], keep="last").sort_values(["date", "symbol"])
+
+
+def _normalize_symbol(value: object) -> str:
+    text = str(value or "").strip().upper()
+    if text.endswith((".SH", ".SZ")):
+        text = text.rsplit(".", 1)[0]
+    return text.zfill(6) if text.isdigit() else text
 
 
 def _market_history_fingerprint(market_history: pd.DataFrame) -> str:
@@ -106,7 +112,7 @@ def _shared_market_history(
         (history["date"] >= pd.Timestamp(lookback_start))
         & (history["date"] <= pd.Timestamp(latest_window_end))
     ].copy()
-    required_symbols = set(PROXY_PROFILE_REGISTRY[profile].extract_managed_symbols())
+    required_symbols = {_normalize_symbol(symbol) for symbol in PROXY_PROFILE_REGISTRY[profile].extract_managed_symbols()}
     missing_symbols = sorted(required_symbols - set(history["symbol"]))
     if missing_symbols:
         raise ValueError(f"market history is missing required symbols: {', '.join(missing_symbols)}")

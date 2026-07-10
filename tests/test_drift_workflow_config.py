@@ -31,6 +31,6 @@ def test_drift_workflow_wires_real_snapshot_history_and_preflight_bundle() -> No
     assert "snapshot_repository: QuantStrategyLab/CnEquitySnapshotPipelines" in workflow
     assert "snapshot_checkout_path: external/CnEquitySnapshotPipelines" in workflow
     assert "ai_gateway_service_url: ${{ vars.AI_GATEWAY_SERVICE_URL }}" in workflow
-    assert "lifecycle_preflight_artifact: lifecycle-preflight-${{ github.run_id }}" in workflow
+    assert "lifecycle_preflight_artifact: lifecycle-preflight-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
     assert "codex_audit_service_url: ${{ secrets.CODEX_AUDIT_SERVICE_URL }}" in workflow
     assert "snapshot_repository_token: ${{ secrets.SNAPSHOT_REPOSITORY_TOKEN }}" in workflow
