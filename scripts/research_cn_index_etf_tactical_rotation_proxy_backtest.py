@@ -3,11 +3,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+for candidate in (SRC, ROOT):
+    candidate_str = str(candidate)
+    if candidate.exists() and candidate_str not in sys.path:
+        sys.path.insert(0, candidate_str)
 
 from cn_equity_strategies.backtest.orchestrator_research import run_proxy_profile_backtest
 from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest
@@ -79,8 +87,8 @@ def _download_market_history(config: ResearchConfig) -> pd.DataFrame:
     return output.sort_values(["date", "symbol"]).reset_index(drop=True)
 
 
-def run(config: ResearchConfig, *, synthetic: bool) -> dict[str, Any]:
-    if synthetic:
+def run(config: ResearchConfig, *, legacy: bool = False) -> dict[str, Any]:
+    if not legacy:
         payload = run_proxy_profile_backtest(
             PROFILE_NAME,
             synthetic_days=500,
@@ -107,7 +115,7 @@ def run(config: ResearchConfig, *, synthetic: bool) -> dict[str, Any]:
     )
     return {
         "config": asdict(config),
-        "synthetic": synthetic,
+        "synthetic": False,
         "data_rows": int(len(market_history)),
         "symbols": sorted(market_history["symbol"].unique().tolist()),
         "rebalance_count": len(backtest.rebalance_events),
@@ -122,9 +130,10 @@ def run(config: ResearchConfig, *, synthetic: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Proxy backtest for cn_index_etf_tactical_rotation.")
     parser.add_argument("--json-output", type=Path)
-    parser.add_argument("--synthetic", action="store_true", help="Use synthetic history instead of AkShare.")
+    parser.add_argument("--legacy", "--analysis", dest="legacy", action="store_true", help="Run the legacy AkShare proxy backtest path.")
+    parser.add_argument("--synthetic", action="store_true", help="Kept for compatibility; default path already uses the orchestrator profile.")
     args = parser.parse_args()
-    payload = run(ResearchConfig(), synthetic=args.synthetic)
+    payload = run(ResearchConfig(), legacy=args.legacy)
     text = json.dumps(payload, indent=2, sort_keys=True, default=str)
     if args.json_output:
         args.json_output.write_text(text + "\n")

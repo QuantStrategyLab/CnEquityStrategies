@@ -23,6 +23,7 @@ from cn_equity_strategies.backtest.proxy_simulator import (  # noqa: E402
     compute_backtest_metrics,
     run_proxy_backtest,
 )
+from cn_equity_strategies.backtest.orchestrator_research import run_proxy_profile_backtest  # noqa: E402
 from cn_equity_strategies.strategies import cn_chinext_tactical_rotation as tactical  # noqa: E402
 
 
@@ -122,15 +123,37 @@ def run(*, start: str, end: str, target_vol: float = 0.50) -> dict[str, Any]:
     }
 
 
+def run_orchestrator(*, synthetic_days: int = 900, target_vol: float = 0.50) -> dict[str, Any]:
+    payload = run_proxy_profile_backtest(
+        tactical.PROFILE_NAME,
+        synthetic_days=synthetic_days,
+        params={"target_annual_volatility": target_vol},
+    )
+    return {
+        "profile": tactical.PROFILE_NAME,
+        "orchestrator": True,
+        "synthetic_days": synthetic_days,
+        "target_annual_volatility": target_vol,
+        "metrics": payload["metrics"],
+        "source": payload["source"],
+        "params": payload["params"],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Proxy backtest for cn_chinext_tactical_rotation.")
     parser.add_argument("--start", default="2021-01-01")
     parser.add_argument("--end", default="2026-06-27")
     parser.add_argument("--target-vol", type=float, default=0.50)
+    parser.add_argument("--synthetic-days", type=int, default=900)
+    parser.add_argument("--legacy", "--analysis", dest="legacy", action="store_true", help="Run the legacy AkShare proxy backtest path.")
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
 
-    payload = run(start=args.start, end=args.end, target_vol=float(args.target_vol))
+    if args.legacy:
+        payload = run(start=args.start, end=args.end, target_vol=float(args.target_vol))
+    else:
+        payload = run_orchestrator(synthetic_days=int(args.synthetic_days), target_vol=float(args.target_vol))
     text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str)
     if args.json_output:
         args.json_output.write_text(text + "\n", encoding="utf-8")
