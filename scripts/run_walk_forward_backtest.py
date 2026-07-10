@@ -49,6 +49,16 @@ def _baseline_param_set_id(profile: str, params: dict[str, Any], *, synthetic_da
     return f"{profile}_baseline_{fingerprint}"
 
 
+def _candidate_param_set_id(profile: str, params: dict[str, Any], *, synthetic_days: int) -> str:
+    identity = {
+        "params": params,
+        "synthetic_days": synthetic_days,
+        "stage": "candidate",
+    }
+    fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
+    return f"{profile}_candidate_{fingerprint}"
+
+
 def _build_runner(*, synthetic_days: int) -> CnProxyBacktestRunner:
     return CnProxyBacktestRunner(synthetic_days=synthetic_days)
 
@@ -68,8 +78,8 @@ def run_walk_forward(
         raise ValueError(f"unsupported profile={profile!r}; supported={sorted(SUPPORTED_PROFILES)}")
 
     params = _default_params(profile)
-    store_root = store_root or Path("/tmp/cn_equity_wf_store")
-    store_root.mkdir(parents=True, exist_ok=True)
+    scratch_root = store_root or Path("/tmp/cn_equity_wf_store")
+    scratch_root.mkdir(parents=True, exist_ok=True)
     baseline_params = copy.deepcopy(params)
     runner = _build_runner(synthetic_days=synthetic_days)
     baseline_raw = runner.run(
@@ -78,7 +88,7 @@ def run_walk_forward(
         start_date=None,
         end_date=None,
     )
-    with tempfile.TemporaryDirectory(prefix=f"{profile}_wf_", dir=store_root) as scratch_dir:
+    with tempfile.TemporaryDirectory(prefix=f"{profile}_wf_", dir=scratch_root) as scratch_dir:
         scratch_store = PerformanceStore(local_root=Path(scratch_dir))
         scratch_orchestrator = BacktestOrchestrator(store=scratch_store)
         scratch_orchestrator.register_runner("cn_equity", runner)
@@ -101,18 +111,26 @@ def run_walk_forward(
     sharpe_delta = abs(float(via_orch.sharpe_ratio or 0.0) - float(baseline_raw.sharpe_ratio or 0.0))
     mdd_delta = abs(float(via_orch.max_drawdown or 0.0) - float(baseline_raw.max_drawdown or 0.0))
     within_tolerance = sharpe_delta <= compare_tolerance and mdd_delta <= compare_tolerance
-    store = PerformanceStore(local_root=store_root)
+    if within_tolerance:
+        param_set_id = _baseline_param_set_id(
+            profile,
+            baseline_params,
+            synthetic_days=synthetic_days,
+        )
+    else:
+        param_set_id = _candidate_param_set_id(
+            profile,
+            baseline_params,
+            synthetic_days=synthetic_days,
+        )
+    store = PerformanceStore(local_root=store_root) if store_root is not None else PerformanceStore.from_env()
     orchestrator = BacktestOrchestrator(store=store)
     baseline = orchestrator.persist_result(
         baseline_raw,
         strategy_profile=profile,
         domain="cn_equity",
         params=baseline_params,
-        param_set_id=_baseline_param_set_id(
-            profile,
-            baseline_params,
-            synthetic_days=synthetic_days,
-        ),
+        param_set_id=param_set_id,
     )
 
     return {

@@ -96,5 +96,10 @@ def test_run_walk_forward_persists_baseline_when_compare_fails(
     )
 
     assert payload["compare"]["within_tolerance"] is False
-    records = list((tmp_path / "backtest" / "cn_equity" / "cn_index_etf_tactical_rotation").glob("*.json"))
+    records = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in (tmp_path / "backtest" / "cn_equity" / "cn_index_etf_tactical_rotation").glob("*.json")
+    ]
     assert records
+    assert not any("_baseline_" in record["param_set_id"] for record in records)
+    assert any("_candidate_" in record["param_set_id"] for record in records)
