@@ -15,6 +15,7 @@ if str(QPK_SRC) not in sys.path:
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+import scripts.run_walk_forward_backtest as walk_forward
 from scripts.run_walk_forward_backtest import _baseline_param_set_id, run_walk_forward
 
 
@@ -75,7 +76,7 @@ def test_run_walk_forward_does_not_persist_partial_results_on_failure(
     assert not list(tmp_path.rglob("*.json"))
 
 
-def test_run_walk_forward_persists_baseline_when_compare_fails(
+def test_run_walk_forward_does_not_persist_baseline_when_compare_fails(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -88,18 +89,20 @@ def test_run_walk_forward_persists_baseline_when_compare_fails(
         return replace(result, sharpe_ratio=float(result.sharpe_ratio or 0.0) + 1.0)
 
     monkeypatch.setattr(BacktestOrchestrator, "run", _mismatch)
-    payload = run_walk_forward(
-        profile="cn_index_etf_tactical_rotation",
-        synthetic_days=900,
-        compare_tolerance=0.0,
-        store_root=tmp_path,
-    )
+    with pytest.raises(RuntimeError, match="baseline comparison failed"):
+        run_walk_forward(
+            profile="cn_index_etf_tactical_rotation",
+            synthetic_days=900,
+            compare_tolerance=0.0,
+            store_root=tmp_path,
+        )
 
-    assert payload["compare"]["within_tolerance"] is False
-    records = [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in (tmp_path / "backtest" / "cn_equity" / "cn_index_etf_tactical_rotation").glob("*.json")
-    ]
-    assert records
-    assert not any("_baseline_" in record["param_set_id"] for record in records)
-    assert any("_candidate_" in record["param_set_id"] for record in records)
+    assert not list(tmp_path.rglob("*.json"))
+
+
+def test_run_walk_forward_keeps_local_default_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(walk_forward, "DEFAULT_STORE_ROOT", tmp_path)
+
+    run_walk_forward(profile="cn_index_etf_tactical_rotation", synthetic_days=900)
+
+    assert list(tmp_path.rglob("*.json"))
