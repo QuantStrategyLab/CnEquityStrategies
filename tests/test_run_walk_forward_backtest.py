@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -72,3 +73,28 @@ def test_run_walk_forward_does_not_persist_partial_results_on_failure(
             store_root=tmp_path,
         )
     assert not list(tmp_path.rglob("*.json"))
+
+
+def test_run_walk_forward_persists_baseline_when_compare_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from quant_platform_kit.strategy_lifecycle.backtest_orchestrator import BacktestOrchestrator
+
+    original_run = BacktestOrchestrator.run
+
+    def _mismatch(self, *args, **kwargs):
+        result = original_run(self, *args, **kwargs)
+        return replace(result, sharpe_ratio=float(result.sharpe_ratio or 0.0) + 1.0)
+
+    monkeypatch.setattr(BacktestOrchestrator, "run", _mismatch)
+    payload = run_walk_forward(
+        profile="cn_index_etf_tactical_rotation",
+        synthetic_days=900,
+        compare_tolerance=0.0,
+        store_root=tmp_path,
+    )
+
+    assert payload["compare"]["within_tolerance"] is False
+    records = list((tmp_path / "backtest" / "cn_equity" / "cn_index_etf_tactical_rotation").glob("*.json"))
+    assert records

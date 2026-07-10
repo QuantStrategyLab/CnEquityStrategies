@@ -71,8 +71,8 @@ def run_walk_forward(
     store_root = store_root or Path("/tmp/cn_equity_wf_store")
     store_root.mkdir(parents=True, exist_ok=True)
     baseline_params = copy.deepcopy(params)
-    baseline_runner = _build_runner(synthetic_days=synthetic_days)
-    baseline_raw = baseline_runner.run(
+    runner = _build_runner(synthetic_days=synthetic_days)
+    baseline_raw = runner.run(
         profile,
         baseline_params,
         start_date=None,
@@ -81,7 +81,7 @@ def run_walk_forward(
     with tempfile.TemporaryDirectory(prefix=f"{profile}_wf_", dir=store_root) as scratch_dir:
         scratch_store = PerformanceStore(local_root=Path(scratch_dir))
         scratch_orchestrator = BacktestOrchestrator(store=scratch_store)
-        scratch_orchestrator.register_runner("cn_equity", _build_runner(synthetic_days=synthetic_days))
+        scratch_orchestrator.register_runner("cn_equity", runner)
         via_orch = scratch_orchestrator.run(
             profile,
             domain="cn_equity",
@@ -90,8 +90,6 @@ def run_walk_forward(
             start_date=None,
             end_date=None,
         )
-        runner = _build_runner(synthetic_days=synthetic_days)
-        scratch_orchestrator.register_runner("cn_equity", runner)
         wf_params = copy.deepcopy(baseline_params)
         wf_results = scratch_orchestrator.walk_forward(
             profile,
@@ -103,21 +101,19 @@ def run_walk_forward(
     sharpe_delta = abs(float(via_orch.sharpe_ratio or 0.0) - float(baseline_raw.sharpe_ratio or 0.0))
     mdd_delta = abs(float(via_orch.max_drawdown or 0.0) - float(baseline_raw.max_drawdown or 0.0))
     within_tolerance = sharpe_delta <= compare_tolerance and mdd_delta <= compare_tolerance
-    baseline = baseline_raw
-    if within_tolerance:
-        store = PerformanceStore(local_root=store_root)
-        orchestrator = BacktestOrchestrator(store=store)
-        baseline = orchestrator.persist_result(
-            baseline_raw,
-            strategy_profile=profile,
-            domain="cn_equity",
-            params=baseline_params,
-            param_set_id=_baseline_param_set_id(
-                profile,
-                baseline_params,
-                synthetic_days=synthetic_days,
-            ),
-        )
+    store = PerformanceStore(local_root=store_root)
+    orchestrator = BacktestOrchestrator(store=store)
+    baseline = orchestrator.persist_result(
+        baseline_raw,
+        strategy_profile=profile,
+        domain="cn_equity",
+        params=baseline_params,
+        param_set_id=_baseline_param_set_id(
+            profile,
+            baseline_params,
+            synthetic_days=synthetic_days,
+        ),
+    )
 
     return {
         "strategy_profile": profile,
