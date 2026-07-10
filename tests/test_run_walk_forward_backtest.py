@@ -148,8 +148,10 @@ def test_run_walk_forward_uses_external_history_and_writes_return_matrix(
 
     return_matrix = pd.read_csv(returns_output)
     assert payload["baseline"]["end_date"] == "2024-12-31"
+    assert payload["baseline"]["observation_count"] == 126
     assert {"as_of", profile, "buy_hold_510300"} <= set(return_matrix.columns)
     assert return_matrix[profile].notna().any()
+    assert len(return_matrix) > payload["baseline"]["observation_count"]
 
 
 def test_shared_market_history_rejects_stale_symbol_tail() -> None:

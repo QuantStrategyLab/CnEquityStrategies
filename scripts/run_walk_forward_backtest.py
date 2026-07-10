@@ -23,6 +23,7 @@ DEFAULT_WINDOWS: tuple[tuple[date, date], ...] = (
     (date(2025, 6, 1), date(2026, 3, 31)),
 )
 DEFAULT_STORE_ROOT = Path("/tmp/cn_equity_wf_store")
+DRIFT_BASELINE_HORIZON_DAYS = 126
 
 
 def _default_params(profile: str) -> dict[str, Any]:
@@ -55,6 +56,7 @@ def _baseline_param_set_id(
         "params": params,
         "data_fingerprint": data_fingerprint or f"synthetic:{synthetic_days}",
         "windows": [(start.isoformat(), end.isoformat()) for start, end in windows],
+        "drift_baseline_horizon_days": DRIFT_BASELINE_HORIZON_DAYS,
     }
     fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
     return f"{profile}_baseline_{fingerprint}"
@@ -112,8 +114,10 @@ def _shared_market_history(
     if not reference_dates:
         raise ValueError("market history is missing 510300 reference dates")
     expected_business_dates = pd.bdate_range(lookback_start, latest_window_end)
-    latest_expected_day = expected_business_dates[-1]
-    if len(reference_dates) / len(expected_business_dates) < 0.85 or max(reference_dates) < latest_expected_day:
+    if (
+        len(reference_dates) / len(expected_business_dates) < 0.85
+        or max(reference_dates) < pd.Timestamp(latest_window_end) - pd.Timedelta(days=7)
+    ):
         raise ValueError("market history has incomplete 510300 reference coverage")
     first_required_day = min(reference_dates)
     latest_required_day = max(reference_dates)
@@ -178,16 +182,26 @@ def run_walk_forward(
             windows,
             market_history,
         )
-    runner = _build_runner(synthetic_days=synthetic_days, market_history=shared_market_history)
-    baseline_start = min(start for start, _ in windows)
+    return_matrix_runner = _build_runner(synthetic_days=synthetic_days, market_history=shared_market_history)
+    full_window_start = min(start for start, _ in windows)
     baseline_end = max(end for _, end in windows)
-    baseline_raw = runner.run(
+    return_matrix_runner.run(
+        profile,
+        baseline_params,
+        start_date=full_window_start,
+        end_date=baseline_end,
+    )
+    full_window_returns = return_matrix_runner.last_daily_returns
+    if len(full_window_returns) < DRIFT_BASELINE_HORIZON_DAYS:
+        raise ValueError("full-window returns do not cover the 126-day drift baseline")
+    baseline_start = full_window_returns.index[-DRIFT_BASELINE_HORIZON_DAYS].date()
+    baseline_runner = _build_runner(synthetic_days=synthetic_days, market_history=shared_market_history)
+    baseline_raw = baseline_runner.run(
         profile,
         baseline_params,
         start_date=baseline_start,
         end_date=baseline_end,
     )
-    baseline_returns = runner.last_daily_returns
     with tempfile.TemporaryDirectory(prefix=f"{profile}_wf_", dir=target_root) as scratch_dir:
         scratch_store = PerformanceStore(local_root=Path(scratch_dir))
         scratch_orchestrator = BacktestOrchestrator(store=scratch_store)
@@ -241,7 +255,7 @@ def run_walk_forward(
         _write_return_matrix(
             returns_output,
             profile=profile,
-            returns=baseline_returns,
+            returns=full_window_returns,
             market_history=shared_market_history,
         )
 
