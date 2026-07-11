@@ -166,6 +166,7 @@ class CnProxyBacktestRunner:
         result = run_proxy_backtest(
             sliced,
             _signal_fn,
+            universe_symbols=spec.extract_managed_symbols(),
             config=ProxyBacktestConfig(
                 initial_cash=self._initial_cash,
                 min_history_days=min_history_days,

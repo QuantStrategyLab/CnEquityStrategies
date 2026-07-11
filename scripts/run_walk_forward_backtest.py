@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from quant_platform_kit.strategy_lifecycle.performance_metrics import compute_window_metrics
 
 from cn_equity_strategies.backtest.orchestrator_runner import CnProxyBacktestRunner, SUPPORTED_PROFILES
 from cn_equity_strategies.backtest.proxy_profile_registry import PROXY_PROFILE_REGISTRY
-from cn_equity_strategies.backtest.proxy_simulator import compute_backtest_metrics
 
 DEFAULT_WINDOWS: tuple[tuple[date, date], ...] = (
     (date(2023, 6, 1), date(2024, 5, 31)),
@@ -107,14 +107,16 @@ def _shared_market_history(
 ) -> tuple[pd.DataFrame, str]:
     min_history_days = int(params["min_history_days"])
     earliest_window_start = min(start for start, _ in windows)
-    latest_window_end = max(end for _, end in windows)
     lookback_start = earliest_window_start - pd.tseries.offsets.BDay(min_history_days + 5)
     history = _normalize_market_history(market_history)
+    available_end = history["date"].max()
     history = history.loc[
         (history["date"] >= pd.Timestamp(lookback_start))
-        & (history["date"] <= pd.Timestamp(latest_window_end))
+        & (history["date"] <= available_end)
     ].copy()
     required_symbols = {_normalize_symbol(symbol) for symbol in PROXY_PROFILE_REGISTRY[profile].extract_managed_symbols()}
+    required_symbols.add("510300")
+    history = history.loc[history["symbol"].isin(required_symbols)].copy()
     missing_symbols = sorted(required_symbols - set(history["symbol"]))
     if missing_symbols:
         raise ValueError(f"market history is missing required symbols: {', '.join(missing_symbols)}")
@@ -122,10 +124,10 @@ def _shared_market_history(
     reference_dates = set(history.loc[history["symbol"] == reference_symbol, "date"])
     if not reference_dates:
         raise ValueError(f"market history is missing {reference_symbol} reference dates")
-    expected_business_dates = pd.bdate_range(lookback_start, latest_window_end)
+    expected_business_dates = pd.bdate_range(lookback_start, available_end)
     if (
         len(reference_dates) / len(expected_business_dates) < 0.85
-        or max(reference_dates) < pd.Timestamp(latest_window_end) - pd.Timedelta(days=7)
+        or max(reference_dates) < pd.Timestamp(available_end) - pd.Timedelta(days=7)
     ):
         raise ValueError("market history has incomplete 510300 reference coverage")
     first_required_day = min(reference_dates)
@@ -164,21 +166,21 @@ def _write_return_matrix(
 
 def _baseline_from_return_tail(full_result: Any, returns: pd.Series) -> Any:
     tail = returns.tail(DRIFT_BASELINE_HORIZON_DAYS)
-    metrics = compute_backtest_metrics(tail)
-    max_drawdown = float(metrics["max_drawdown"])
-    cagr = float(metrics["annual_return"])
+    metrics = compute_window_metrics(tail, window_days=DRIFT_BASELINE_HORIZON_DAYS)
+    max_drawdown = float(metrics.max_drawdown)
+    cagr = float(metrics.cagr)
     return replace(
         full_result,
-        sharpe_ratio=float(metrics["sharpe_ratio"]),
-        calmar_ratio=abs(cagr / max_drawdown) if max_drawdown else None,
+        sharpe_ratio=float(metrics.sharpe_ratio),
+        calmar_ratio=float(metrics.calmar_ratio),
         max_drawdown=max_drawdown,
         cagr=cagr,
-        volatility=float(metrics["annual_volatility"]),
-        win_rate=float((tail > 0.0).mean()),
-        total_return=float(metrics["total_return"]),
-        start_date=tail.index.min().date(),
-        end_date=tail.index.max().date(),
-        observation_count=int(metrics["days"]),
+        volatility=float(metrics.volatility),
+        win_rate=float(metrics.win_rate),
+        total_return=float(metrics.total_return),
+        start_date=metrics.start_date,
+        end_date=metrics.end_date,
+        observation_count=metrics.observation_count,
     )
 
 
@@ -274,10 +276,21 @@ def run_walk_forward(
     if returns_output is not None:
         if shared_market_history is None:
             raise ValueError("returns_output requires market_history")
+        current_end = shared_market_history["date"].max().date()
+        current_runner = _build_runner(
+            synthetic_days=synthetic_days,
+            market_history=shared_market_history,
+        )
+        current_runner.run(
+            profile,
+            copy.deepcopy(baseline_params),
+            start_date=full_window_start,
+            end_date=current_end,
+        )
         _write_return_matrix(
             returns_output,
             profile=profile,
-            returns=full_window_returns,
+            returns=current_runner.last_daily_returns,
             market_history=shared_market_history,
         )
 
