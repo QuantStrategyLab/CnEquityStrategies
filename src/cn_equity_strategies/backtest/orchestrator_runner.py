@@ -8,7 +8,11 @@ from typing import Any, Mapping
 import pandas as pd
 
 from cn_equity_strategies.backtest.proxy_profile_registry import PROXY_PROFILE_REGISTRY, SUPPORTED_PROFILES
-from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest
+from cn_equity_strategies.backtest.proxy_simulator import (
+    ProxyBacktestConfig,
+    compute_backtest_metrics,
+    run_proxy_backtest,
+)
 
 try:
     from quant_platform_kit.strategy_lifecycle.contracts import BacktestResult
@@ -51,6 +55,21 @@ def _slice_history(
     if end_date is not None:
         frame = frame[frame["date"] <= pd.Timestamp(end_date)]
     return frame.sort_values(["date", "symbol"]).reset_index(drop=True)
+
+
+def _slice_daily_returns(
+    returns: pd.Series,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+) -> pd.Series:
+    sliced = returns.copy()
+    sliced.index = pd.to_datetime(sliced.index, utc=False).tz_localize(None).normalize()
+    if start_date is not None:
+        sliced = sliced.loc[sliced.index >= pd.Timestamp(start_date)]
+    if end_date is not None:
+        sliced = sliced.loc[sliced.index <= pd.Timestamp(end_date)]
+    return sliced
 
 
 def _metrics_to_backtest_result(
@@ -104,6 +123,11 @@ class CnProxyBacktestRunner:
         self._market_history = market_history
         self._initial_cash = float(initial_cash)
         self._synthetic_days = int(synthetic_days)
+        self._last_daily_returns = pd.Series(dtype=float)
+
+    @property
+    def last_daily_returns(self) -> pd.Series:
+        return self._last_daily_returns.copy()
 
     def run(
         self,
@@ -142,11 +166,17 @@ class CnProxyBacktestRunner:
         result = run_proxy_backtest(
             sliced,
             _signal_fn,
+            universe_symbols=spec.extract_managed_symbols(),
             config=ProxyBacktestConfig(
                 initial_cash=self._initial_cash,
                 min_history_days=min_history_days,
             ),
             strategy_kwargs={"min_history_days": min_history_days},
+        )
+        self._last_daily_returns = _slice_daily_returns(
+            result.daily_returns,
+            start_date=start_date,
+            end_date=end_date,
         )
         elapsed = (datetime.now(timezone.utc) - started).total_seconds()
         eval_frame = sliced
@@ -155,7 +185,7 @@ class CnProxyBacktestRunner:
         return _metrics_to_backtest_result(
             strategy_profile=strategy_profile,
             params=params,
-            metrics=result.metrics,
+            metrics=compute_backtest_metrics(self._last_daily_returns),
             start_date=start_date or (eval_frame["date"].min().date() if not eval_frame.empty else None),
             end_date=end_date or (eval_frame["date"].max().date() if not eval_frame.empty else None),
             run_duration_seconds=elapsed,
