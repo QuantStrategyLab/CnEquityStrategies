@@ -118,9 +118,10 @@ def _shared_market_history(
     missing_symbols = sorted(required_symbols - set(history["symbol"]))
     if missing_symbols:
         raise ValueError(f"market history is missing required symbols: {', '.join(missing_symbols)}")
-    reference_dates = set(history.loc[history["symbol"] == "510300", "date"])
+    reference_symbol = "510300" if "510300" in required_symbols else sorted(required_symbols)[0]
+    reference_dates = set(history.loc[history["symbol"] == reference_symbol, "date"])
     if not reference_dates:
-        raise ValueError("market history is missing 510300 reference dates")
+        raise ValueError(f"market history is missing {reference_symbol} reference dates")
     expected_business_dates = pd.bdate_range(lookback_start, latest_window_end)
     if (
         len(reference_dates) / len(expected_business_dates) < 0.85
