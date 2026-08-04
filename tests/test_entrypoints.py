@@ -14,7 +14,6 @@ from cn_equity_strategies.catalog import (
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
     CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
 )
-from cn_equity_strategies.strategies.cn_dividend_quality_snapshot import SAFE_HAVEN
 from cn_equity_strategies.strategies.cn_chinext_growth_momentum_quality import (
     CHINEXT_ETF_SYMBOL as GROWTH_CHINEXT_ETF_SYMBOL,
     CSI1000_ETF_SYMBOL,
@@ -122,7 +121,15 @@ def _growth_history(rates: dict[str, float]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_industry_etf_rotation_entrypoint_returns_volatility_targeted_weight_targets():
+def _assert_no_order(decision, *, flag: str, reason: str) -> None:
+    assert decision.positions == ()
+    assert decision.budgets == ()
+    assert decision.risk_flags == (flag,)
+    assert decision.diagnostics["risk_gate"] == "REJECT"
+    assert reason in decision.diagnostics["reason"]
+
+
+def test_industry_etf_rotation_entrypoint_fails_closed_without_authoritative_snapshot():
     entrypoint = get_strategy_entrypoint(CN_INDUSTRY_ETF_ROTATION_PROFILE)
 
     decision = entrypoint.evaluate(
@@ -133,10 +140,7 @@ def test_industry_etf_rotation_entrypoint_returns_volatility_targeted_weight_tar
         )
     )
 
-    weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert weights
-    assert len(weights) <= 5
-    assert 0.0 < sum(weights.values()) <= 1.0
+    _assert_no_order(decision, flag="rejected:concentration", reason="159819 80.4% > 10%")
     assert decision.diagnostics["signal_source"] == "daily_market_history"
     assert decision.diagnostics["sentiment_mode"] == "off"
     assert decision.diagnostics["target_annual_volatility"] == pytest.approx(0.20)
@@ -144,7 +148,7 @@ def test_industry_etf_rotation_entrypoint_returns_volatility_targeted_weight_tar
     assert set(INDUSTRY_UNIVERSE_SYMBOLS).issubset(set(decision.diagnostics["managed_symbols"]))
 
 
-def test_index_etf_rotation_entrypoint_returns_volatility_targeted_weight_targets():
+def test_index_etf_rotation_entrypoint_fails_closed_without_authoritative_snapshot():
     entrypoint = get_strategy_entrypoint(CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE)
 
     decision = entrypoint.evaluate(
@@ -155,17 +159,14 @@ def test_index_etf_rotation_entrypoint_returns_volatility_targeted_weight_target
         )
     )
 
-    weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert NEW_ENERGY_ETF_SYMBOL in set(weights)
-    assert len(weights) <= 2
-    assert 0.0 < sum(weights.values()) < 1.0
+    _assert_no_order(decision, flag="rejected:concentration", reason="515030 56.3% > 10%")
     assert decision.diagnostics["signal_source"] == "daily_market_history"
     assert decision.diagnostics["target_annual_volatility"] == pytest.approx(0.14)
-    assert "cash_residual" in decision.risk_flags
+    assert NEW_ENERGY_ETF_SYMBOL in set(decision.diagnostics["selected_symbols"])
     assert set(DEFAULT_UNIVERSE_SYMBOLS).issubset(set(decision.diagnostics["managed_symbols"]))
 
 
-def test_dividend_quality_entrypoint_consumes_feature_snapshot():
+def test_dividend_quality_entrypoint_preserves_signal_but_fails_closed_without_snapshot():
     entrypoint = get_strategy_entrypoint(CN_DIVIDEND_QUALITY_SNAPSHOT_PROFILE)
 
     decision = entrypoint.evaluate(
@@ -177,15 +178,12 @@ def test_dividend_quality_entrypoint_consumes_feature_snapshot():
         )
     )
 
-    weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert weights
-    assert sum(weights.values()) == pytest.approx(1.0)
-    assert SAFE_HAVEN not in weights or len(weights) > 1
+    _assert_no_order(decision, flag="rejected:too_many_positions", reason="仅允许一个非零持仓")
     assert decision.diagnostics["signal_source"] == "factor_snapshot"
     assert decision.diagnostics["snapshot_contract_version"] == "cn_dividend_quality_snapshot.factor_snapshot.v1"
 
 
-def test_chinext_tactical_rotation_entrypoint_returns_weights():
+def test_chinext_tactical_rotation_entrypoint_fails_closed_without_authoritative_snapshot():
     entrypoint = get_strategy_entrypoint(CN_CHINEXT_TACTICAL_ROTATION_PROFILE)
 
     decision = entrypoint.evaluate(
@@ -196,12 +194,11 @@ def test_chinext_tactical_rotation_entrypoint_returns_weights():
         )
     )
 
-    weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert weights
+    _assert_no_order(decision, flag="rejected:concentration", reason="159915 100.0% > 10%")
     assert decision.diagnostics["signal_source"] == "daily_market_history"
 
 
-def test_chinext_growth_momentum_quality_entrypoint_returns_weights():
+def test_chinext_growth_momentum_quality_entrypoint_fails_closed_without_authoritative_snapshot():
     entrypoint = get_strategy_entrypoint(CN_CHINEXT_GROWTH_MOMENTUM_QUALITY_PROFILE)
 
     decision = entrypoint.evaluate(
@@ -222,13 +219,12 @@ def test_chinext_growth_momentum_quality_entrypoint_returns_weights():
         )
     )
 
-    weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert weights
+    _assert_no_order(decision, flag="rejected:concentration", reason="159915 100.0% > 10%")
     assert decision.diagnostics["signal_source"] == "daily_market_history"
     assert decision.diagnostics["actionable"] is True
 
 
-def test_star_growth_momentum_quality_entrypoint_returns_weights():
+def test_star_growth_momentum_quality_entrypoint_fails_closed_without_authoritative_snapshot():
     entrypoint = get_strategy_entrypoint(CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE)
 
     decision = entrypoint.evaluate(
@@ -249,7 +245,6 @@ def test_star_growth_momentum_quality_entrypoint_returns_weights():
         )
     )
 
-    weights = {position.symbol: position.target_weight for position in decision.positions}
-    assert weights
+    _assert_no_order(decision, flag="rejected:concentration", reason="588000 96.3% > 10%")
     assert decision.diagnostics["signal_source"] == "daily_market_history"
     assert decision.diagnostics["actionable"] is True

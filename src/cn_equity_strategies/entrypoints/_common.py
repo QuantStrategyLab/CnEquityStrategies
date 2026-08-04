@@ -54,6 +54,7 @@ def apply_risk_gate(
     max_total_exposure: float = 1.0,
     portfolio_snapshot: Any | None = None,
     market_data: Mapping[str, Any] | None = None,
+    product_leverage_factors: Mapping[str, int] | None = None,
 ) -> StrategyDecision:
     """QPK unified risk gate: stop-loss, circuit breaker, concentration (task 8)."""
     snapshot = portfolio_snapshot if portfolio_snapshot is not None else (
@@ -75,6 +76,7 @@ def apply_risk_gate(
         max_total_exposure=max_total_exposure,
         portfolio_snapshot=snapshot,
         market_data=market_data,
+        product_leverage_factors=product_leverage_factors,
     )
 
 
