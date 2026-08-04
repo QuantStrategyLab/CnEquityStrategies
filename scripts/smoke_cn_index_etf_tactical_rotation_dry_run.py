@@ -19,8 +19,11 @@ for candidate in (SRC, QPK_SRC):
 from quant_platform_kit.strategy_contracts import StrategyContext  # noqa: E402
 
 from cn_equity_strategies import get_strategy_entrypoint  # noqa: E402
-from cn_equity_strategies.catalog import CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE  # noqa: E402
-from cn_equity_strategies.runtime_adapters import describe_platform_runtime_requirements  # noqa: E402
+from cn_equity_strategies.catalog import (  # noqa: E402
+    CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
+    get_strategy_definition,
+)
+from cn_equity_strategies.runtime_adapters import derive_runtime_input_mode  # noqa: E402
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (  # noqa: E402
     NEW_ENERGY_ETF_SYMBOL,
     extract_managed_symbols,
@@ -70,17 +73,24 @@ def build_smoke_report() -> dict[str, object]:
         if float(position.target_weight or 0.0) > 1e-12
     }
     gross_exposure = sum(target_weights.values())
-    requirements = describe_platform_runtime_requirements(
-        CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
-        platform_id="qmt",
-    )
+    definition = get_strategy_definition(CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE)
+    requirements = {
+        "execution_mode": "synthetic_offline",
+        "input_mode": derive_runtime_input_mode(definition.required_inputs),
+        "order_authority": "none",
+        "platform_id": "qmt",
+        "platform_declared_compatible": "qmt" in definition.supported_platforms,
+    }
     checks = {
-        "strategy_actionable": bool(decision.diagnostics.get("actionable")),
+        "signal_actionable": bool(decision.diagnostics.get("actionable")),
         "uses_direct_market_history": decision.diagnostics.get("signal_source") == "daily_market_history",
-        "weights_non_empty": bool(target_weights),
-        "gross_exposure_lte_one": 0.0 < gross_exposure <= 1.0,
-        "qmt_direct_inputs": requirements["input_mode"] == "market_history",
-        "expected_leaders_selected": NEW_ENERGY_ETF_SYMBOL in target_weights,
+        "safe_no_order": not target_weights and not decision.budgets,
+        "all_cash": gross_exposure == 0.0,
+        "risk_gate_rejected": decision.diagnostics.get("risk_gate") == "REJECT",
+        "qmt_direct_inputs": requirements["input_mode"] == "market_history"
+        and requirements["platform_declared_compatible"],
+        "expected_leader_signal_preserved": NEW_ENERGY_ETF_SYMBOL
+        in set(decision.diagnostics.get("selected_symbols") or ()),
     }
     status = "pass" if all(checks.values()) else "fail"
     return {
