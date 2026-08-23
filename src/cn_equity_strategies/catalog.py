@@ -27,6 +27,7 @@ from cn_equity_strategies.strategies import cn_industry_etf_rotation_aggressive 
 from cn_equity_strategies.strategies import cn_star_growth_momentum_quality as star_growth_momentum_quality_strategy
 
 from cn_equity_strategies.strategies import cn_equity_combo as cn_combo_strategy
+from cn_equity_strategies.runtime_allowlist import get_runtime_selectable_profiles
 
 CN_EQUITY_DOMAIN = index_etf_strategy.CN_EQUITY_DOMAIN
 CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE = index_etf_strategy.PROFILE_NAME
@@ -572,11 +573,9 @@ def get_strategy_metadata_map() -> dict[str, StrategyMetadata]:
 
 
 def get_runtime_enabled_profiles() -> frozenset[str]:
-    return frozenset(
-        profile
-        for profile, metadata in STRATEGY_METADATA.items()
-        if str(metadata.status or "").strip().lower() == STRATEGY_STATUS_RUNTIME_ENABLED
-    )
+    # Compatibility entry point; runtime selection is explicit and separate
+    # from catalog lifecycle metadata.
+    return get_runtime_selectable_profiles()
 
 
 def get_live_candidate_profiles() -> frozenset[str]:
