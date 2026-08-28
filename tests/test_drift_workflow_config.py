@@ -18,7 +18,7 @@ def test_drift_workflow_wires_real_snapshot_history_and_preflight_bundle() -> No
     assert '"conclusion": "success"' in workflow
     assert "cn_etf_market_history.csv" in workflow
     assert "repository: QuantStrategyLab/QuantPlatformKit" in workflow
-    assert "ref: bb91e4cad1a32d58dc0e4023f1cbe0c7ec150d81" in workflow
+    assert "ref: 6b887d9954eb656141597eac077ca22053a525ef" in workflow
     assert "python -m pip install --no-deps -e external/QuantPlatformKit" in workflow
     assert "scripts/run_walk_forward_backtest.py" in workflow
     assert '"--list-profiles"' in workflow
@@ -27,9 +27,9 @@ def test_drift_workflow_wires_real_snapshot_history_and_preflight_bundle() -> No
     assert '"--returns-output"' in workflow
     assert "LIFECYCLE_PREFLIGHT_BUNDLE_ROOT" in workflow
     assert "Upload lifecycle preflight artifact" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v5" in workflow
     assert workflow.count("github.ref == format('refs/heads/{0}', github.event.repository.default_branch)") == 2
-    assert "uses: QuantStrategyLab/QuantPlatformKit/.github/workflows/reusable-drift-check.yml@bb91e4cad1a32d58dc0e4023f1cbe0c7ec150d81" in workflow
+    assert "uses: QuantStrategyLab/QuantPlatformKit/.github/workflows/reusable-drift-check.yml@6b887d9954eb656141597eac077ca22053a525ef" in workflow
     assert "strategy_domain: cn_equity" in workflow
     assert "caller_event_name: ${{ github.event_name }}" in workflow
     assert "caller_pr_head_repository: ${{ github.event.pull_request.head.repo.full_name || '' }}" in workflow
