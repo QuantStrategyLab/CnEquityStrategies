@@ -20,7 +20,11 @@ for candidate in (SRC, SCRIPTS):
         sys.path.insert(0, candidate_str)
 
 from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest  # noqa: E402
-from cn_equity_strategies.backtest.promotion_gate import evaluate_promotion  # noqa: E402
+from cn_equity_strategies.backtest.promotion_gate import (  # noqa: E402
+    attach_research_evidence,
+    build_research_evidence,
+    evaluate_promotion,
+)
 from cn_equity_strategies.strategies import cn_industry_etf_rotation as industry_rotation  # noqa: E402
 from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
     AGGRESSIVE_RESEARCH_PRESETS,
@@ -31,6 +35,17 @@ from research_cn_industry_etf_rotation_validation import (  # noqa: E402
     VALIDATION_PERIODS,
     _download_market_history,
     _period_metrics,
+)
+
+INDUSTRY_ETF_RESEARCH_EVIDENCE = build_research_evidence(
+    research_only=True,
+    promotion_eligible=False,
+    point_in_time=False,
+    historical_membership_complete=False,
+    historical_constituents_complete=False,
+    adjustment_provenance_complete=False,
+    universe_provenance_complete=False,
+    survivorship_bias_controlled=False,
 )
 
 
@@ -92,16 +107,23 @@ def run_matrix(*, start: str, end: str, suite: str = "etf") -> dict[str, Any]:
     market_history = _download_market_history(start=download_start, end=end)
     presets = {"conservative_v1": CONSERVATIVE_V1_PRESET, **AGGRESSIVE_RESEARCH_PRESETS}
     results = {key: _run_preset(market_history, key, preset) for key, preset in presets.items()}
-    promotion = evaluate_promotion(results, PROMOTION_GATE)
-    return {
-        "start": start,
-        "end": end,
-        "suite": suite,
-        "status": "research_backtest_only",
-        "conservative_baseline": "conservative_v1",
-        "variants": results,
-        "promotion_review": promotion,
-    }
+    promotion = evaluate_promotion(
+        results,
+        PROMOTION_GATE,
+        research_evidence=INDUSTRY_ETF_RESEARCH_EVIDENCE,
+    )
+    return attach_research_evidence(
+        {
+            "start": start,
+            "end": end,
+            "suite": suite,
+            "status": "research_backtest_only",
+            "conservative_baseline": "conservative_v1",
+            "variants": results,
+            "promotion_review": promotion,
+        },
+        research_evidence=INDUSTRY_ETF_RESEARCH_EVIDENCE,
+    )
 
 
 def _print_report(payload: dict[str, Any]) -> None:
