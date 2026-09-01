@@ -19,7 +19,11 @@ for candidate in (SRC, SCRIPTS):
     if candidate.exists() and candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from cn_equity_strategies.backtest.promotion_gate import evaluate_promotion  # noqa: E402
+from cn_equity_strategies.backtest.promotion_gate import (  # noqa: E402
+    attach_research_evidence,
+    build_research_evidence,
+    evaluate_promotion,
+)
 from cn_equity_strategies.research.momentum_stock_history import (  # noqa: E402
     BENCHMARK_SYMBOL,
     active_stock_symbols_at_start,
@@ -39,6 +43,17 @@ from research_cn_industry_etf_rotation_aggressive_matrix import _run_preset  # n
 from research_cn_industry_etf_rotation_validation import _download_market_history  # noqa: E402
 
 ResearchTrack = Literal["momentum", "thematic", "both"]
+
+MOMENTUM_STOCK_RESEARCH_EVIDENCE = build_research_evidence(
+    research_only=True,
+    promotion_eligible=False,
+    point_in_time=False,
+    historical_membership_complete=False,
+    historical_constituents_complete=False,
+    adjustment_provenance_complete=False,
+    universe_provenance_complete=False,
+    survivorship_bias_controlled=False,
+)
 
 
 def _extra_symbols_for_preset(preset: dict[str, Any]) -> tuple[str, ...]:
@@ -166,26 +181,30 @@ def run_momentum_stock_matrix(
     promotion = evaluate_promotion(
         {"conservative_v1": conservative, **results},
         STOCK_MOMENTUM_PROMOTION_GATE,
+        research_evidence=MOMENTUM_STOCK_RESEARCH_EVIDENCE,
     )
 
-    return {
-        "start": start,
-        "end": end,
-        "track": "cross_section_momentum_riskoff" if suite == "csi500_riskoff" else "cross_section_momentum",
-        "status": "research_backtest_only",
-        "default_universe_mode": suite or universe_mode or "all_presets",
-        "conservative_etf_baseline": conservative,
-        "variants": results,
-        "promotion_review": promotion,
-        "promotion_gate": STOCK_MOMENTUM_PROMOTION_GATE,
-        "universe_diagnostics": universe_diagnostics,
-        "limitations": [
-            "index constituents (CSI500/1000) use latest csindex table — not fully point-in-time",
-            "liquid_top uses current spot turnover snapshot — not historical liquidity PIT",
-            "selection is cross-sectional momentum within broad pool, not fixed thematic industry list",
-            "not runtime-enabled; compare vs ETF conservative_v1 and thematic 8-name sleeve separately",
-        ],
-    }
+    return attach_research_evidence(
+        {
+            "start": start,
+            "end": end,
+            "track": "cross_section_momentum_riskoff" if suite == "csi500_riskoff" else "cross_section_momentum",
+            "status": "research_backtest_only",
+            "default_universe_mode": suite or universe_mode or "all_presets",
+            "conservative_etf_baseline": conservative,
+            "variants": results,
+            "promotion_review": promotion,
+            "promotion_gate": STOCK_MOMENTUM_PROMOTION_GATE,
+            "universe_diagnostics": universe_diagnostics,
+            "limitations": [
+                "index constituents (CSI500/1000) use latest csindex table — not fully point-in-time",
+                "liquid_top uses current spot turnover snapshot — not historical liquidity PIT",
+                "selection is cross-sectional momentum within broad pool, not fixed thematic industry list",
+                "not runtime-enabled; compare vs ETF conservative_v1 and thematic 8-name sleeve separately",
+            ],
+        },
+        research_evidence=MOMENTUM_STOCK_RESEARCH_EVIDENCE,
+    )
 
 
 def run_thematic_reference(*, start: str, end: str) -> dict[str, Any]:
