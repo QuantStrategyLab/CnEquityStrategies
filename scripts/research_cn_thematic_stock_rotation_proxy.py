@@ -19,7 +19,11 @@ for candidate in (SRC, SCRIPTS):
     if candidate.exists() and candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from cn_equity_strategies.backtest.promotion_gate import evaluate_promotion  # noqa: E402
+from cn_equity_strategies.backtest.promotion_gate import (  # noqa: E402
+    attach_research_evidence,
+    build_research_evidence,
+    evaluate_promotion,
+)
 from cn_equity_strategies.strategies.industry_etf_rotation_presets import (  # noqa: E402
     CONSERVATIVE_V1_PRESET,
     OPTICAL_COMPUTE_STOCK_SYMBOLS,
@@ -36,6 +40,17 @@ from research_cn_industry_etf_rotation_validation import (  # noqa: E402
 )
 
 _ETF_SYMBOL_PREFIXES = ("51", "15", "58")
+
+THEMATIC_STOCK_RESEARCH_EVIDENCE = build_research_evidence(
+    research_only=True,
+    promotion_eligible=False,
+    point_in_time=False,
+    historical_membership_complete=False,
+    historical_constituents_complete=False,
+    adjustment_provenance_complete=False,
+    universe_provenance_complete=False,
+    survivorship_bias_controlled=False,
+)
 
 
 def _is_etf_symbol(symbol: str) -> bool:
@@ -173,26 +188,30 @@ def run_stock_thematic_matrix(*, start: str, end: str, suite: str = "stock") -> 
     promotion = evaluate_promotion(
         {"conservative_v1": conservative, **results},
         STOCK_THEMATIC_PROMOTION_GATE,
+        research_evidence=THEMATIC_STOCK_RESEARCH_EVIDENCE,
     )
 
-    return {
-        "start": start,
-        "end": end,
-        "suite": suite,
-        "status": "research_backtest_only",
-        "active_symbols": list(active),
-        "candidate_symbols": list(OPTICAL_COMPUTE_STOCK_SYMBOLS),
-        "conservative_etf_baseline": conservative,
-        "variants": results,
-        "promotion_review": promotion,
-        "promotion_gate": STOCK_THEMATIC_PROMOTION_GATE,
-        "limitations": [
-            "fixed optical/compute stock list (survivorship / theme hindsight)",
-            "requires overlapping listing history; universe shrinks to active names at start",
-            "not runtime-enabled; stricter gate vs ETF conservative_v1",
-            "risk presets may include ETF benchmark symbols (510300/512760) for risk-off",
-        ],
-    }
+    return attach_research_evidence(
+        {
+            "start": start,
+            "end": end,
+            "suite": suite,
+            "status": "research_backtest_only",
+            "active_symbols": list(active),
+            "candidate_symbols": list(OPTICAL_COMPUTE_STOCK_SYMBOLS),
+            "conservative_etf_baseline": conservative,
+            "variants": results,
+            "promotion_review": promotion,
+            "promotion_gate": STOCK_THEMATIC_PROMOTION_GATE,
+            "limitations": [
+                "fixed optical/compute stock list (survivorship / theme hindsight)",
+                "requires overlapping listing history; universe shrinks to active names at start",
+                "not runtime-enabled; stricter gate vs ETF conservative_v1",
+                "risk presets may include ETF benchmark symbols (510300/512760) for risk-off",
+            ],
+        },
+        research_evidence=THEMATIC_STOCK_RESEARCH_EVIDENCE,
+    )
 
 
 def _print_report(payload: dict[str, Any]) -> None:

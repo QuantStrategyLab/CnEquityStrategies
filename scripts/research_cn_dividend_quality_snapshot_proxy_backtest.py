@@ -29,6 +29,10 @@ from cn_equity_strategies.backtest.proxy_simulator import (  # noqa: E402
     ProxyBacktestResult,
     compute_backtest_metrics,
 )
+from cn_equity_strategies.backtest.promotion_gate import (  # noqa: E402
+    attach_research_evidence,
+    build_research_evidence,
+)
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_strategy  # noqa: E402
 from cn_equity_strategies.strategies.etf_rotation_core import normalize_symbol  # noqa: E402
 
@@ -88,6 +92,17 @@ _active_stock_symbols_as_of = partial(active_stock_symbols_as_of, normalize=pipe
 
 CACHE_DIR = ROOT / ".cache" / "cn_equity_strategies"
 CACHE_VERSION = "v1"
+
+DIVIDEND_SNAPSHOT_RESEARCH_EVIDENCE = build_research_evidence(
+    research_only=True,
+    promotion_eligible=False,
+    point_in_time=False,
+    historical_membership_complete=False,
+    historical_constituents_complete=False,
+    adjustment_provenance_complete=False,
+    universe_provenance_complete=False,
+    survivorship_bias_controlled=False,
+)
 
 
 def _cache_path(prefix: str, *, parts: tuple[str, ...]) -> Path:
@@ -738,29 +753,32 @@ def main() -> None:
         "2021_2022": ("2021-01-01", "2022-12-31"),
         "2023_2026": ("2023-01-01", args.end),
     }
-    output = {
-        "profile": dividend_strategy.PROFILE_NAME,
-        "start": args.start,
-        "end": args.end,
-        "universe": list(universe),
-        "universe_mode": args.universe_mode,
-        "panel_diagnostics": panel_diag,
-        "strategy_full": strategy.metrics,
-        "benchmark_510300_full": benchmark.metrics,
-        "periods": {
-            key: {
-                "dividend_quality": _metrics_slice(strategy.daily_returns, pstart, pend),
-                "benchmark_510300": _metrics_slice(benchmark.daily_returns, pstart, pend),
-            }
-            for key, (pstart, pend) in periods.items()
+    output = attach_research_evidence(
+        {
+            "profile": dividend_strategy.PROFILE_NAME,
+            "start": args.start,
+            "end": args.end,
+            "universe": list(universe),
+            "universe_mode": args.universe_mode,
+            "panel_diagnostics": panel_diag,
+            "strategy_full": strategy.metrics,
+            "benchmark_510300_full": benchmark.metrics,
+            "periods": {
+                key: {
+                    "dividend_quality": _metrics_slice(strategy.daily_returns, pstart, pend),
+                    "benchmark_510300": _metrics_slice(benchmark.daily_returns, pstart, pend),
+                }
+                for key, (pstart, pend) in periods.items()
+            },
+            "limitations": [
+                f"universe_mode={args.universe_mode}; expanded pool uses fhps dividend-yield filter, not full A-share",
+                "fhps table uses latest available report table, not fully point-in-time report selection",
+                "proxy uses 510300 calendar + per-symbol ffill; monthly panel filters symbols with price history at as_of",
+                "evidence gate only; not promotion-ready without PIT fhps and live data validation",
+            ],
         },
-        "limitations": [
-            f"universe_mode={args.universe_mode}; expanded pool uses fhps dividend-yield filter, not full A-share",
-            "fhps table uses latest available report table, not fully point-in-time report selection",
-            "proxy uses 510300 calendar + per-symbol ffill; monthly panel filters symbols with price history at as_of",
-            "evidence gate only; not promotion-ready without PIT fhps and live data validation",
-        ],
-    }
+        research_evidence=DIVIDEND_SNAPSHOT_RESEARCH_EVIDENCE,
+    )
 
     print("\n========== P3.5 cn_dividend_quality_snapshot proxy ==========")
     print(
