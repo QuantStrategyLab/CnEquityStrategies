@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from quant_platform_kit.strategy_contracts import CallableStrategyEntrypoint, StrategyContext, StrategyDecision
+from quant_platform_kit.common.strategy_contracts import CallableStrategyEntrypoint, StrategyContext, StrategyDecision
 
 from cn_equity_strategies.manifests import (
     cn_chinext_growth_momentum_quality_manifest,
