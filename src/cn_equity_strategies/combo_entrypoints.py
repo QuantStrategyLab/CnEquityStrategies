@@ -1,7 +1,7 @@
 """CN equity combo entrypoints."""
 from __future__ import annotations
 from typing import Any
-from quant_platform_kit.strategy_contracts import CallableStrategyEntrypoint, PositionTarget, StrategyContext, StrategyDecision
+from quant_platform_kit.common.strategy_contracts import CallableStrategyEntrypoint, PositionTarget, StrategyContext, StrategyDecision
 from cn_equity_strategies.combo_manifests import cn_equity_combo_manifest
 from cn_equity_strategies.strategies import cn_equity_combo
 

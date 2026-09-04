@@ -1,6 +1,6 @@
 """CN equity combo manifests."""
 from __future__ import annotations
-from quant_platform_kit.strategy_contracts import StrategyManifest
+from quant_platform_kit.common.strategy_contracts import StrategyManifest
 from cn_equity_strategies.strategies import cn_equity_combo
 
 CN_EQUITY_COMBO_PROFILE = cn_equity_combo.PROFILE_NAME

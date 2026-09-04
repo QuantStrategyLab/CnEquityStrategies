@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from quant_platform_kit.common.models import PortfolioSnapshot, Position
-from quant_platform_kit.strategy_contracts import BudgetIntent, PositionTarget, StrategyContext, StrategyDecision
+from quant_platform_kit.common.strategy_contracts import BudgetIntent, PositionTarget, StrategyContext, StrategyDecision
 
 from cn_equity_strategies.entrypoints._common import apply_risk_gate
 

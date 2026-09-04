@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from quant_platform_kit.strategy_contracts import StrategyManifest
+from quant_platform_kit.common.strategy_contracts import StrategyManifest
 
 from cn_equity_strategies.strategies import cn_dividend_quality_snapshot as dividend_quality_strategy
 from cn_equity_strategies.strategies import (

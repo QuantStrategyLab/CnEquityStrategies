@@ -16,7 +16,7 @@ for candidate in (SRC, QPK_SRC):
     if candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from quant_platform_kit.strategy_contracts import StrategyContext  # noqa: E402
+from quant_platform_kit.common.strategy_contracts import StrategyContext  # noqa: E402
 
 from cn_equity_strategies import get_strategy_entrypoint  # noqa: E402
 from cn_equity_strategies.catalog import CN_INDUSTRY_ETF_ROTATION_PROFILE  # noqa: E402

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from quant_platform_kit.strategy_contracts import StrategyContext
+from quant_platform_kit.common.strategy_contracts import StrategyContext
 
 from cn_equity_strategies import get_strategy_entrypoint
 from cn_equity_strategies.catalog import (
