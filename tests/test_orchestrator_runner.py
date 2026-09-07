@@ -7,7 +7,11 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from cn_equity_strategies.backtest.orchestrator_runner import CnProxyBacktestRunner, SUPPORTED_PROFILES
+from cn_equity_strategies.backtest.orchestrator_runner import (
+    CnProxyBacktestRunner,
+    SUPPORTED_PROFILES,
+    _metrics_to_backtest_result,
+)
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
     DEFAULT_MIN_HISTORY_DAYS,
     PROFILE_NAME,
@@ -15,6 +19,21 @@ from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
 
 
 class CnProxyBacktestRunnerTests(unittest.TestCase):
+    def test_calmar_keeps_cagr_sign_and_zero_drawdown_is_undefined(self) -> None:
+        cases = ((-0.1, -0.2, -0.5), (0.1, -0.2, 0.5), (0.0, -0.2, 0.0), (0.1, 0.0, None))
+        for cagr, max_drawdown, expected in cases:
+            with self.subTest(cagr=cagr, max_drawdown=max_drawdown):
+                result = _metrics_to_backtest_result(
+                    strategy_profile=PROFILE_NAME,
+                    params={},
+                    metrics={"annual_return": cagr, "max_drawdown": max_drawdown},
+                    start_date=date(2024, 1, 1),
+                    end_date=date(2024, 12, 31),
+                    run_duration_seconds=0.0,
+                )
+                self.assertEqual(result.calmar_ratio, expected)
+                self.assertIsNone(result.validation_identity)
+
     def test_supported_profile_includes_index_etf(self) -> None:
         self.assertIn(PROFILE_NAME, SUPPORTED_PROFILES)
 
