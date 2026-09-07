@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import math
+
 import pandas as pd
 import pytest
 
-from cn_equity_strategies.backtest.proxy_simulator import ProxyBacktestConfig, run_proxy_backtest
+from cn_equity_strategies.backtest.proxy_simulator import (
+    ProxyBacktestConfig,
+    compute_backtest_metrics,
+    run_proxy_backtest,
+)
 from cn_equity_strategies.strategies.cn_index_etf_tactical_rotation import (
     NASDAQ_ETF_SYMBOL,
     build_target_weights,
@@ -85,3 +91,23 @@ def test_proxy_backtest_requires_minimum_history():
             _signal_fn,
             config=ProxyBacktestConfig(min_history_days=220),
         )
+
+
+@pytest.mark.parametrize("returns, expected", [([-0.1], -0.1), ([-0.1, -0.1], -0.19), ([0.1, -0.2], -0.2)])
+def test_metrics_drawdown_includes_initial_equity_without_extra_observation(returns, expected):
+    metrics = compute_backtest_metrics(pd.Series(returns))
+    assert metrics["max_drawdown"] == pytest.approx(expected)
+    assert metrics["days"] == len(returns)
+
+
+@pytest.mark.parametrize("returns", [[0.1, -0.1], [0.01, 0.02, -0.01]])
+def test_metrics_sharpe_uses_annualized_arithmetic_mean(returns):
+    mean = math.fsum(returns) / len(returns)
+    daily_std = math.sqrt(math.fsum((value - mean) ** 2 for value in returns) / len(returns))
+    metrics = compute_backtest_metrics(pd.Series(returns))
+    assert metrics["sharpe_ratio"] == pytest.approx(mean / daily_std * math.sqrt(252))
+
+
+@pytest.mark.parametrize("returns", [[], [0.0], [0.1, 0.1]])
+def test_metrics_empty_and_zero_volatility_sharpe_remain_zero(returns):
+    assert compute_backtest_metrics(pd.Series(returns, dtype=float))["sharpe_ratio"] == 0.0

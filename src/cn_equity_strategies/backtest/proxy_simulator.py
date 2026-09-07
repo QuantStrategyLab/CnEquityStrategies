@@ -119,9 +119,9 @@ def compute_backtest_metrics(daily_returns: pd.Series) -> dict[str, float | int]
     equity = (1.0 + returns).cumprod()
     years = len(returns) / 252.0
     annual_return = float(equity.iloc[-1] ** (1 / years) - 1) if years > 0 else 0.0
-    drawdown = equity / equity.cummax() - 1.0
+    drawdown = equity / equity.cummax().clip(lower=1.0) - 1.0
     annual_volatility = float(returns.std(ddof=0) * math.sqrt(252))
-    sharpe = annual_return / annual_volatility if annual_volatility > 0 else 0.0
+    sharpe = float(returns.mean()) * 252.0 / annual_volatility if annual_volatility > 0 else 0.0
     return {
         "days": int(len(returns)),
         "annual_return": annual_return,

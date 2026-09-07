@@ -89,7 +89,7 @@ def _metrics_to_backtest_result(
     annual_vol = float(metrics.get("annual_volatility") or 0.0)
     sharpe = float(metrics.get("sharpe_ratio") or 0.0)
     total_return = float(metrics.get("total_return") or 0.0)
-    calmar = abs(annual_return / max_drawdown) if max_drawdown else None
+    calmar = annual_return / abs(max_drawdown) if max_drawdown else None
     return BacktestResult(
         strategy_profile=strategy_profile,
         domain="cn_equity",
