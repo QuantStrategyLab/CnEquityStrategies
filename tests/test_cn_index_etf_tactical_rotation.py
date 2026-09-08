@@ -86,3 +86,14 @@ def test_index_etf_rotation_managed_symbols_include_defensive_pool():
     assert set(DEFAULT_UNIVERSE_SYMBOLS).issubset(set(managed))
     assert "511880" in managed
     assert "511260" in managed
+
+
+def test_explicit_cash_defense_does_not_restore_default_defensive_etfs():
+    assert extract_managed_symbols(universe_symbols=("510300", "510500"), defensive_symbols=()) == (
+        "510300", "510500",
+    )
+    signal = compute_latest_signal(
+        _history(benchmark_weak=True), universe_symbols=("510300", "510500"), defensive_symbols=(),
+    )
+    assert signal["weights"] == {}
+    assert signal["cash_weight"] == 1.0

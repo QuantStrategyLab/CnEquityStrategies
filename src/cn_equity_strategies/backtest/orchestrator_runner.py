@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
+from dataclasses import replace
+from functools import partial
 from typing import Any, Mapping
 
 import pandas as pd
@@ -50,7 +52,13 @@ def _slice_history(
     frame = market_history.copy()
     frame["date"] = pd.to_datetime(frame["date"], utc=False).dt.tz_localize(None).dt.normalize()
     if start_date is not None:
-        effective_start = pd.Timestamp(start_date) - pd.tseries.offsets.BDay(max(int(lookback_days), 0))
+        effective_start = pd.Timestamp(start_date)
+        # BDay includes weekday exchange holidays and can silently shorten the
+        # supplied warmup. Count the actual observation dates in this input.
+        prior_dates = frame.loc[frame["date"] < effective_start, "date"].drop_duplicates().sort_values()
+        count = max(int(lookback_days), 0)
+        if count and not prior_dates.empty:
+            effective_start = prior_dates.iloc[-min(count, len(prior_dates))]
         frame = frame[frame["date"] >= effective_start]
     if end_date is not None:
         frame = frame[frame["date"] <= pd.Timestamp(end_date)]
@@ -119,10 +127,14 @@ class CnProxyBacktestRunner:
         market_history: pd.DataFrame | None = None,
         initial_cash: float = 1_000_000.0,
         synthetic_days: int = 500,
+        strategy_defaults: Mapping[str, Any] | None = None,
+        config: ProxyBacktestConfig | None = None,
     ) -> None:
         self._market_history = market_history
         self._initial_cash = float(initial_cash)
         self._synthetic_days = int(synthetic_days)
+        self._strategy_defaults = dict(strategy_defaults or {})
+        self._config = config or ProxyBacktestConfig(initial_cash=self._initial_cash)
         self._last_daily_returns = pd.Series(dtype=float)
 
     @property
@@ -143,11 +155,15 @@ class CnProxyBacktestRunner:
                 f"supported={sorted(SUPPORTED_PROFILES)}"
             )
 
-        min_history_days = int(params.get("min_history_days", spec.default_min_history_days))
+        self._last_daily_returns = pd.Series(dtype=float)
+        strategy_params = {**self._strategy_defaults, **dict(params)}
+        min_history_days = int(strategy_params.get("min_history_days", spec.default_min_history_days))
+        strategy_params["min_history_days"] = min_history_days
+        managed_symbols = spec.extract_managed_symbols(**strategy_params)
         history = self._market_history
         if history is None:
             history = _synthetic_market_history(
-                extract_managed_symbols=spec.extract_managed_symbols,
+                extract_managed_symbols=partial(spec.extract_managed_symbols, **strategy_params),
                 days=max(self._synthetic_days, min_history_days + 400),
             )
         sliced = _slice_history(
@@ -166,12 +182,9 @@ class CnProxyBacktestRunner:
         result = run_proxy_backtest(
             sliced,
             _signal_fn,
-            universe_symbols=spec.extract_managed_symbols(),
-            config=ProxyBacktestConfig(
-                initial_cash=self._initial_cash,
-                min_history_days=min_history_days,
-            ),
-            strategy_kwargs={"min_history_days": min_history_days},
+            universe_symbols=managed_symbols,
+            config=replace(self._config, min_history_days=min_history_days),
+            strategy_kwargs=strategy_params,
         )
         self._last_daily_returns = _slice_daily_returns(
             result.daily_returns,
@@ -184,7 +197,7 @@ class CnProxyBacktestRunner:
             eval_frame = sliced[sliced["date"] >= pd.Timestamp(start_date)]
         return _metrics_to_backtest_result(
             strategy_profile=strategy_profile,
-            params=params,
+            params=strategy_params,
             metrics=compute_backtest_metrics(self._last_daily_returns),
             start_date=start_date or (eval_frame["date"].min().date() if not eval_frame.empty else None),
             end_date=end_date or (eval_frame["date"].max().date() if not eval_frame.empty else None),

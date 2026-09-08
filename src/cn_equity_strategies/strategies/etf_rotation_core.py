@@ -463,7 +463,11 @@ def build_target_weights(market_history: Any, **kwargs: Any) -> tuple[dict[str, 
 
 def extract_managed_symbols(*_args: Any, **kwargs: Any) -> tuple[str, ...]:
     offensive = normalize_universe_symbols(kwargs.get("universe_symbols"))
-    defensive = normalize_universe_symbols(kwargs.get("defensive_symbols") or DEFAULT_DEFENSIVE_SYMBOLS)
+    raw_defensive = kwargs.get("defensive_symbols")
+    defensive = (
+        normalize_universe_symbols(DEFAULT_DEFENSIVE_SYMBOLS if raw_defensive is None else raw_defensive)
+        if raw_defensive is None or raw_defensive else ()
+    )
     return tuple(dict.fromkeys([*offensive, *defensive]))
 
 
