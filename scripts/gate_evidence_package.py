@@ -103,7 +103,7 @@ def _run_promotion_dual_review(evidence_files: list[Path]) -> int:
         print("[evidence-gate] dual-review skipped by DUAL_REVIEW_GATE_SKIP")
         return 0
 
-    worst = 0
+    failed = False
     for path in evidence_files:
         proc = subprocess.run(
             [
@@ -122,9 +122,9 @@ def _run_promotion_dual_review(evidence_files: list[Path]) -> int:
             print(proc.stdout.strip())
         if proc.stderr:
             print(proc.stderr.strip(), file=sys.stderr)
-        worst = max(worst, proc.returncode)
-    if worst >= 2:
-        print("::error::Dual-review blocked promotion (disagreement or reject)", file=sys.stderr)
+        failed = failed or proc.returncode != 0
+    if failed:
+        print("::error::Dual-review blocked promotion (review did not succeed)", file=sys.stderr)
         return 1
     return 0
 

@@ -62,6 +62,19 @@ class CnProxyBacktestRunnerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             runner.run("unknown_profile", {})
 
+    def test_candidate_parameter_changes_actual_signal_and_returns(self) -> None:
+        runner = CnProxyBacktestRunner(synthetic_days=700)
+        active = runner.run(PROFILE_NAME, {"min_history_days": 220, "min_momentum": 0.0})
+        cash = runner.run(PROFILE_NAME, {"min_history_days": 220, "min_momentum": 999.0})
+        self.assertGreater(active.total_return, 0.0)
+        self.assertEqual(cash.total_return, 0.0)
+        self.assertEqual(cash.params["min_momentum"], 999.0)
+
+    def test_unknown_candidate_parameter_is_not_silently_ignored(self) -> None:
+        runner = CnProxyBacktestRunner(synthetic_days=700)
+        with self.assertRaises(TypeError):
+            runner.run(PROFILE_NAME, {"min_history_days": 220, "typo_momentum": 10})
+
 
 class WalkForwardPilotTests(unittest.TestCase):
     def test_walk_forward_produces_one_result_per_window(self) -> None:

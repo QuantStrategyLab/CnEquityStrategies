@@ -312,10 +312,13 @@ def run_proxy_backtest(
             # lookahead bias. In live trading, the rebalance-day close is
             # not yet available when the signal is computed.
             history = _history_slice(market_history, day_ts - pd.Timedelta(days=1))
-            weights, metadata = strategy_signal_fn(history, **kwargs)
-            pending_targets = {normalize_symbol(symbol): float(value) for symbol, value in weights.items()}
-            pending_signal_day = day_ts
-            pending_metadata = dict(metadata)
+            # The current date is not visible history. Count dates, not rows:
+            # multi-asset rows and calendar-added gaps cannot satisfy warmup.
+            if history["date"].nunique() >= int(settings.min_history_days):
+                weights, metadata = strategy_signal_fn(history, **kwargs)
+                pending_targets = {normalize_symbol(symbol): float(value) for symbol, value in weights.items()}
+                pending_signal_day = day_ts
+                pending_metadata = dict(metadata)
 
         equity_points[day_ts] = _portfolio_value(cash=cash, holdings=holdings, prices=prices)
 

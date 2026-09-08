@@ -113,11 +113,16 @@ def test_metrics_empty_and_zero_volatility_sharpe_remain_zero(returns):
     assert compute_backtest_metrics(pd.Series(returns, dtype=float))["sharpe_ratio"] == 0.0
 
 
+def _valuation_dates():
+    # Dec 28 warms up the Dec 29 signal; Jan 2 is the first execution.
+    return pd.to_datetime(["2023-12-28", "2023-12-29", *pd.bdate_range("2024-01-02", periods=5)])
+
+
 @pytest.mark.parametrize("value", [None, float("nan"), float("inf"), 0.0, -1.0])
-@pytest.mark.parametrize("missing_day", ["2024-01-03", "2024-01-04"])
+@pytest.mark.parametrize("missing_day", ["2024-01-02", "2024-01-03"])
 def test_proxy_rejects_missing_held_or_execution_price(value, missing_day):
     rows = [{"date": day, "symbol": symbol, "close": 10.0}
-            for day in pd.bdate_range("2024-01-02", periods=5)
+            for day in _valuation_dates()
             for symbol in ("510300", "510500")]
     for row in rows:
         if row["date"] == pd.Timestamp(missing_day) and row["symbol"] == "510300":
@@ -126,44 +131,44 @@ def test_proxy_rejects_missing_held_or_execution_price(value, missing_day):
         rows = [row for row in rows if row["close"] is not None]
     with pytest.raises(ValueError, match="finite positive price"):
         run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
-                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="monthly"))
 
 
 def test_proxy_ignores_unheld_missing_price_without_dropping_valuation_days():
     rows = [{"date": day, "symbol": symbol, "close": 10.0}
-            for day in pd.bdate_range("2024-01-02", periods=5)
+            for day in _valuation_dates()
             for symbol in ("510300", "510500")
             if not (day == pd.Timestamp("2024-01-04") and symbol == "510500")]
     result = run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
-                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly", commission_rate=0,
+                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="monthly", commission_rate=0,
                                                          min_commission=0, cash_reserve_ratio=0))
-    assert len(result.equity_curve) == 5
+    assert len(result.equity_curve) == len(_valuation_dates())
     assert result.daily_returns.eq(0).all()
     assert result.final_holdings["510300"] > 0
 
 
 def test_proxy_does_not_drop_all_nan_held_valuation_day():
-    rows = [{"date": day, "symbol": "510300", "close": float("nan") if i == 2 else 10.0}
-            for i, day in enumerate(pd.bdate_range("2024-01-02", periods=5))]
+    rows = [{"date": day, "symbol": "510300", "close": float("nan") if day == pd.Timestamp("2024-01-04") else 10.0}
+            for day in _valuation_dates()]
     with pytest.raises(ValueError, match="finite positive price"):
         run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
-                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="monthly"))
 
 
 def test_proxy_rejects_whole_missing_trading_day_while_holding():
     rows = [{"date": day, "symbol": "510300", "close": 10.0}
-            for day in pd.bdate_range("2024-01-02", periods=5)
+            for day in _valuation_dates()
             if day != pd.Timestamp("2024-01-04")]
     with pytest.raises(ValueError, match="finite positive price"):
         run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
-                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="monthly"))
 
 
 def test_proxy_does_not_require_quotes_on_calendar_holidays():
     rows = [{"date": day, "symbol": "510300", "close": 10.0}
             for day in pd.to_datetime(["2023-12-28", "2023-12-29", "2024-01-02", "2024-01-03"])]
     result = run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
-                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="monthly"))
     assert len(result.equity_curve) == 4
     assert result.final_holdings["510300"] > 0
 
@@ -177,3 +182,92 @@ def test_proxy_all_cash_tolerates_missing_trading_day_without_inventing_holdings
     assert len(result.equity_curve) == 5
     assert not result.final_holdings
     assert result.daily_returns.eq(0).all()
+
+
+def test_proxy_waits_for_complete_visible_warmup_at_month_end():
+    from datetime import date
+
+    from quant_platform_kit.common.cn_equity_calendar import is_cn_equity_trading_day
+    from cn_equity_strategies.backtest.orchestrator_runner import _slice_history
+
+    history = pd.DataFrame([
+        {"date": day, "symbol": symbol, "close": 10.0}
+        for day in pd.date_range("2024-01-02", "2025-02-06")
+        if is_cn_equity_trading_day(day.date())
+        for symbol in ("510300", "510500")
+    ])
+    history = _slice_history(
+        history, start_date=date(2025, 1, 9), end_date=date(2025, 2, 6), lookback_days=225,
+    )
+    visible_dates = []
+
+    def signal(visible_history):
+        days = pd.DatetimeIndex(visible_history["date"].unique())
+        assert len(days) >= 220
+        visible_dates.append(days)
+        return {"510300": 1.0}, {}
+
+    result = run_proxy_backtest(
+        history, signal, universe_symbols=("510300", "510500"),
+        config=ProxyBacktestConfig(min_history_days=220),
+    )
+
+    assert visible_dates
+    assert visible_dates[0].max() == pd.Timestamp("2025-01-24")
+    assert len(result.rebalance_events) == 1
+    event = result.rebalance_events[0]
+    assert event["signal_date"] == "2025-01-27"
+    assert event["execution_date"] == "2025-02-05"
+    assert result.equity_curve.loc[:"2025-02-04"].eq(1_000_000.0).all()
+
+
+@pytest.mark.parametrize("start, expected_events", [("2024-01-26", 1), ("2024-01-29", 0)])
+def test_proxy_warmup_boundary_uses_only_prior_observations(start, expected_events):
+    history = pd.DataFrame([
+        {"date": day, "symbol": "510300", "close": 10.0}
+        for day in pd.bdate_range(start, "2024-02-01")
+    ])
+
+    def signal(visible_history):
+        assert visible_history["date"].nunique() >= 3
+        return {"510300": 1.0}, {}
+
+    result = run_proxy_backtest(
+        history, signal, universe_symbols=("510300",),
+        config=ProxyBacktestConfig(min_history_days=3),
+    )
+
+    assert len(result.rebalance_events) == expected_events
+    if expected_events:
+        assert result.rebalance_events[0]["signal_date"] == "2024-01-31"
+        assert result.rebalance_events[0]["execution_date"] == "2024-02-01"
+
+
+def test_proxy_cash_round_trip_preserves_cash_and_both_commissions():
+    history = pd.DataFrame([
+        {"date": day, "symbol": "510300", "close": 10.0}
+        for day in pd.bdate_range("2024-01-02", periods=23)
+    ])
+    calls = 0
+
+    def signal(visible_history):
+        nonlocal calls
+        calls += 1
+        return ({"510300": 1.0} if calls == 1 else {}), {}
+
+    result = run_proxy_backtest(
+        history, signal, universe_symbols=("510300",),
+        config=ProxyBacktestConfig(
+            initial_cash=10_000.0, min_history_days=1, rebalance_frequency="biweekly",
+            commission_rate=0.0003, min_commission=5.0, cash_reserve_ratio=0.02,
+        ),
+    )
+
+    trades = [trade for event in result.rebalance_events for trade in event["trades"]]
+    assert [(trade["side"], trade["qty"], trade["fee"]) for trade in trades] == [
+        ("buy", 900, 5.0), ("sell", 900, 5.0),
+    ]
+    assert result.final_holdings == {}
+    assert result.final_cash == pytest.approx(9_990.0)
+    assert result.equity_curve.iloc[-1] == pytest.approx(result.final_cash)
+    assert (1.0 + result.daily_returns).prod() == pytest.approx(0.999)
