@@ -111,3 +111,69 @@ def test_metrics_sharpe_uses_annualized_arithmetic_mean(returns):
 @pytest.mark.parametrize("returns", [[], [0.0], [0.1, 0.1]])
 def test_metrics_empty_and_zero_volatility_sharpe_remain_zero(returns):
     assert compute_backtest_metrics(pd.Series(returns, dtype=float))["sharpe_ratio"] == 0.0
+
+
+@pytest.mark.parametrize("value", [None, float("nan"), float("inf"), 0.0, -1.0])
+@pytest.mark.parametrize("missing_day", ["2024-01-03", "2024-01-04"])
+def test_proxy_rejects_missing_held_or_execution_price(value, missing_day):
+    rows = [{"date": day, "symbol": symbol, "close": 10.0}
+            for day in pd.bdate_range("2024-01-02", periods=5)
+            for symbol in ("510300", "510500")]
+    for row in rows:
+        if row["date"] == pd.Timestamp(missing_day) and row["symbol"] == "510300":
+            row["close"] = value
+    if value is None:
+        rows = [row for row in rows if row["close"] is not None]
+    with pytest.raises(ValueError, match="finite positive price"):
+        run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
+                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+
+
+def test_proxy_ignores_unheld_missing_price_without_dropping_valuation_days():
+    rows = [{"date": day, "symbol": symbol, "close": 10.0}
+            for day in pd.bdate_range("2024-01-02", periods=5)
+            for symbol in ("510300", "510500")
+            if not (day == pd.Timestamp("2024-01-04") and symbol == "510500")]
+    result = run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
+                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly", commission_rate=0,
+                                                         min_commission=0, cash_reserve_ratio=0))
+    assert len(result.equity_curve) == 5
+    assert result.daily_returns.eq(0).all()
+    assert result.final_holdings["510300"] > 0
+
+
+def test_proxy_does_not_drop_all_nan_held_valuation_day():
+    rows = [{"date": day, "symbol": "510300", "close": float("nan") if i == 2 else 10.0}
+            for i, day in enumerate(pd.bdate_range("2024-01-02", periods=5))]
+    with pytest.raises(ValueError, match="finite positive price"):
+        run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
+                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+
+
+def test_proxy_rejects_whole_missing_trading_day_while_holding():
+    rows = [{"date": day, "symbol": "510300", "close": 10.0}
+            for day in pd.bdate_range("2024-01-02", periods=5)
+            if day != pd.Timestamp("2024-01-04")]
+    with pytest.raises(ValueError, match="finite positive price"):
+        run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
+                           config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+
+
+def test_proxy_does_not_require_quotes_on_calendar_holidays():
+    rows = [{"date": day, "symbol": "510300", "close": 10.0}
+            for day in pd.to_datetime(["2023-12-28", "2023-12-29", "2024-01-02", "2024-01-03"])]
+    result = run_proxy_backtest(pd.DataFrame(rows), lambda history: ({"510300": 1.0}, {}),
+                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+    assert len(result.equity_curve) == 4
+    assert result.final_holdings["510300"] > 0
+
+
+def test_proxy_all_cash_tolerates_missing_trading_day_without_inventing_holdings():
+    rows = [{"date": day, "symbol": "510300", "close": 10.0}
+            for day in pd.bdate_range("2024-01-02", periods=5)
+            if day != pd.Timestamp("2024-01-04")]
+    result = run_proxy_backtest(pd.DataFrame(rows), lambda history: ({}, {}),
+                               config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="biweekly"))
+    assert len(result.equity_curve) == 5
+    assert not result.final_holdings
+    assert result.daily_returns.eq(0).all()

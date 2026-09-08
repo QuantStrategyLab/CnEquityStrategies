@@ -167,7 +167,7 @@ def test_package_root_exports_use_local_source_tree() -> None:
 
     package_file = Path(cn_equity_strategies.__file__).resolve()
     assert package_file.name == "__init__.py"
-    assert "CnEquityStrategies/src/cn_equity_strategies" in str(package_file)
+    assert package_file == Path(__file__).resolve().parents[1] / "src/cn_equity_strategies/__init__.py"
 
     assert cn_equity_strategies.get_live_candidate_profiles() == frozenset(
         {CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE}

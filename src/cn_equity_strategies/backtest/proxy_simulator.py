@@ -11,7 +11,11 @@ from quant_platform_kit.common.cn_equity_calendar import (
     is_cn_equity_trading_day,
 )
 
-from cn_equity_strategies.strategies.etf_rotation_core import build_close_matrix, normalize_symbol
+from cn_equity_strategies.strategies.etf_rotation_core import (
+    _history_to_frame,
+    normalize_symbol,
+    normalize_universe_symbols,
+)
 
 StrategySignalFn = Callable[[Any], tuple[Mapping[str, float], Mapping[str, object]]]
 
@@ -99,8 +103,10 @@ def _portfolio_value(
     equity = float(cash)
     for symbol, quantity in holdings.items():
         price = prices.get(symbol)
-        if price is None or quantity <= 0:
+        if quantity <= 0:
             continue
+        if price is None or not math.isfinite(price) or price <= 0:
+            raise ValueError("market_history requires a finite positive price for held assets")
         equity += float(quantity) * float(price)
     return equity
 
@@ -146,7 +152,13 @@ def run_proxy_backtest(
         universe_symbols = tuple(
             dict.fromkeys(market_history["symbol"].map(normalize_symbol).tolist()),
         )
-    close = build_close_matrix(market_history, universe_symbols=universe_symbols)
+    # Signal helpers may fill gaps; executable prices and valuation must not.
+    frame = _history_to_frame(market_history, drop_missing_close=False)
+    symbols = normalize_universe_symbols(universe_symbols)
+    close = frame.groupby(["date", "symbol"])["close"].agg(lambda values: values.iloc[-1]).unstack("symbol")
+    trading_days = pd.DatetimeIndex(day for day in pd.date_range(close.index.min(), close.index.max())
+                                    if is_cn_equity_trading_day(day.date()))
+    close = close.reindex(index=close.index.union(trading_days), columns=list(symbols))
     if len(close) < int(settings.min_history_days):
         raise ValueError(
             f"market_history requires at least {int(settings.min_history_days)} overlapping trading days"
@@ -183,6 +195,10 @@ def run_proxy_backtest(
             execution_day = pd.Timestamp(add_cn_equity_trading_days(pending_signal_day.date(), 1))
             execution_due = day_ts >= execution_day
         if execution_due and pending_targets is not None:
+            for symbol, weight in pending_targets.items():
+                price = prices.get(symbol)
+                if weight > 0 and (price is None or not math.isfinite(price) or price <= 0):
+                    raise ValueError("market_history requires a finite positive price for traded assets")
             portfolio_value = _portfolio_value(cash=cash, holdings=holdings, prices=prices)
             investable = portfolio_value * (1.0 - float(settings.cash_reserve_ratio))
             target_values = {
@@ -195,7 +211,7 @@ def run_proxy_backtest(
 
             for symbol in all_symbols:
                 price = prices.get(symbol)
-                if price is None or price <= 0.0:
+                if price is None or not math.isfinite(price) or price <= 0.0:
                     continue
                 current_qty = int(holdings.get(symbol, 0))
                 sellable_qty = max(current_qty - int(locked.get(symbol, 0)), 0)
@@ -203,7 +219,10 @@ def run_proxy_backtest(
                 delta = target_qty - current_qty
                 if delta == 0:
                     continue
-                limit = _limit_status(prev_prices.get(symbol, price), price, settings.limit_pct)
+                previous = prev_prices.get(symbol)
+                if previous is None or not math.isfinite(previous) or previous <= 0:
+                    raise ValueError("market_history requires a finite positive price for prior trading close")
+                limit = _limit_status(previous, price, settings.limit_pct)
                 if delta < 0:
                     if limit == "limit_down":
                         trades.append({"symbol": symbol, "side": "sell", "status": "blocked_limit_down", "qty": 0})
@@ -231,14 +250,17 @@ def run_proxy_backtest(
 
             for symbol in all_symbols:
                 price = prices.get(symbol)
-                if price is None or price <= 0.0:
+                if price is None or not math.isfinite(price) or price <= 0.0:
                     continue
                 current_qty = int(holdings.get(symbol, 0))
                 target_qty = _round_lot(target_values.get(symbol, 0.0) / price, settings.lot_size)
                 delta = target_qty - current_qty
                 if delta <= 0:
                     continue
-                limit = _limit_status(prev_prices.get(symbol, price), price, settings.limit_pct)
+                previous = prev_prices.get(symbol)
+                if previous is None or not math.isfinite(previous) or previous <= 0:
+                    raise ValueError("market_history requires a finite positive price for prior trading close")
+                limit = _limit_status(previous, price, settings.limit_pct)
                 if limit == "limit_up":
                     trades.append({"symbol": symbol, "side": "buy", "status": "blocked_limit_up", "qty": 0})
                     continue

@@ -83,7 +83,7 @@ def normalize_universe_symbols(symbols: Sequence[Any] | None = None) -> tuple[st
     return tuple(normalized)
 
 
-def _history_to_frame(market_history: Any) -> pd.DataFrame:
+def _history_to_frame(market_history: Any, *, drop_missing_close: bool = True) -> pd.DataFrame:
     if isinstance(market_history, pd.DataFrame):
         frame = market_history.copy()
     elif isinstance(market_history, Mapping):
@@ -106,7 +106,7 @@ def _history_to_frame(market_history: Any) -> pd.DataFrame:
     frame["date"] = pd.to_datetime(frame["date"], utc=False).dt.tz_localize(None).dt.normalize()
     frame["symbol"] = frame["symbol"].map(normalize_symbol)
     frame["close"] = pd.to_numeric(frame["close"], errors="coerce")
-    frame = frame.dropna(subset=["date", "symbol", "close"])
+    frame = frame.dropna(subset=["date", "symbol", *(["close"] if drop_missing_close else [])])
     frame = frame.loc[frame["symbol"] != ""]
     if frame.empty:
         raise ValueError("market_history has no valid date/symbol/close rows")
