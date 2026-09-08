@@ -18,6 +18,8 @@ from scripts.run_walk_forward_backtest import run_walk_forward  # noqa: E402
 
 
 def run_bounded_research(args) -> dict:
+    if getattr(args, "strict_input_package", None) is not None:
+        return run_strict_development(args)
     from dataclasses import asdict
     import pandas as pd
     from quant_platform_kit.strategy_lifecycle.performance_store import PerformanceStore
@@ -57,16 +59,53 @@ def run_bounded_research(args) -> dict:
     }
 
 
+
+def run_strict_development(args) -> dict:
+    """Explicit byte-verified local package, no source-approval or live flag."""
+    from dataclasses import asdict
+    from quant_platform_kit.strategy_lifecycle.performance_store import PerformanceStore
+    from cn_equity_strategies.backtest.index_etf_research_job import PROFILE, make_strict_index_etf_optimizer
+    from cn_equity_strategies.backtest.index_etf_strict_runner import IndexEtfExecutionConfig, read_index_etf_input
+
+    payload = dict(strategy_profile=PROFILE, status="parked", learning_only=True,
+                   promotion_eligible=False, live_ready=False, size_zero_required=True, no_order=True,
+                   execution_model="next_open_daily_v1", benchmark_method="monthly_target_510300_same_constraints",
+                   strict_backtest_gate="not_run",
+                   input_provenance="unverified", cost_model=asdict(IndexEtfExecutionConfig()), trials=[])
+    required = ("expected_manifest_sha256", "development_start", "development_end", "store_root")
+    missing = [name for name in required if getattr(args, name, None) is None]
+    if missing:
+        return {**payload, "reason": "strict_research_inputs_missing", "missing": missing}
+    try:
+        data = read_index_etf_input(args.strict_input_package, expected_manifest_sha256=args.expected_manifest_sha256)
+        payload.update(input_provenance=data.evidence_kind, input_manifest_sha256=data.manifest_sha256)
+        optimize = make_strict_index_etf_optimizer(
+            data=data, development_start=args.development_start, development_end=args.development_end,
+            store=PerformanceStore(local_root=args.store_root), trial_records=payload["trials"],
+        )
+        proposal = optimize(SimpleNamespace(strategy_profile=PROFILE, domain="cn_equity"),
+                            SimpleNamespace(max_param_keys=3, max_search_iterations=12))
+    except (OSError, ValueError, TypeError, RuntimeError):
+        return {**payload, "reason": "strict_input_or_backtest_failed"}
+    return {**payload, "status": "learning_completed", "reason": "validation_and_paired_shadow_pending",
+            "proposal": proposal.to_dict()}
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="CN index ETF walk-forward pilot (compat wrapper).")
     parser.add_argument("--json-output", type=Path)
     parser.add_argument("--tolerance", type=float, default=0.001)
     parser.add_argument("--bounded-research", action="store_true", help="Run explicit-input development search.")
     parser.add_argument("--market-history", type=Path)
+    parser.add_argument("--strict-input-package", type=Path, help="Use a local execution-input package for bounded development.")
+    parser.add_argument("--expected-manifest-sha256", help="Expected input bytes only; does not approve the source.")
     parser.add_argument("--development-start", type=date.fromisoformat)
     parser.add_argument("--development-end", type=date.fromisoformat)
     parser.add_argument("--store-root", type=Path)
     args = parser.parse_args()
+    if args.strict_input_package is not None and not args.bounded_research:
+        parser.error("--strict-input-package requires --bounded-research")
+    if args.strict_input_package is not None and args.market_history is not None:
+        parser.error("choose one explicit input mode")
     if args.bounded_research:
         payload = run_bounded_research(args)
     else:
