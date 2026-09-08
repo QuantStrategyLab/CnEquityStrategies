@@ -98,3 +98,7 @@ python scripts/run_cn_index_etf_walk_forward_pilot.py --bounded-research
 - 测试仅使用代码生成的 synthetic 行情。隔离探针确认原 workspace、凭据路径、网络均不可读/不可访问。
 - 当前 pinned QPK 的优化测试与本地新版 HITL 集成分别验证；后者不代表消费者已经升级或服务已经发布。
 - 当前 pin 的六个相关测试文件：71 passed、2 skipped、4 subtests passed；最后补充的输入回归：7 passed（含新增 nullable 缺值一项）。两项 skip 对应旧 pin 缺失 HITL 模块。新版 QPK 的两项跨仓集成另行验证通过；无真实历史收益或真实 shadow 成功结论。
+
+### 2026-09-09 晋级复核退出保护
+
+在 CN `c5576b613fbf37c0b82398b0052e60be6031086a` 后续切片中，修复 Evidence Gate 将复核子进程退出码 `1` 或负退出码误当通过的问题：任何非零退出均阻断，多工件中后续成功也不能覆盖此前失败。使用真实本地合成 Python 子进程，先复现 4 个失败子案例，再验证 5 项测试通过（含多工件、全成功、原有显式 skip 与缺可选脚本行为）。本次不运行真实模型，不改变证据发现、validator、候选数值或执行权限；CN/QPK pins 保持原值。新研究代码采用新版 QPK 与 Evidence Gate/定时漂移工作流的实际版本采用仍须分别核对，旧冻结证据不重解释。
