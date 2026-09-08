@@ -116,7 +116,7 @@ def test_future_prices_cannot_change_development_result(tmp_path):
 
 
 def test_proxy_search_never_reaches_shadow_or_human_candidate(tmp_path):
-    cycle_module = pytest.importorskip("quant_platform_kit.strategy_lifecycle.research_promotion_cycle")
+    from quant_platform_kit.strategy_lifecycle import research_promotion_cycle as cycle_module
     optimize = bind(tmp_path, history(), [])
     calls = []
     ticket = cycle_module.run_research_promotion_cycle(
@@ -131,7 +131,7 @@ def test_proxy_search_never_reaches_shadow_or_human_candidate(tmp_path):
 
 
 def test_proxy_result_cannot_supply_strict_backtest_evidence(tmp_path):
-    cycle_module = pytest.importorskip("quant_platform_kit.strategy_lifecycle.research_promotion_cycle")
+    from quant_platform_kit.strategy_lifecycle import research_promotion_cycle as cycle_module
     optimize = bind(tmp_path, history(), [])
     calls = []
 
