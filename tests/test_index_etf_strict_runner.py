@@ -330,6 +330,51 @@ def test_full_job_refuses_unapproved_or_synthetic_roots_before_any_callback(tmp_
     assert not list(tmp_path.rglob("*.json"))
 
 
+def test_full_job_forwards_optional_summary_callback_to_qpk(tmp_path, monkeypatch):
+    import cn_equity_strategies.backtest.index_etf_research_job as job
+    import sys
+    import types
+
+    identity = {field: "a" * 64 for field in (
+        "code_revision", "input_revision", "param_space_revision", "cost_model_revision", "validator_revision",
+    )}
+    def summary(context):
+        return {"status": "available", "text": "合成说明", "provider": "codex", "model": "test"}
+    observed = {}
+    owner = {"repository": "QuantStrategyLab/CnEquityStrategies", "issue_number": 123,
+             "watcher_issue_key": "watcher-key-123"}
+
+    monkeypatch.setattr(job, "preflight_index_etf_research_job", lambda **_: identity)
+    monkeypatch.setattr(job, "make_strict_index_etf_optimizer", lambda **_: "optimize")
+    monkeypatch.setattr(job, "make_index_etf_promotion_gate", lambda **_: "gate")
+
+    def checked_cycle(*, research_identity, admit_new_research, read_pending_shadow, summarize, research_owner, **kwargs):
+        observed.update({"research_identity": research_identity, "admit_new_research": admit_new_research,
+                         "read_pending_shadow": read_pending_shadow, "summarize": summarize,
+                         "research_owner": research_owner, **kwargs})
+        return {"status": "parked", "reason": "research_scope_archived"}
+
+    monkeypatch.setitem(
+        sys.modules,
+        "quant_platform_kit.strategy_lifecycle.promotion_actionable_runner",
+        types.SimpleNamespace(run_actionable_research_promotion=checked_cycle),
+    )
+    result = job.run_index_etf_research_job(
+        development_input=object(), validation_input=object(), trusted_input_roots={"development": "dev", "validation": "val"},
+        development_start=date(2024, 1, 1), development_end=date(2024, 1, 2), folds=(),
+        locked_oos_start=date(2025, 1, 1), locked_oos_end=date(2025, 1, 2), purge_days=1, embargo_days=1,
+        code_revision="c" * 40, ticket_dir=tmp_path / "tickets", store_root=tmp_path / "store",
+        as_of=date(2026, 9, 13), drift_score=.8, source_revision="d" * 40,
+        record_shadow=lambda *_: None, sync_console=lambda *_: None, summarize=summary,
+        research_owner=owner,
+        config=object(), cost_model=object(),
+    )
+
+    assert result["reason"] == "research_scope_archived"
+    assert observed["summarize"] is summary
+    assert observed["research_owner"] == owner
+
+
 def test_benchmark_retries_monthly_target_under_same_volume_constraint():
     from cn_equity_strategies.backtest.index_etf_research_job import BASELINE_PARAMS
     days = list(pd.bdate_range("2024-01-02", periods=290).strftime("%Y-%m-%d"))
@@ -396,10 +441,15 @@ def test_real_cycle_adapter_persists_rejected_search_and_reuses_terminal_without
     old_root = Path(first["trial_records_path"]).parent
     before = {p: p.read_bytes() for p in old_root.rglob("*.json")}
     third = run_index_etf_research_job(**{**kwargs, "as_of": date(2026, 9, 8), "source_revision": "e" * 40})
-    assert third["research_key"] != first["research_key"]
-    assert third["trial_records_path"] != first["trial_records_path"]
+    # A changed observation revision does not create a new research scope. The
+    # terminal ticket remains the durable admission record, so no optimizer or
+    # diagnosis call is repeated.
+    assert third["reason"] == "saved_research_ticket_reused"
+    assert third["research_key"] == first["research_key"]
+    assert third["trial_records_path"] is None
+    assert third["experiment_store_root"] is None
     assert all(p.read_bytes() == content for p, content in before.items())
-    assert calls == ["admit", "diagnose", "admit", "diagnose"]
+    assert calls == ["admit", "diagnose"]
 
 
 def test_malformed_license_record_has_fixed_failure_reason():
