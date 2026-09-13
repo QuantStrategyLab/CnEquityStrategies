@@ -386,7 +386,9 @@ def run_index_etf_research_job(
     development_start: date, development_end: date, folds,
     locked_oos_start: date, locked_oos_end: date, purge_days: int, embargo_days: int,
     code_revision: str, ticket_dir, store_root, as_of, drift_score, source_revision,
-    record_shadow, sync_console, diagnose=None, pull_console=None, admit_new_research=None, read_pending_shadow=None,
+    record_shadow, sync_console, diagnose=None, summarize=None, pull_console=None, admit_new_research=None,
+    read_pending_shadow=None,
+    research_owner=None,
     config=None, cost_model=None, evaluation_date=None,
 ) -> dict[str, Any]:
     """Owning watcher's frozen job -> QPK's existing durable cycle.
@@ -436,16 +438,43 @@ def run_index_etf_research_job(
     )
     # A dependency without the persisted interface fails before any remote call.
     import inspect
-    if not {"research_identity", "admit_new_research", "read_pending_shadow"} <= set(inspect.signature(run_actionable_research_promotion).parameters):
+    required_qpk_parameters = {"research_identity", "admit_new_research", "read_pending_shadow"}
+    if summarize is not None:
+        required_qpk_parameters.add("summarize")
+    if research_owner is not None:
+        required_qpk_parameters.add("research_owner")
+    if not required_qpk_parameters <= set(inspect.signature(run_actionable_research_promotion).parameters):
         raise ValueError("cn_research_persistent_qpk_required")
-    result = run_actionable_research_promotion(
+    promotion_kwargs = dict(
         strategy_profile=PROFILE, domain="cn_equity", as_of=as_of, drift_score=drift_score,
         source_revision=source_revision, evaluation_date=evaluation_date,
         optimize=optimize, enforce_backtest_gates=gate, record_shadow=record_shadow, sync_console=sync_console,
         diagnose=diagnose, pull_console=pull_console, research_identity=identity, ticket_dir=ticket_dir,
         admit_new_research=admit_new_research, read_pending_shadow=read_pending_shadow,
+        research_owner=research_owner,
     )
-    return {**result, "trial_records_path": str(trial_path), "experiment_store_root": str(experiment_store_root),
+    if summarize is not None:
+        promotion_kwargs["summarize"] = summarize
+    result = dict(run_actionable_research_promotion(**promotion_kwargs))
+    # QPK may reuse or archive a saved ticket before invoking either callback.
+    # Do not report the newly derived experiment hash as executed evidence in
+    # that case; the durable ticket is the only accepted identity.
+    ticket_path = result.get("ticket_path")
+    ticket_stem = Path(ticket_path).stem if isinstance(ticket_path, str) else ""
+    if not ticket_stem:
+        ticket = result.get("ticket")
+        ticket_id = ticket.get("ticket_id") if isinstance(ticket, dict) else ""
+        ticket_stem = str(ticket_id or "")
+    if ticket_stem:
+        if (ticket_stem.startswith("rpt_") and len(ticket_stem) == 68
+                and all(char in "0123456789abcdef" for char in ticket_stem[4:])):
+            result["research_key"] = ticket_stem[4:]
+    if result.get("reason") in {"saved_research_ticket_reused", "saved_research_ticket_terminal",
+                                 "research_scope_archived"} and not trial_path.exists():
+        result["trial_records_path"] = None
+        result["experiment_store_root"] = None
+    return {**result, "trial_records_path": result.get("trial_records_path", str(trial_path)),
+            "experiment_store_root": result.get("experiment_store_root", str(experiment_store_root)),
             "research_identity": identity,
             "benchmark_method": "monthly_target_510300_same_constraints",
             "live_ready": False, "size_zero_required": True, "no_order": True}
