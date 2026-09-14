@@ -173,6 +173,47 @@ def test_proxy_does_not_require_quotes_on_calendar_holidays():
     assert result.final_holdings["510300"] > 0
 
 
+def test_proxy_does_not_insert_2023_market_holiday_gaps():
+    dates = pd.bdate_range("2023-05-30", "2023-06-26")
+    holidays = {pd.Timestamp("2023-06-22"), pd.Timestamp("2023-06-23")}
+    rows = [
+        {"date": day, "symbol": "159949", "close": 10.0}
+        for day in dates
+        if day not in holidays
+    ]
+    result = run_proxy_backtest(
+        pd.DataFrame(rows),
+        lambda history: ({"159949": 1.0}, {}),
+        universe_symbols=("159949",),
+        config=ProxyBacktestConfig(
+            min_history_days=1,
+            rebalance_frequency="monthly",
+            commission_rate=0,
+            min_commission=0,
+            cash_reserve_ratio=0,
+        ),
+    )
+    assert list(result.equity_curve.index) == [day for day in dates if day not in holidays]
+    assert result.final_holdings["159949"] > 0
+
+
+def test_proxy_rejects_missing_price_on_2023_trading_day_while_holding():
+    dates = pd.bdate_range("2023-05-30", "2023-06-26")
+    holidays = {pd.Timestamp("2023-06-22"), pd.Timestamp("2023-06-23")}
+    rows = [
+        {"date": day, "symbol": "159949", "close": float("nan") if day == pd.Timestamp("2023-06-26") else 10.0}
+        for day in dates
+        if day not in holidays
+    ]
+    with pytest.raises(ValueError, match="finite positive price"):
+        run_proxy_backtest(
+            pd.DataFrame(rows),
+            lambda history: ({"159949": 1.0}, {}),
+            universe_symbols=("159949",),
+            config=ProxyBacktestConfig(min_history_days=1, rebalance_frequency="monthly"),
+        )
+
+
 def test_proxy_all_cash_tolerates_missing_trading_day_without_inventing_holdings():
     rows = [{"date": day, "symbol": "510300", "close": 10.0}
             for day in pd.bdate_range("2024-01-02", periods=5)
