@@ -40,7 +40,7 @@ requires-dist = [
     { name = "ai-gateway-client", marker = "extra == 'research'", git = "https://github.com/QuantStrategyLab/AIAuditBridge.git?rev=60bd64a2ae059a082614181eeb845b46df395523" },
     { name = "pandas", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
-    { name = "quant-platform-kit", git = "https://github.com/QuantStrategyLab/QuantPlatformKit.git?rev=1a6ed98eea5d69ebe6d09ec1cb1e6ec10c4faeed" },
+    { name = "quant-platform-kit", git = "https://github.com/QuantStrategyLab/QuantPlatformKit.git?rev=c7646a7168b3dafa763ef7751a182d23e8de7790" },
 ]
 provides-extras = ["test", "research"]
 
@@ -324,7 +324,7 @@ wheels = [
 [[package]]
 name = "quant-platform-kit"
 version = "1.0.0"
-source = { git = "https://github.com/QuantStrategyLab/QuantPlatformKit.git?rev=1a6ed98eea5d69ebe6d09ec1cb1e6ec10c4faeed#1a6ed98eea5d69ebe6d09ec1cb1e6ec10c4faeed" }
+source = { git = "https://github.com/QuantStrategyLab/QuantPlatformKit.git?rev=c7646a7168b3dafa763ef7751a182d23e8de7790#c7646a7168b3dafa763ef7751a182d23e8de7790" }
 
 [[package]]
 name = "six"
