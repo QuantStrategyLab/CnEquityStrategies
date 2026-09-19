@@ -132,6 +132,15 @@ def _shared_market_history(
         raise ValueError("market history has incomplete 510300 reference coverage")
     first_required_day = min(reference_dates)
     latest_required_day = max(reference_dates)
+    peer_dates_after_first = set(
+        history.loc[
+            history["symbol"].isin(required_symbols - {reference_symbol})
+            & (history["date"] > first_required_day),
+            "date",
+        ]
+    )
+    if not peer_dates_after_first.issubset(reference_dates):
+        raise ValueError("market history has incomplete 510300 reference coverage")
     incomplete_symbols: list[str] = []
     for symbol in sorted(required_symbols):
         symbol_dates = set(history.loc[history["symbol"] == symbol, "date"])
