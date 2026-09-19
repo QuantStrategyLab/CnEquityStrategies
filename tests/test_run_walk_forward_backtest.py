@@ -180,6 +180,26 @@ def test_shared_market_history_rejects_stale_symbol_tail() -> None:
         )
 
 
+def test_shared_market_history_rejects_midstream_510300_gap_observed_by_peers() -> None:
+    profile = "cn_index_etf_tactical_rotation"
+    dates = pd.bdate_range("2022-01-03", "2026-03-31")
+    gap_day = pd.Timestamp("2026-02-18")
+    rows = [
+        {"date": day, "symbol": symbol, "close": 10.0}
+        for symbol in PROXY_PROFILE_REGISTRY[profile].extract_managed_symbols()
+        for day in dates
+        if not (symbol == "510300" and day == gap_day)
+    ]
+
+    with pytest.raises(ValueError, match="incomplete 510300 reference coverage"):
+        _shared_market_history(
+            profile,
+            {"min_history_days": 220},
+            DEFAULT_WINDOWS,
+            pd.DataFrame(rows),
+        )
+
+
 def test_baseline_uses_exact_tail_of_full_return_stream() -> None:
     from quant_platform_kit.strategy_lifecycle.contracts import BacktestResult
 
