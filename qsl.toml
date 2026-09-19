@@ -5,6 +5,6 @@ upgrade_ring = "ring_b"
 bundle = "2026.09.1"
 requires = [
   "pandas>=2.0",
-  "quant-platform-kit @ git+https://github.com/QuantStrategyLab/QuantPlatformKit.git@4664c2b283e9409a7dae4febf8571260c9f72724",
+  "quant-platform-kit @ git+https://github.com/QuantStrategyLab/QuantPlatformKit.git@8e8ec51884bf8abb0a7ca699fc2da39fad134f89",
   "ai-gateway-client @ git+https://github.com/QuantStrategyLab/AIAuditBridge.git@60bd64a2ae059a082614181eeb845b46df395523",
 ]
