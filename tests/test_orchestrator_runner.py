@@ -50,6 +50,8 @@ class CnProxyBacktestRunnerTests(unittest.TestCase):
         )
         self.assertEqual(result.strategy_profile, PROFILE_NAME)
         self.assertEqual(result.domain, "cn_equity")
+        self.assertEqual(result.periods_per_year, 252.0)
+        self.assertEqual(result.calendar_id, "XSHG")
         self.assertIsNotNone(result.sharpe_ratio)
         self.assertGreater(result.observation_count, 0)
         self.assertFalse(runner.last_daily_returns.empty)

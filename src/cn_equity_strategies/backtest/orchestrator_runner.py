@@ -115,6 +115,8 @@ def _metrics_to_backtest_result(
         source_script="cn_equity_strategies.backtest.orchestrator_runner",
         computed_at=datetime.now(timezone.utc).isoformat(),
         run_duration_seconds=run_duration_seconds,
+        periods_per_year=252.0,
+        calendar_id="XSHG",
     )
 
 
