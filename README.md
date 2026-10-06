@@ -1,14 +1,5 @@
 # CnEquityStrategies
 
-
-## QSL architecture role
-
-- **Layer**: `strategy-library`.
-- **Responsibility**: A-share strategy implementation package.
-- **Owns**: runtime-enabled strategy code, manifests, catalog metadata.
-- **Consumes**: QuantPlatformKit and validated snapshot artifacts.
-- **Must not**: connect to brokers or deploy live services.
-
 [Chinese README](README.zh-CN.md)
 
 > Investing involves risk. This project does not provide investment advice and is for education, research, and engineering review only.
@@ -18,6 +9,14 @@
 `CnEquityStrategies` is the A-share equity strategy package for QuantStrategyLab. It contains reusable strategy implementations, manifests, catalog metadata, and runtime adapters for CN-capable platform repositories.
 
 This repository is a strategy layer, not a broker or deployment layer. It does not store broker credentials, submit orders by itself, publish snapshot artifacts, or decide whether a profile is safe for live trading without external evidence.
+
+## QSL architecture role
+
+- **Layer**: `strategy-library`.
+- **Responsibility**: A-share strategy implementation package.
+- **Owns**: runtime-enabled strategy code, manifests, catalog metadata.
+- **Consumes**: QuantPlatformKit and validated snapshot artifacts.
+- **Must not**: connect to brokers or deploy live services.
 
 ## Current runtime surface
 

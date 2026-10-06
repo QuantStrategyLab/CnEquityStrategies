@@ -1,14 +1,5 @@
 # CnEquityStrategies
 
-
-## QSL 架构角色
-
-- **层级**：`策略库`。
-- **职责**：A 股策略实现包。
-- **事实源/归属**：runtime-enabled 策略代码、manifests、catalog metadata。
-- **消费对象**：QuantPlatformKit 和已验证快照 artifacts。
-- **禁止事项**：连接券商或部署 live 服务。
-
 [English README](README.md)
 
 > 投资有风险。本项目不构成投资建议，仅用于学习、研究和工程审阅。
@@ -18,6 +9,14 @@
 `CnEquityStrategies` 是 QuantStrategyLab 的 A 股策略包，提供 A 股策略实现、manifest、catalog metadata 和 runtime adapter，供支持 A 股的执行平台复用。
 
 这是策略层，不是券商或部署层。本仓库不保存券商凭据，不自行下单，不发布 snapshot artifact，也不能在缺少外部证据的情况下决定某个 profile 是否适合 live。
+
+## QSL 架构角色
+
+- **层级**：`策略库`。
+- **职责**：A 股策略实现包。
+- **事实源/归属**：runtime-enabled 策略代码、manifests、catalog metadata。
+- **消费对象**：QuantPlatformKit 和已验证快照 artifacts。
+- **禁止事项**：连接券商或部署 live 服务。
 
 ## 当前 runtime 面
 
