@@ -1,66 +1,72 @@
-from __future__ import annotations
-
-import contextlib
-import io
-import os
-import tempfile
-import unittest
-from pathlib import Path
+"""Promotion keeps a three-role advisory quorum and blocks missing results."""
+import json
 from unittest.mock import patch
-
+import pytest
 from scripts.gate_evidence_package import _run_promotion_dual_review
 
 
-class PromotionReviewExitTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
-        scripts = self.root / "scripts"
-        scripts.mkdir()
-        self.script = scripts / "run_dual_review_pipeline.py"
-        self.script.write_text(
-            "import os, signal, sys\n"
-            "from pathlib import Path\n"
-            "code = Path(sys.argv[sys.argv.index('--from-evidence') + 1]).stem\n"
-            "with Path('calls').open('a') as log: log.write(code + '\\n')\n"
-            "if code == 'signal': os.kill(os.getpid(), signal.SIGTERM)\n"
-            "raise SystemExit(int(code))\n",
-            encoding="utf-8",
-        )
-
-    def review(self, codes: tuple[str, ...], *, skip: str = "") -> int:
-        # This is a real local Python child process, with synthetic exit behavior
-        # only. It never imports AIAuditBridge, reads evidence or calls a model.
-        with patch.dict(os.environ, {"AIAUDIT_BRIDGE_ROOT": str(self.root), "DUAL_REVIEW_GATE_SKIP": skip}):
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                return _run_promotion_dual_review([self.root / f"{code}.json" for code in codes])
-
-    def test_every_nonzero_exit_blocks_promotion(self) -> None:
-        for code in ("1", "2", "3", "127", "signal"):
-            with self.subTest(code=code):
-                self.assertEqual(self.review((code,)), 1)
-
-    def test_failure_remains_blocking_after_later_success(self) -> None:
-        for failure in ("1", "2", "signal"):
-            with self.subTest(failure=failure):
-                (self.root / "calls").write_text("", encoding="utf-8")
-                self.assertEqual(self.review((failure, "0")), 1)
-                self.assertEqual((self.root / "calls").read_text().splitlines(), [failure, "0"])
-
-    def test_all_successful_reviews_pass(self) -> None:
-        self.assertEqual(self.review(("0", "0")), 0)
-        self.assertEqual((self.root / "calls").read_text().splitlines(), ["0", "0"])
-
-    def test_explicit_skip_does_not_run_review(self) -> None:
-        self.assertEqual(self.review(("1",), skip="true"), 0)
-        self.assertFalse((self.root / "calls").exists())
-
-    def test_missing_optional_script_keeps_existing_skip(self) -> None:
-        self.script.unlink()
-        self.assertEqual(self.review(("1",)), 0)
-        self.assertFalse((self.root / "calls").exists())
+@pytest.fixture
+def evidence(tmp_path, monkeypatch):
+    monkeypatch.setenv("GITHUB_SHA", "a" * 40)
+    monkeypatch.delenv("DUAL_REVIEW_GATE_SKIP", raising=False)
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps({"synthetic": True}))
+    return path
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize("status", ["pending", "unavailable", "failed", "outcome_unknown"])
+def test_noncompleted_quorum_blocks_promotion(evidence, status):
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material", return_value={"status": status}):
+        assert _run_promotion_dual_review([evidence]) != 0
+
+
+@pytest.mark.parametrize("outcome", ["agree_reject", "requires_human", "unknown"])
+def test_rejection_or_disagreement_blocks(evidence, outcome):
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material", return_value={
+        "status": "completed", "outcome": outcome, "advisory_only": True,
+    }):
+        assert _run_promotion_dual_review([evidence]) != 0
+
+
+def test_three_roles_and_caller_bound_material(evidence):
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material", return_value={
+        "status": "completed", "outcome": "agree_approve", "advisory_only": True,
+    }) as review:
+        assert _run_promotion_dual_review([evidence]) == 0
+    assert review.call_args.args[0] == {"synthetic": True}
+    assert len(review.call_args.kwargs["required_roles"]) == 3
+    assert "a" * 40 in review.call_args.kwargs["operation_id"]
+
+
+def test_failed_file_cannot_be_overwritten_by_later_success(evidence):
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material", side_effect=[
+        {"status": "completed", "outcome": "agree_reject", "advisory_only": True},
+        {"status": "completed", "outcome": "agree_approve", "advisory_only": True},
+    ]) as review:
+        assert _run_promotion_dual_review([evidence, evidence]) != 0
+    assert review.call_count == 1
+
+
+def test_explicit_existing_skip_makes_no_task(evidence, monkeypatch):
+    monkeypatch.setenv("DUAL_REVIEW_GATE_SKIP", "true")
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material") as review:
+        assert _run_promotion_dual_review([evidence]) == 0
+        review.assert_not_called()
+
+
+def test_missing_evidence_and_private_error_fail_without_leaking(evidence, capsys):
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material", side_effect=RuntimeError("private credential")):
+        assert _run_promotion_dual_review([evidence]) != 0
+    evidence.unlink()
+    assert _run_promotion_dual_review([evidence]) != 0
+    assert "private credential" not in capsys.readouterr().err
+
+
+def test_toml_evidence_is_supported(evidence):
+    path = evidence.with_suffix(".toml")
+    path.write_text("synthetic = true\n")
+    with patch("quant_platform_kit.strategy_lifecycle.task_review.review_material", return_value={
+        "status": "completed", "outcome": "agree_approve", "advisory_only": True,
+    }) as review:
+        assert _run_promotion_dual_review([path]) == 0
+    assert review.call_args.args[0] == {"synthetic": True}

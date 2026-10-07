@@ -14,11 +14,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "ai-gateway-client"
-version = "0.1.0"
-source = { git = "https://github.com/QuantStrategyLab/AIAuditBridge.git?rev=60bd64a2ae059a082614181eeb845b46df395523#60bd64a2ae059a082614181eeb845b46df395523" }
-
-[[package]]
 name = "cn-equity-strategies"
 version = "0.1.0"
 source = { editable = "." }
@@ -28,16 +23,12 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-research = [
-    { name = "ai-gateway-client" },
-]
 test = [
     { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "ai-gateway-client", marker = "extra == 'research'", git = "https://github.com/QuantStrategyLab/AIAuditBridge.git?rev=60bd64a2ae059a082614181eeb845b46df395523" },
     { name = "pandas", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
     { name = "quant-platform-kit", git = "https://github.com/QuantStrategyLab/QuantPlatformKit.git?rev=c7646a7168b3dafa763ef7751a182d23e8de7790" },

@@ -15,7 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
-research = ["ai-gateway-client @ git+https://github.com/QuantStrategyLab/AIAuditBridge.git@60bd64a2ae059a082614181eeb845b46df395523"]
+research = []
 
 [tool.setuptools]
 package-dir = {"" = "src"}
