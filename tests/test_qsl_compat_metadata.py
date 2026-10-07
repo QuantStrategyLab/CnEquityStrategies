@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-QPK_REVISION = "c7646a7168b3dafa763ef7751a182d23e8de7790"
+QPK_REVISION = "f6f2079f6b53d3cbb3b72bdcc5c2476ed8f170f1"
 QPK_URL = (
     "quant-platform-kit @ git+https://github.com/QuantStrategyLab/"
     f"QuantPlatformKit.git@{QPK_REVISION}"
@@ -53,28 +53,11 @@ def test_qpk_pin_lock_and_ci_are_dependency_enabled() -> None:
     assert "python -m pip check" in ci
 
 
-def test_research_extra_installs_frozen_sdk_and_consumer_checker():
-    import importlib.metadata
-    import inspect
-    import json
-    import ai_gateway_client
-    from quant_platform_kit.strategy_lifecycle import research_promotion_cycle
-    from quant_platform_kit.strategy_lifecycle.promotion_actionable_runner import run_actionable_research_promotion
-
-    assert ai_gateway_client.AiGatewayClient
-    assert research_promotion_cycle.run_research_promotion_cycle
-    assert importlib.metadata.version("quant-platform-kit") == "1.0.0"
-    installed_qpk = json.loads(importlib.metadata.distribution("quant-platform-kit").read_text("direct_url.json"))
-    assert installed_qpk["vcs_info"]["commit_id"] == QPK_REVISION
-    assert {"research_identity", "admit_new_research", "read_pending_shadow"} <= set(inspect.signature(run_actionable_research_promotion).parameters)
+def test_research_extra_has_no_legacy_ai_sdk():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
-    sdk = "ai-gateway-client @ git+https://github.com/QuantStrategyLab/AIAuditBridge.git@60bd64a2ae059a082614181eeb845b46df395523"
-    assert project["project"]["optional-dependencies"]["research"] == [sdk]
+    assert project["project"]["optional-dependencies"]["research"] == []
     lock = tomllib.loads((ROOT / "uv.lock").read_text())
-    package = next(p for p in lock["package"] if p["name"] == "ai-gateway-client")
-    assert package["source"]["git"].endswith("#60bd64a2ae059a082614181eeb845b46df395523")
-    installed_sdk = json.loads(importlib.metadata.distribution("ai-gateway-client").read_text("direct_url.json"))
-    assert installed_sdk["vcs_info"]["commit_id"] == "60bd64a2ae059a082614181eeb845b46df395523"
+    assert "ai-gateway-client" not in {p["name"] for p in lock["package"]}
     ci = (ROOT / ".github/workflows/ci.yml").read_text()
     assert 'consumer-qpk-pin' in ci
     assert '--pin-file external/QuantPlatformKit/QPK_PIN' not in ci
@@ -85,5 +68,7 @@ def test_evidence_gate_uses_exact_installed_consumer_without_source_override():
     assert 'tomllib.load(stream)["project"]["dependencies"]' in workflow
     assert "--no-deps" not in workflow
     assert "ref: main" not in workflow
-    assert 'ref: 60bd64a2ae059a082614181eeb845b46df395523' in workflow
+    assert "AIAuditBridge" not in workflow
+    assert "AI_SERVICE_REVIEWERS_JSON" in workflow
+    assert "CODEX_AUDIT_SERVICE_URL" not in workflow
     assert "python -m pip check" in workflow
