@@ -387,7 +387,7 @@ def run_index_etf_research_job(
     locked_oos_start: date, locked_oos_end: date, purge_days: int, embargo_days: int,
     code_revision: str, ticket_dir, store_root, as_of, drift_score, source_revision,
     record_shadow, sync_console, diagnose=None, summarize=None, pull_console=None, admit_new_research=None,
-    read_pending_shadow=None,
+    read_pending_shadow=None, read_pending_diagnosis=None,
     research_owner=None,
     config=None, cost_model=None, evaluation_date=None,
 ) -> dict[str, Any]:
@@ -395,7 +395,7 @@ def run_index_etf_research_job(
 
     No command text/model result can select this configuration. The deployment
     binds historical roots only after approving provider/license/range evidence.
-    AAB keeps its job/lease; QPK owns stage persistence. This is not a scheduler.
+    The owning caller admits work; QPK owns stage persistence. This is not a scheduler.
     """
     from pathlib import Path
     from collections.abc import Mapping
@@ -439,6 +439,8 @@ def run_index_etf_research_job(
     # A dependency without the persisted interface fails before any remote call.
     import inspect
     required_qpk_parameters = {"research_identity", "admit_new_research", "read_pending_shadow"}
+    if read_pending_diagnosis is not None:
+        required_qpk_parameters.add("read_pending_diagnosis")
     if summarize is not None:
         required_qpk_parameters.add("summarize")
     if research_owner is not None:
@@ -453,6 +455,8 @@ def run_index_etf_research_job(
         admit_new_research=admit_new_research, read_pending_shadow=read_pending_shadow,
         research_owner=research_owner,
     )
+    if read_pending_diagnosis is not None:
+        promotion_kwargs["read_pending_diagnosis"] = read_pending_diagnosis
     if summarize is not None:
         promotion_kwargs["summarize"] = summarize
     result = dict(run_actionable_research_promotion(**promotion_kwargs))

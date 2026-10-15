@@ -14,9 +14,10 @@ Dynamic mode
 Regime-based adjustment driven by the dividend leg's breadth regime:
 - risk_on: full static weights (30/50/20 ETF/growth/dividend).
 - soft_defense: growth reduced to 85% of its weight; freed allocation
-  shifts to the safe-haven ETF (510300).
+  increases the existing ETF leg budget (not a dedicated 510300 order).
 - hard_defense: growth reduced to 50% of its weight; ETF reduced to 85%
-  of its weight; freed allocation stays in the safe-haven ETF.
+  of its weight; freed allocation remains cash. With fully invested legs,
+  default budgets become 25.5/25/20%, leaving 29.5% cash.
 
 Usage
 -----
@@ -172,12 +173,13 @@ def build_target_weights(
     # Determine effective weights (dynamic adjustment)
     regime = str(dividend_metadata.get("regime", "risk_on"))
     if dynamic_mode and regime == "soft_defense":
-        # Soft defense: reduce growth to 85%, shift proceeds to ETF
+        # Soft defense: reduce growth to 85%, increase the ETF leg budget.
         effective_growth = resolved_growth_weight * 0.85
         effective_etf = etf_weight + (resolved_growth_weight - effective_growth)
         effective_dividend = dividend_weight
     elif dynamic_mode and regime == "hard_defense":
-        # Hard defense: growth at 50%, ETF boosted to 85% allocation
+        # Hard defense: growth at 50%, ETF at 85% of its original budget;
+        # the unused budget remains cash.
         effective_growth = resolved_growth_weight * 0.50
         effective_etf = etf_weight * 0.85
         effective_dividend = dividend_weight

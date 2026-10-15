@@ -30,13 +30,13 @@ def test_drift_workflow_wires_real_snapshot_history_and_preflight_bundle() -> No
     assert "Upload lifecycle preflight artifact" in workflow
     assert "actions/upload-artifact@v7" in workflow
     assert workflow.count("github.ref == format('refs/heads/{0}', github.event.repository.default_branch)") == 2
-    assert "uses: QuantStrategyLab/QuantPlatformKit/.github/workflows/reusable-drift-check.yml@c7646a7168b3dafa763ef7751a182d23e8de7790" in workflow
+    assert "uses: ./.github/workflows/reusable-drift-check.yml" in workflow
     assert "strategy_domain: cn_equity" in workflow
     assert "caller_event_name: ${{ github.event_name }}" in workflow
     assert "caller_pr_head_repository: ${{ github.event.pull_request.head.repo.full_name || '' }}" in workflow
     assert "snapshot_repository: QuantStrategyLab/CnEquitySnapshotPipelines" in workflow
     assert "snapshot_checkout_path: external/CnEquitySnapshotPipelines" in workflow
-    assert "ai_gateway_service_url: ${{ vars.AI_GATEWAY_SERVICE_URL }}" in workflow
+    assert "ai_service_url: ${{ vars.AI_SERVICE_URL }}" in workflow
     assert "lifecycle_preflight_artifact: lifecycle-preflight-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
-    assert "codex_audit_service_url: ${{ secrets.CODEX_AUDIT_SERVICE_URL }}" in workflow
+    assert "codex_audit_service_url:" not in workflow
     assert "secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token" in workflow

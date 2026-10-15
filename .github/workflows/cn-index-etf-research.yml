@@ -1,0 +1,38 @@
+name: CN Index ETF Research V2
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: Run the root-policy-bound cloud experiment
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: cn-index-etf-research-v2
+  cancel-in-progress: false
+jobs:
+  research:
+    if: github.repository == 'QuantStrategyLab/CnEquityStrategies' && github.ref == 'refs/heads/main' && github.run_attempt == 1 && vars.AI_SERVICE_RELEASE_READY == 'true'
+    runs-on: [self-hosted, research-runner]
+    timeout-minutes: 60
+    env:
+      AI_SERVICE_URL: ${{ vars.AI_SERVICE_URL }}
+      AI_SERVICE_AUDIENCE: ${{ vars.AI_SERVICE_AUDIENCE }}
+      AI_SERVICE_MODE: agent
+      AI_SERVICE_MODEL: ${{ vars.AI_SERVICE_RESEARCH_MODEL }}
+      AI_SERVICE_PROFILE: ${{ vars.AI_SERVICE_RESEARCH_PROFILE || 'default' }}
+      AI_SERVICE_SUMMARY_MODEL: ${{ vars.AI_SERVICE_SUMMARY_MODEL }}
+      STRATEGY_WATCH_SOURCE_REPO: QuantStrategyLab/CnEquitySnapshotPipelines
+      GH_TOKEN: ${{ github.token }}
+      WATCHER_RESULT: ${{ vars.CN_RESEARCH_WATCHER_RESULT_PATH }}
+      EXECUTE: ${{ inputs.execute }}
+    steps:
+      - name: Run the preinstalled approved source revision
+        run: |
+          set -euo pipefail
+          test -n "$WATCHER_RESULT"
+          args=(--dry-run)
+          if [[ "$EXECUTE" == "true" ]]; then args=(); fi
+          python -m cn_equity_strategies.backtest.index_etf_research_task --watcher-result "$WATCHER_RESULT" "${args[@]}"
