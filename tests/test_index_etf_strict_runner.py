@@ -452,6 +452,74 @@ def test_real_cycle_adapter_persists_rejected_search_and_reuses_terminal_without
     assert calls == ["admit", "diagnose"]
 
 
+def test_strict_run_persists_same_annualization_contract_as_proxy(tmp_path):
+    from cn_equity_strategies.backtest.index_etf_research_job import BASELINE_PARAMS
+    from cn_equity_strategies.backtest.orchestrator_runner import _metrics_to_backtest_result
+    from quant_platform_kit.strategy_lifecycle.contracts import BacktestResult, WindowPerformance
+    from quant_platform_kit.strategy_lifecycle.performance_metrics import (
+        annualization_basis_is_comparable, compare_with_backtest,
+    )
+    from quant_platform_kit.strategy_lifecycle.performance_store import PerformanceStore
+
+    days = list(pd.bdate_range("2024-01-02", periods=230).strftime("%Y-%m-%d"))
+
+    def change(rows):
+        for row in rows:
+            close = 10 + days.index(row["date"]) * .01
+            row.update(open=close, close=close, high=close * 1.02, low=close * .98, limit_up=close * 1.1, limit_down=close * .9)
+
+    runner = CnIndexEtfBacktestRunner(inputs(days, mutate=change), development_end=date.fromisoformat(days[-1]))
+    result = runner.run("cn_index_etf_tactical_rotation", BASELINE_PARAMS, date.fromisoformat(days[220]), date.fromisoformat(days[-1]))
+    assert result.periods_per_year == 252.0
+    assert result.calendar_id == "XSHG"
+
+    store = PerformanceStore(local_root=tmp_path / "strict")
+    store.save_backtest_result(result)
+    loaded = store.load_latest_backtest(result.domain, result.strategy_profile)
+    assert loaded.periods_per_year == 252.0
+    assert loaded.calendar_id == "XSHG"
+
+    proxy = _metrics_to_backtest_result(
+        strategy_profile=result.strategy_profile, params=dict(result.params),
+        metrics={"days": result.observation_count, "annual_return": result.cagr, "max_drawdown": result.max_drawdown,
+                 "annual_volatility": result.volatility, "sharpe_ratio": result.sharpe_ratio, "total_return": result.total_return},
+        start_date=result.start_date, end_date=result.end_date, run_duration_seconds=0.0,
+    )
+    actual = WindowPerformance(
+        window_name="synthetic", window_days=result.observation_count, start_date=result.start_date, end_date=result.end_date,
+        observation_count=result.observation_count, total_return=result.total_return, cagr=result.cagr, volatility=result.volatility,
+        sharpe_ratio=result.sharpe_ratio, sortino_ratio=0.0, calmar_ratio=result.calmar_ratio or 0.0, max_drawdown=result.max_drawdown,
+        win_rate=0.0, periods_per_year=252.0, calendar_id="XSHG",
+    )
+    assert loaded.periods_per_year == proxy.periods_per_year == 252.0
+    assert loaded.calendar_id == proxy.calendar_id == "XSHG"
+    assert annualization_basis_is_comparable(actual, loaded)
+    assert annualization_basis_is_comparable(actual, proxy)
+    assert compare_with_backtest(actual, loaded)
+    assert compare_with_backtest(actual, proxy)
+
+    legacy_root = tmp_path / "legacy"
+    legacy_dir = legacy_root / "backtest" / "cn_equity" / result.strategy_profile
+    legacy_dir.mkdir(parents=True)
+    legacy_path = legacy_dir / "backtest_v1_2020-01-01T00-00-00Z.json"
+    legacy_path.write_text(json.dumps({
+        "strategy_profile": result.strategy_profile, "domain": result.domain,
+        "param_set_id": "cn_index_etf_tactical_rotation_baseline_legacy",
+        "params": {"momentum_window_days": 60, "trend_window_days": 200, "top_n": 1},
+        "sharpe_ratio": 0.1, "cagr": 0.05, "max_drawdown": -0.2, "volatility": 0.15, "total_return": 0.08,
+        "start_date": "2024-01-02", "end_date": "2024-12-31", "observation_count": 10,
+        "computed_at": "2020-01-01T00:00:00Z",
+    }) + "\n")
+    before = legacy_path.read_bytes()
+    legacy = PerformanceStore(local_root=legacy_root).load_latest_backtest(result.domain, result.strategy_profile)
+    assert isinstance(legacy, BacktestResult)
+    assert legacy.periods_per_year is None
+    assert legacy.calendar_id == ""
+    assert annualization_basis_is_comparable(actual, legacy) is False
+    assert compare_with_backtest(actual, legacy) == {}
+    assert legacy_path.read_bytes() == before
+
+
 def test_malformed_license_record_has_fixed_failure_reason():
     manifest, members, _ = package()
     members["evidence/license_identity.json"] = b"[]"

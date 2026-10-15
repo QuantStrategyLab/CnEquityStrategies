@@ -428,7 +428,8 @@ class CnIndexEtfBacktestRunner:
                               benchmark_cagr=benchmark.metrics["annual_return"],
                               benchmark_max_drawdown=benchmark.metrics["max_drawdown"],
                               excess_cagr=metrics["annual_return"]-benchmark.metrics["annual_return"],
-                              source_script=__name__, computed_at=datetime.now(timezone.utc).isoformat())
+                              source_script=__name__, computed_at=datetime.now(timezone.utc).isoformat(),
+                              periods_per_year=252.0, calendar_id="XSHG")
 
     def run(self, strategy_profile, params, start_date=None, end_date=None):
         if self.development_end is None or end_date is None or end_date > self.development_end:
