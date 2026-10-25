@@ -122,6 +122,8 @@ The intended A-share runtime platform is:
 
 ## Safety and contribution notes
 
+- AI assistants and maintainers follow [AGENTS.md](AGENTS.md).
+
 - Do not commit secrets, tokens, cookies, broker credentials, account identifiers, or private order data.
 - Keep behavior changes small and include tests or reproducible evidence commands.
 - Do not promote a research profile into live runtime settings without the documented evidence gates.
