@@ -115,6 +115,8 @@ python scripts/smoke_cn_index_etf_tactical_rotation_dry_run.py --json
 
 ## 安全和贡献说明
 
+- AI 助手与维护者遵循 [AGENTS.md](AGENTS.md)。
+
 - 不要提交密钥、token、Cookie、券商凭据、账户标识或私人订单数据。
 - 行为改动尽量小，并附上测试或可复现证据命令。
 - 没有通过文档化 evidence gate 前，不要把研究 profile 提升到 live runtime settings。
