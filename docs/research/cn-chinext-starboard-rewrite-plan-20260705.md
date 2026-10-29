@@ -127,8 +127,8 @@
 
 ### 5.1 研究文档
 
-- `docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md`
-- `docs/research/cn_strategy_selection_20260627.md`
+- `docs/research/cn-chinext-growth-momentum-quality-snapshot-20260705.md`
+- `docs/research/cn-strategy-selection-20260627.md`
 - `docs/platform-integration.md`
 
 ### 5.2 研究脚本

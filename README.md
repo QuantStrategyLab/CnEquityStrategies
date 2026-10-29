@@ -116,9 +116,9 @@ The intended A-share runtime platform is:
 
 - [`docs/platform-integration.md`](docs/platform-integration.md)
 - [`docs/research/cn-index-etf-tactical-rotation.md`](docs/research/cn-index-etf-tactical-rotation.md)
-- [`docs/research/cn_growth_sleeve_redesign_20260705.md`](docs/research/cn_growth_sleeve_redesign_20260705.md)
-- [`docs/research/cn_growth_sleeve_structure_20260705.md`](docs/research/cn_growth_sleeve_structure_20260705.md)
-- [`docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md`](docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md)
+- [`docs/research/cn-growth-sleeve-redesign-20260705.md`](docs/research/cn-growth-sleeve-redesign-20260705.md)
+- [`docs/research/cn-growth-sleeve-structure-20260705.md`](docs/research/cn-growth-sleeve-structure-20260705.md)
+- [`docs/research/cn-chinext-growth-momentum-quality-snapshot-20260705.md`](docs/research/cn-chinext-growth-momentum-quality-snapshot-20260705.md)
 
 ## Safety and contribution notes
 
