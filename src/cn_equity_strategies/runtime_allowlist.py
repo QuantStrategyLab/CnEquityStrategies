@@ -1,6 +1,6 @@
 """Explicit runtime-selectable profiles for CN equity strategies."""
 
-RUNTIME_SELECTABLE_ALLOWLIST_V1 = frozenset({"cn_industry_etf_rotation"})
+RUNTIME_SELECTABLE_ALLOWLIST_V1 = frozenset()
 
 
 def get_runtime_selectable_profiles() -> frozenset[str]:

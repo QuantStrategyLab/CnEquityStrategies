@@ -4,6 +4,23 @@
 
 > Investing involves risk. This project does not provide investment advice and is for education, research, and engineering review only.
 
+## Research maintenance status
+
+New mainland China strategy research and selection are on hold while the project
+focuses on US equities. `get_runtime_selectable_profiles()` and
+`get_runtime_enabled_profiles()` now return an empty set: these package
+selection interfaces offer no profiles for new runtime selection. Catalog
+metadata, strategy code, evidence and historical interfaces remain available
+for existing baseline resolution; their historical labels do not authorize
+new selection.
+
+The QMT rollout allowlist is also empty; legacy QMT adapter lookup remains
+available for existing baseline resolution.
+
+This change does not stop existing schedules, update deployed or pinned
+consumers, or change existing targets or risk controls. Resumption requires an
+explicit owner decision and the existing evidence and platform approval checks.
+
 ## What this repository is
 
 `CnEquityStrategies` is the A-share equity strategy package for QuantStrategyLab. It contains reusable strategy implementations, manifests, catalog metadata, and runtime adapters for CN-capable platform repositories.
@@ -26,7 +43,7 @@ These profiles use platform-provided `market_history` and do not require a separ
 
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
-| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | A-share ETF main live track. |
+| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | Retained historical profile; not runtime-selectable. |
 | `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | Research/backtest only; legacy ETF tactical rotation. |
 
 ### Snapshot-backed runtime strategy
@@ -42,7 +59,7 @@ These profiles use platform-provided `market_history` and do not require a separ
 
 | Profile | Name | Input | Benchmark | Current role |
 | --- | --- | --- | --- | --- |
-| `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | Optional QMT live candidate; not the default runtime profile. |
+| `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | Retained historical candidate; excluded from the QMT rollout allowlist. |
 
 ### Research-only snapshot profiles
 

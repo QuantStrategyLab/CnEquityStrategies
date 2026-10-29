@@ -37,7 +37,7 @@ def test_aggressive_industry_etf_rotation_optional_qmt_runtime_adapter():
     assert adapter.available_inputs == frozenset({"market_history"})
     assert adapter.available_capabilities == frozenset({"broker_client"})
     assert CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE in get_qmt_optional_runtime_profiles()
-    assert CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE in get_qmt_rollout_allowlist()
+    assert CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE not in get_qmt_rollout_allowlist()
 
 
 def test_dividend_quality_runtime_adapter_requires_feature_snapshot_manifest():

@@ -1,12 +1,23 @@
 # Platform integration
 
-## Runtime-enabled profiles
+## Research maintenance status
+
+New mainland China research and selection are on hold. The package's runtime
+selection allowlist is empty. The QMT rollout
+allowlist is also empty; legacy adapter lookup remains available for existing
+baselines. Profiles and metadata below are
+historical interfaces, not authorization for new selection. Existing schedules,
+deployed or pinned consumers, platform bindings, and risk controls are not
+changed by this package update. Resumption requires an explicit owner decision
+and the existing evidence and platform approval checks.
+
+## Historical runtime profile
 
 | Profile | Input | Platform | Target mode |
 | --- | --- | --- | --- |
 | `cn_industry_etf_rotation` | `market_history` | `qmt` | `weight` |
 
-## Live candidate profiles
+## Historical live candidate profile
 
 | Profile | Input | Platform | Target mode |
 | --- | --- | --- | --- |
