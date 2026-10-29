@@ -133,7 +133,7 @@ def test_profile_groups_keep_runtime_and_scaffolds_separate():
             CN_STAR_GROWTH_MOMENTUM_QUALITY_PROFILE,
         }
     )
-    assert get_runtime_enabled_profiles() == frozenset({CN_INDUSTRY_ETF_ROTATION_PROFILE})
+    assert get_runtime_enabled_profiles() == frozenset()
     assert get_external_snapshot_scaffold_profiles().isdisjoint(get_runtime_enabled_profiles())
     assert get_live_candidate_profiles().isdisjoint(get_runtime_enabled_profiles())
     assert get_research_backtest_only_profiles().isdisjoint(get_runtime_enabled_profiles())

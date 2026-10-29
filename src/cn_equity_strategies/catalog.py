@@ -599,7 +599,7 @@ def get_qmt_optional_runtime_profiles() -> frozenset[str]:
 
 
 def get_qmt_rollout_allowlist() -> frozenset[str]:
-    return get_runtime_enabled_profiles() | get_qmt_optional_runtime_profiles()
+    return get_runtime_enabled_profiles()
 
 
 def get_direct_market_history_profiles() -> frozenset[str]:

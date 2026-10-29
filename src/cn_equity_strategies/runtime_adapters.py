@@ -13,7 +13,7 @@ from cn_equity_strategies.catalog import (
     CN_INDEX_ETF_TACTICAL_ROTATION_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_AGGRESSIVE_PROFILE,
     CN_INDUSTRY_ETF_ROTATION_PROFILE,
-    get_qmt_rollout_allowlist,
+    get_qmt_optional_runtime_profiles,
     get_strategy_definition,
     get_strategy_definitions,
     resolve_canonical_profile,
@@ -99,10 +99,11 @@ def _build_runtime_adapter_for_platform(
 
 def _build_platform_runtime_adapter_map(platform_id: str) -> dict[str, StrategyRuntimeAdapter]:
     normalized_platform = str(platform_id).strip().lower()
-    rollout_allowlist = get_qmt_rollout_allowlist()
+    # Keep historical adapter lookup available independently of new selection.
+    legacy_profiles = {CN_INDUSTRY_ETF_ROTATION_PROFILE} | get_qmt_optional_runtime_profiles()
     adapters: dict[str, StrategyRuntimeAdapter] = {}
     for profile, definition in get_strategy_definitions().items():
-        if profile not in rollout_allowlist:
+        if profile not in legacy_profiles:
             continue
         if normalized_platform not in definition.supported_platforms:
             continue
