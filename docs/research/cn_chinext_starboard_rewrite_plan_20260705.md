@@ -129,7 +129,7 @@
 
 - `docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md`
 - `docs/research/cn_strategy_selection_20260627.md`
-- `docs/platform_integration.md`
+- `docs/platform-integration.md`
 
 ### 5.2 研究脚本
 
