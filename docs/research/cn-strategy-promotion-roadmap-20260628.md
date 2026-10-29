@@ -268,7 +268,7 @@ JSON：`docs/research/cn_momentum_csi500_riskoff_tuning_20260628.json`
 
 **脚本：** `research_cn_ma120_vol_and_combo_scan.py`  
 **JSON：** `docs/research/cn_ma120_vol_and_combo_scan_20260628.json`  
-**Phase 2 计划：** `docs/research/cn_ma120_vol25_stock_sleeve_research_plan_20260628.md`
+**Phase 2 计划：** `docs/research/cn-ma120-vol25-stock-sleeve-research-plan-20260628.md`
 
 | Preset | 年化 | MDD | OOS 2024+ |
 |---|---:|---:|---:|
@@ -358,4 +358,4 @@ PYTHONPATH=src:scripts python3 scripts/research_cn_thematic_stock_rotation_proxy
 | `research_cn_thematic_stock_rotation_proxy.py` | 个股矩阵 |
 | `research_cn_dual_track_combo_proxy_backtest.py` | 双轨 proxy（ETF + 红利） |
 | `research_cn_etf_momentum_stock_combo_proxy_backtest.py` | ETF + CSI500 动量 risk-off 组合 proxy |
-| `docs/research/cn_industry_etf_rotation_design_20260627.md` | §12–§14 回测证据 |
+| `docs/research/cn-industry-etf-rotation-design-20260627.md` | §12–§14 回测证据 |

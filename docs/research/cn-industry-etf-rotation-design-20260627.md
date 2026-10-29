@@ -385,7 +385,7 @@ PYTHONPATH=src:scripts:../QuantPlatformKit/src:../CnEquitySnapshotPipelines/src 
 
 ## 14. Promotion 路线图与个股 risk 矩阵（2026-06-28）
 
-详见 **[cn_strategy_promotion_roadmap_20260628.md](./cn_strategy_promotion_roadmap_20260628.md)**，要点：
+详见 **[cn-strategy-promotion-roadmap-20260628.md](./cn-strategy-promotion-roadmap-20260628.md)**，要点：
 
 1. **Aggressive vol25% live 评审** — `AGGRESSIVE_PROMOTION_REVIEW_CHECKLIST`；推荐先作为 `live_candidate`，不替换 conservative 默认。
 2. **双轨 combo runtime 设计** — `DUAL_TRACK_COMBO_PRESETS` + `cn_dual_track_combo` 目标形态；阻塞项为 PIT 红利 + 统一组合模拟。
