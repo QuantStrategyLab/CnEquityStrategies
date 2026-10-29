@@ -114,8 +114,8 @@ The intended A-share runtime platform is:
 
 ## Useful docs
 
-- [`docs/platform_integration.md`](docs/platform_integration.md)
-- [`docs/research/cn_index_etf_tactical_rotation.md`](docs/research/cn_index_etf_tactical_rotation.md)
+- [`docs/platform-integration.md`](docs/platform-integration.md)
+- [`docs/research/cn-index-etf-tactical-rotation.md`](docs/research/cn-index-etf-tactical-rotation.md)
 - [`docs/research/cn_growth_sleeve_redesign_20260705.md`](docs/research/cn_growth_sleeve_redesign_20260705.md)
 - [`docs/research/cn_growth_sleeve_structure_20260705.md`](docs/research/cn_growth_sleeve_structure_20260705.md)
 - [`docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md`](docs/research/cn_chinext_growth_momentum_quality_snapshot_20260705.md)
