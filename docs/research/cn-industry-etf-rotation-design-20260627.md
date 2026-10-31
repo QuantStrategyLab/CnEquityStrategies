@@ -246,16 +246,8 @@ cd ../QmtPlatform && python3 scripts/smoke_cn_industry_etf_rotation_dry_run_e2e.
 - [x] manifest / default_config 含 `max_pair_correlation`
 - [x] CnEquity smoke：`scripts/smoke_cn_industry_etf_rotation_dry_run.py --json`
 - [x] Qmt e2e smoke：`QmtPlatform/scripts/smoke_cn_industry_etf_rotation_dry_run_e2e.py`
-- [x] Qmt pin 合入 main（QmtPlatform #7 → `3295660` on Strategies）
-- [x] 红利轨 expanded universe PR 合入（CnEquitySnapshotPipelines #6 → `c1c982f`）
-
-**合入记录（2026-06-27）**
-
-| PR | merge commit |
-|---|---|
-| CnEquityStrategies #7 | `3295660` |
-| CnEquitySnapshotPipelines #6 | `c1c982f` |
-| QmtPlatform #7 | `8e2aec9` |
+- [x] Qmt 侧 pin 指向当前 Strategies 版本
+- [x] 红利轨 expanded universe 已合入
 
 ---
 
