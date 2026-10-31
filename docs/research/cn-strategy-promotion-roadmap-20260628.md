@@ -80,7 +80,7 @@ QuantRuntimeSettings（切换控制台）
 | `bear_2021_2022` | **review** | 需确认熊市子区间未显著劣于 conservative |
 | `live_dry_run` | pass | Qmt conservative e2e 已通；aggressive 同 entrypoint 形态 |
 | `runtime_policy` | **pending** | 见下方 rollout 选项 |
-| `pin_and_docs` | pass | PR #7 已合入 |
+| `pin_and_docs` | pass | pin 与文档已更新 |
 
 ### 1.3 推荐 rollout（三选一）
 
