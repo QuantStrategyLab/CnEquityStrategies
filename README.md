@@ -17,7 +17,7 @@ new selection.
 The QMT rollout allowlist is also empty; legacy QMT adapter lookup remains
 available for existing baseline resolution.
 
-This change does not stop existing schedules, update deployed or pinned
+Paused selection does not stop existing schedules, update deployed or pinned
 consumers, or change existing targets or risk controls. Resumption requires an
 explicit owner decision and the existing evidence and platform approval checks.
 
