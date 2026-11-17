@@ -1,5 +1,7 @@
 # CN ETF 通用任务调用
 
+[English](task-service-v2.md) | 简体中文
+
 本地迁移基线：CnEquityStrategies `8f2c7296ddad5245203f445667f18fa41dc13d91`。没有修改主工作区、提交、发布、部署或调用真实模型。
 
 `backtest/index_etf_research_task.py` 接管原 AIAuditBridge 的 CN ETF 研究调用、根用户保护的本地政策、来源与问题绑定、每日一次新研究准入、真实前向观察及终态归档校验。策略边界由本仓库提供，AI 服务只接收通用任务。
