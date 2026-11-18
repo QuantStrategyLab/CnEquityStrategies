@@ -66,9 +66,10 @@ def test_drift_workflow_supports_readonly_app_and_no_fallback_mode() -> None:
         "|| (!(github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback) "
         "&& (steps.app_token.outputs.token || secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token)) || '' }}"
     ) in drift_workflow
+    assert "app_cred_source: ${{ steps.app_creds.outputs.source }}" in drift_workflow
     assert "disable_legacy_pat_fallback: ${{ github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback }}" in drift_workflow
-    assert "qsl_drift_app_id: ${{ secrets.QSL_DRIFT_APP_ID || secrets.QSL_GITHUB_APP_ID }}" in drift_workflow
-    assert "qsl_drift_app_private_key: ${{ secrets.QSL_DRIFT_APP_PRIVATE_KEY || secrets.QSL_GITHUB_APP_PRIVATE_KEY }}" in drift_workflow
+    assert "qsl_drift_app_id: ${{ (needs.preflight_backtests.outputs.app_cred_source == 'drift' && secrets.QSL_DRIFT_APP_ID) || (needs.preflight_backtests.outputs.app_cred_source == 'legacy' && secrets.QSL_GITHUB_APP_ID) || '' }}" in drift_workflow
+    assert "qsl_drift_app_private_key: ${{ (needs.preflight_backtests.outputs.app_cred_source == 'drift' && secrets.QSL_DRIFT_APP_PRIVATE_KEY) || (needs.preflight_backtests.outputs.app_cred_source == 'legacy' && secrets.QSL_GITHUB_APP_PRIVATE_KEY) || '' }}" in drift_workflow
     assert (
         "snapshot_repository_token: ${{ !(github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback) "
         "&& (secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token) || '' }}"
