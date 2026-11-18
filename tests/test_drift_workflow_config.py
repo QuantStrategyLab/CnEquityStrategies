@@ -68,6 +68,12 @@ def test_drift_workflow_supports_readonly_app_and_no_fallback_mode() -> None:
     ) in drift_workflow
     assert "app_cred_source: ${{ steps.app_creds.outputs.source }}" in drift_workflow
     assert "disable_legacy_pat_fallback: ${{ github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback }}" in drift_workflow
+    assert "Verify App-only snapshot checkout" in drift_workflow
+    assert "if: ${{ github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback }}" in drift_workflow
+    assert "token: ${{ steps.app_token.outputs.token }}" in drift_workflow
+    assert "path: external/app-checkout-proof" in drift_workflow
+    assert "persist-credentials: false" in drift_workflow
+    assert "test -d external/app-checkout-proof/.git && rm -rf external/app-checkout-proof" in drift_workflow
     assert "qsl_drift_app_id: ${{ (needs.preflight_backtests.outputs.app_cred_source == 'drift' && secrets.QSL_DRIFT_APP_ID) || (needs.preflight_backtests.outputs.app_cred_source == 'legacy' && secrets.QSL_GITHUB_APP_ID) || '' }}" in drift_workflow
     assert "qsl_drift_app_private_key: ${{ (needs.preflight_backtests.outputs.app_cred_source == 'drift' && secrets.QSL_DRIFT_APP_PRIVATE_KEY) || (needs.preflight_backtests.outputs.app_cred_source == 'legacy' && secrets.QSL_GITHUB_APP_PRIVATE_KEY) || '' }}" in drift_workflow
     assert (
