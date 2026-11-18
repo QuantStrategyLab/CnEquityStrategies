@@ -41,10 +41,32 @@ jobs:
           python -m pip install -e . pandas
           python -m pip install --no-deps -e external/QuantPlatformKit
 
+      - name: Check optional GitHub App credentials
+        id: app_creds
+        env:
+          APP_ID: ${{ secrets.QSL_GITHUB_APP_ID }}
+          APP_KEY: ${{ secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
+        run: |
+          if [ -n "${APP_ID:-}" ] && [ -n "${APP_KEY:-}" ]; then
+            echo "configured=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "configured=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Mint optional GitHub App token
+        id: app_token
+        if: steps.app_creds.outputs.configured == 'true'
+        continue-on-error: true
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        with:
+          app-id: ${{ secrets.QSL_GITHUB_APP_ID }}
+          private-key: ${{ secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Download latest trusted market history
         id: snapshot-input
         env:
-          GH_TOKEN: ${{ secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.app_token.outputs.token || secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token }}
           MARKET_HISTORY_PATH: ${{ runner.temp }}/snapshot-input/cn_etf_market_history.csv
         run: |
           set -euo pipefail
