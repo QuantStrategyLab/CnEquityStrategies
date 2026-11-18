@@ -32,42 +32,49 @@ QMT rollout allowlist 同样为空；历史 adapter 查找仍可用于解析既�
 
 ## 当前 runtime 面
 
-### 普通 runtime 策略
+### 直接运行时策略
 
 这些 profile 使用平台提供的 `market_history`，不需要先生成单独的 snapshot artifact，也能通过策略入口生成目标权重。
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
 | --- | --- | --- | --- | --- |
-| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | **主轨**：A 股行业 ETF 动量轮动。 |
-| `cn_dividend_quality_snapshot` | CN Dividend Quality Snapshot | `feature_snapshot` + manifest | `510300` | **防守轨**：红利+质量选股，广度控制防御敞口。 |
-| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | Legacy ETF tactical rotation；**research_backtest_only**。 |
+| `cn_industry_etf_rotation` | CN Industry ETF Rotation | `market_history` | `510300` | 保留的历史 profile；当前不可在运行时选择。 |
+| `cn_index_etf_tactical_rotation` | CN Index ETF Tactical Rotation | `market_history` | `510300` | 仅用于研究/回测；legacy ETF tactical rotation。 |
+
+### Snapshot-backed 运行时策略
+
+`CnEquitySnapshotPipelines` 负责维护 artifact 契约、生产数据血缘与 promotion 证据。
+
+| Profile | 名称 | 输入 | 基准 | 当前角色 |
+| --- | --- | --- | --- | --- |
+| `cn_dividend_quality_snapshot` | CN Dividend Quality Snapshot | `feature_snapshot` + manifest | `510300` | 防御配置的红利+质量复合选股器。 |
+| `cn_equity_combo` | CN Equity Combo | `market_history` + `feature_snapshot` | `510300` | 仅限研究的组合编排器，整合 ETF、成长与红利子策略。 |
 
 ### live candidate
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
 | --- | --- | --- | --- | --- |
-| `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | **Optional QMT live candidate**，不是默认 runtime。 |
+| `cn_industry_etf_rotation_aggressive` | CN Industry ETF Rotation Aggressive | `market_history` | `510300` | 保留的历史候选；已从 QMT rollout allowlist 中移除。 |
 
 ### 研究侧 snapshot 策略
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
 | --- | --- | --- | --- | --- |
-| `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | `feature_snapshot` + manifest | `399006` | **研究轨**：创业板成长动量质量选择。 |
+| `cn_chinext_growth_momentum_quality_snapshot` | CN ChiNext Growth Momentum Quality Snapshot | `feature_snapshot` + manifest | `399006` | 仅限研究的创业板成长动量质量选股器。 |
 
 ### 研究侧成长 sleeve
 
 | Profile | 名称 | 输入 | 基准 | 当前角色 |
 | --- | --- | --- | --- | --- |
-| `cn_chinext_growth_momentum_quality` | CN ChiNext Growth Momentum Quality | `market_history` | `510300` | **研究轨**：创业板成长 sleeve，板块级成长 + 动量 + 质量。 |
-| `cn_star_growth_momentum_quality` | CN Star Growth Momentum Quality | `market_history` | `510300` | **研究轨**：科创板成长 sleeve，流动性和集中度更严格。 |
+| `cn_chinext_growth_momentum_quality` | CN ChiNext Growth Momentum Quality | `market_history` | `510300` | 仅限研究的创业板成长 sleeve，板块级成长 + 动量 + 质量。 |
+| `cn_star_growth_momentum_quality` | CN Star Growth Momentum Quality | `market_history` | `510300` | 仅限研究的科创板成长 sleeve，流动性和集中度更严格。 |
 
-### 计划中的 snapshot-backed 策略
+### 计划中的外部 snapshot 脚手架
 
-| Profile | 名称 | 输入 | 基准 | 当前角色 |
-| --- | --- | --- | --- | --- |
-| `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | `feature_snapshot` + manifest | `510300` | Research scaffold，尚未 promotion。 |
-| `cn_equity_combo` | CN Equity Combo | `market_history` + `feature_snapshot` | `510300` | Research-only 组合轨；底层 legs 需重新过关。 |
-| `cn_chinext_tactical_rotation` | CN ChiNext Tactical Rotation | `market_history` | `510300` | Research-only 创业板 tactical 轮动线。 |
+| Profile | 名称 | 备注 |
+| --- | --- | --- |
+| `cn_small_cap_quality_snapshot` | CN Small-Cap Quality Snapshot | 外部 snapshot 脚手架；尚未注册到运行时 catalog。 |
+| `cn_chinext_tactical_rotation` | CN ChiNext Tactical Rotation | 仅限研究的创业板 tactical 轮动线。 |
 
 ## 表现和证据边界
 
