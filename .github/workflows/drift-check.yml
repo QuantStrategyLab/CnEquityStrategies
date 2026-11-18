@@ -6,6 +6,12 @@ on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
+    inputs:
+      disable_legacy_pat_fallback:
+        description: "Fail closed instead of falling back to legacy PAT or github.token."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -44,32 +50,48 @@ jobs:
       - name: Check optional GitHub App credentials
         id: app_creds
         env:
-          APP_ID: ${{ secrets.QSL_GITHUB_APP_ID }}
-          APP_KEY: ${{ secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
+          DRIFT_APP_ID: ${{ secrets.QSL_DRIFT_APP_ID }}
+          DRIFT_APP_KEY: ${{ secrets.QSL_DRIFT_APP_PRIVATE_KEY }}
+          LEGACY_APP_ID: ${{ secrets.QSL_GITHUB_APP_ID }}
+          LEGACY_APP_KEY: ${{ secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
         run: |
-          if [ -n "${APP_ID:-}" ] && [ -n "${APP_KEY:-}" ]; then
+          if [ -n "${DRIFT_APP_ID:-}" ] && [ -n "${DRIFT_APP_KEY:-}" ]; then
             echo "configured=true" >> "${GITHUB_OUTPUT}"
+            echo "source=drift" >> "${GITHUB_OUTPUT}"
+          elif [ -n "${LEGACY_APP_ID:-}" ] && [ -n "${LEGACY_APP_KEY:-}" ]; then
+            echo "configured=true" >> "${GITHUB_OUTPUT}"
+            echo "source=legacy" >> "${GITHUB_OUTPUT}"
           else
             echo "configured=false" >> "${GITHUB_OUTPUT}"
+            echo "source=none" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Mint optional GitHub App token
         id: app_token
         if: steps.app_creds.outputs.configured == 'true'
-        continue-on-error: true
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        continue-on-error: ${{ !(github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback) }}
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:
-          app-id: ${{ secrets.QSL_GITHUB_APP_ID }}
-          private-key: ${{ secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
+          app-id: ${{ steps.app_creds.outputs.source == 'drift' && secrets.QSL_DRIFT_APP_ID || secrets.QSL_GITHUB_APP_ID }}
+          private-key: ${{ steps.app_creds.outputs.source == 'drift' && secrets.QSL_DRIFT_APP_PRIVATE_KEY || secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: CnEquitySnapshotPipelines
+          permission-contents: read
+          permission-actions: read
 
       - name: Download latest trusted market history
         id: snapshot-input
         env:
-          GH_TOKEN: ${{ steps.app_token.outputs.token || secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token }}
+          DISABLE_LEGACY_PAT_FALLBACK: ${{ github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback }}
+          APP_TOKEN: ${{ steps.app_token.outputs.token }}
+          GH_TOKEN: ${{ (github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback && steps.app_token.outputs.token) || (!(github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback) && (steps.app_token.outputs.token || secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token)) || '' }}
           MARKET_HISTORY_PATH: ${{ runner.temp }}/snapshot-input/cn_etf_market_history.csv
         run: |
           set -euo pipefail
+          if [ "${DISABLE_LEGACY_PAT_FALLBACK:-false}" = "true" ] && [ -z "${APP_TOKEN:-}" ]; then
+            echo "::error::GitHub App token is required when disable_legacy_pat_fallback is true"
+            exit 1
+          fi
           if [ -z "${GH_TOKEN:-}" ]; then
             echo "::error::SNAPSHOT_REPOSITORY_TOKEN is required for market-history artifact access"
             exit 1
@@ -229,5 +251,8 @@ jobs:
       ai_service_reviewers_json: ${{ vars.AI_SERVICE_REVIEWERS_JSON }}
       quant_platform_kit_ref: c7646a7168b3dafa763ef7751a182d23e8de7790
       lifecycle_preflight_artifact: lifecycle-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+      disable_legacy_pat_fallback: ${{ github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback }}
     secrets:
-      snapshot_repository_token: ${{ secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token }}
+      qsl_drift_app_id: ${{ secrets.QSL_DRIFT_APP_ID || secrets.QSL_GITHUB_APP_ID }}
+      qsl_drift_app_private_key: ${{ secrets.QSL_DRIFT_APP_PRIVATE_KEY || secrets.QSL_GITHUB_APP_PRIVATE_KEY }}
+      snapshot_repository_token: ${{ !(github.event_name == 'workflow_dispatch' && inputs.disable_legacy_pat_fallback) && (secrets.SNAPSHOT_REPOSITORY_TOKEN || secrets.QSL_REPO_SYNC_TOKEN || github.token) || '' }}

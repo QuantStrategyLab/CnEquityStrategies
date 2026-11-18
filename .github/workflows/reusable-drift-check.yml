@@ -78,8 +78,17 @@ on:
         required: false
         type: string
         default: ""
+      disable_legacy_pat_fallback:
+        description: "Fail closed instead of falling back to legacy PAT or github.token."
+        required: false
+        type: boolean
+        default: false
     secrets:
       snapshot_repository_token:
+        required: false
+      qsl_drift_app_id:
+        required: false
+      qsl_drift_app_private_key:
         required: false
 
 permissions:
@@ -105,6 +114,7 @@ jobs:
 
     steps:
       - name: Validate trusted caller
+        id: trusted_caller
         env:
           CALLER_REPOSITORY: ${{ github.repository }}
           CALLER_EVENT_NAME: ${{ inputs.caller_event_name }}
@@ -160,16 +170,56 @@ jobs:
             echo "::error::snapshot_repository mismatch for caller $caller_repo: $snapshot_repo"
             exit 1
           fi
+          echo "snapshot_repo_name=${snapshot_repo#*/}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Check snapshot GitHub App credentials
+        id: snapshot_app_creds
+        env:
+          APP_ID: ${{ secrets.qsl_drift_app_id }}
+          APP_KEY: ${{ secrets.qsl_drift_app_private_key }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${APP_ID:-}" ] && [ -n "${APP_KEY:-}" ]; then
+            echo "configured=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "configured=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Mint snapshot GitHub App token
+        id: snapshot_app_token
+        if: steps.snapshot_app_creds.outputs.configured == 'true'
+        continue-on-error: ${{ !inputs.disable_legacy_pat_fallback }}
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.qsl_drift_app_id }}
+          private-key: ${{ secrets.qsl_drift_app_private_key }}
+          owner: QuantStrategyLab
+          repositories: ${{ steps.trusted_caller.outputs.snapshot_repo_name }}
+          permission-contents: read
+          permission-actions: read
+
+      - name: Assert snapshot GitHub App token when legacy fallback is disabled
+        if: inputs.disable_legacy_pat_fallback
+        env:
+          APP_TOKEN: ${{ steps.snapshot_app_token.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_TOKEN:-}" ]; then
+            echo "::error::qsl_drift_app_id and qsl_drift_app_private_key must mint a token when disable_legacy_pat_fallback is true"
+            exit 1
+          fi
 
       - name: Checkout snapshot pipeline repo
         uses: actions/checkout@v6
         with:
           repository: ${{ inputs.snapshot_repository }}
           ref: ${{ inputs.snapshot_repository_ref }}
-          token: ${{ secrets.snapshot_repository_token || github.token }}
+          token: ${{ (inputs.disable_legacy_pat_fallback && steps.snapshot_app_token.outputs.token) || (!inputs.disable_legacy_pat_fallback && (steps.snapshot_app_token.outputs.token || secrets.snapshot_repository_token || github.token)) || '' }}
           path: ${{ inputs.snapshot_checkout_path }}
 
       - name: Checkout QuantPlatformKit
