@@ -8,6 +8,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 import sys
 import time
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 

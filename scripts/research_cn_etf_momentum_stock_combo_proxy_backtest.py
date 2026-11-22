@@ -315,7 +315,7 @@ def run_etf_momentum_stock_combo(
         },
         "periods": {
             key: {
-                "combo": _metrics_slice(combo_slice, pstart, pend),
+                "combo": _metrics_slice(blend_slice, pstart, pend),
                 "industry_etf": _metrics_slice(etf_slice, pstart, pend),
                 "momentum_stock": _metrics_slice(stock_slice, pstart, pend),
             }
