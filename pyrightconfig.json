@@ -1,0 +1,12 @@
+{
+  "include": [
+    "src/cn_equity_strategies/backtest/promotion_gate.py",
+    "src/cn_equity_strategies/backtest/proxy_profile_registry.py",
+    "src/cn_equity_strategies/runtime_allowlist.py"
+  ],
+  "extraPaths": [
+    "src"
+  ],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic"
+}
