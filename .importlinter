@@ -1,0 +1,11 @@
+[importlinter]
+root_package = cn_equity_strategies
+
+[importlinter:contract:strategies_no_entrypoints]
+name = Live strategies must not import entrypoints or backtest
+type = forbidden
+source_modules =
+    cn_equity_strategies.strategies
+forbidden_modules =
+    cn_equity_strategies.entrypoints
+    cn_equity_strategies.backtest
